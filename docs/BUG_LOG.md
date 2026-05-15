@@ -61,3 +61,17 @@ Layar putih atau blank screen pada framework Vue 3 (menggunakan Inertia) biasany
   // BENAR (Vanilla JS)
   const hours = String(new Date().getHours()).padStart(2, '0');
   ```
+
+---
+
+## 4. Error Query SQL (No such column: price)
+
+### Kasus: `no such column: price` pada Dashboard
+* **Gejala:** Muncul Internal Server Error saat Admin membuka Dashboard.
+* **Penyebab Utama:** Kode di `DashboardController` mencoba melakukan agregasi `SUM(price * quantity)`, namun kolom di tabel `order_items` sebenarnya bernama `unit_price` dan sudah tersedia kolom `subtotal` yang menampung total harga per baris (termasuk varian).
+* **Solusi/Pencegahan:** Selalu periksa schema migrasi sebelum menulis query SQL manual (`DB::raw`). Gunakan kolom `subtotal` untuk menghitung total pendapatan per item.
+  ```php
+  // BENAR
+  SUM(subtotal) as total_revenue
+  ```
+

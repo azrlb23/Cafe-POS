@@ -1,20 +1,23 @@
 # Panduan Operasional Cafe-POS (Denjavas Retro Café)
 
-Dokumen ini berisi panduan dasar untuk mengoperasikan sistem *Point of Sales* (POS) Denjavas. Sistem ini dirancang untuk dua jenis pengguna utama: **Administrator (Pemilik/Manajer)** dan **Kasir**.
+Dokumen ini berisi panduan lengkap untuk mengoperasikan sistem *Point of Sales* (POS) Denjavas. Sistem ini dirancang untuk dua jenis pengguna utama: **Administrator (Pemilik/Manajer)** dan **Kasir**.
+
+> **Terakhir diperbarui:** 15 Mei 2026
 
 ---
 
 ## 1. Hak Akses & Akun Default
+
 Sistem dilengkapi dengan dua level otorisasi (*Role-Based Access Control*). Saat pertama kali sistem diinstal dan di-seed, akun berikut otomatis terbuat:
 
 ### Akun Administrator (Admin)
-Admin memiliki akses penuh ke seluruh sistem, termasuk mengelola data master (Kategori, Menu, Bahan Baku, Resep) dan melihat laporan keuangan.
+Admin memiliki akses penuh ke seluruh sistem, termasuk mengelola data master (Kategori, Menu, Bahan Baku), melihat Dashboard Analitik, dan memantau operasional kasir.
 - **Email Login:** `admin@denjavas.com`
 - **Password:** `password`
-- **PIN Kasir:** `123456` *(Digunakan jika sistem beralih ke mode PIN login cepat)*
+- **PIN Kasir:** `123456`
 
 ### Akun Kasir (Cashier)
-Kasir hanya memiliki akses ke modul "Tablet POS" untuk melayani pelanggan, memproses pesanan, dan mencetak struk pembayaran. Karena kafe menerapkan sistem 2 shift dalam 1 tablet bergantian, terdapat 2 akun kasir default:
+Kasir memiliki akses ke modul Tablet POS untuk melayani pelanggan, memproses pesanan, mencatat petty cash, dan melihat riwayat transaksi hari ini. Terdapat 2 akun kasir default untuk sistem 2 shift:
 
 **Kasir 1 (Shift Pagi-Siang)**
 - **Email Login:** `kasir@denjavas.com`
@@ -29,44 +32,47 @@ Kasir hanya memiliki akses ke modul "Tablet POS" untuk melayani pelanggan, mempr
 ---
 
 ## 2. Cara Menjalankan Aplikasi
-Untuk menjalankan sistem secara lokal di komputer, Anda hanya perlu menjalankan satu perintah praktis di terminal:
 
 ```bash
 composer run dev
 ```
-*(Atau bisa disingkat menjadi `composer dev`)*
 
-Perintah di atas akan secara otomatis dan bersamaan menjalankan:
+Perintah di atas akan secara otomatis menjalankan:
 1. Server Backend PHP (Laravel) di `http://localhost:8000`
-2. Server Frontend (Vite) untuk *Hot Module Replacement* UI.
-3. Server Queue Worker (untuk memproses *background task* jika ada).
+2. Server Frontend (Vite) untuk *Hot Module Replacement* UI
+3. Server Queue Worker
 
 ---
 
 ## 3. Alur Kerja Sistem (Workflow)
 
-Sistem bekerja dengan relasi data yang saling terkait. Berikut adalah urutan kerja standar bagi manajemen kafe:
-
 ### Fase Setup (Tugas Admin)
-Sebelum Kasir bisa berjualan, Admin harus menyiapkan master data secara berurutan:
-1. **Tambah Kategori:** Masuk ke menu `Kategori Menu` dan buat kategori (misal: "Kopi", "Non-Kopi", "Snack").
-2. **Kelola Stok Bahan Baku:** Masuk ke menu `Bahan Baku` untuk mendaftarkan bahan seperti Biji Kopi, Susu, Gula Aren, Cup, dll. Anda bisa memantau stok real-time di sini.
-3. **Buat Menu & Resep:** Masuk ke `Katalog Menu` -> `Tambah Menu`. 
-   - Anda dapat menetapkan harga dasar.
-   - Menautkan "Resep Dasar" (misal: 1 Porsi Kopi Susu Aren = 18g Kopi + 150ml Susu + 20ml Gula).
-   - Menambahkan opsi kustomisasi (misal: Suhu Panas/Dingin, Ukuran Reguler/Large) lengkap dengan penambahan harga dan tambahan resepnya.
+Sebelum kasir bisa berjualan, Admin harus menyiapkan master data:
+1. **Tambah Kategori:** Menu `Kategori Menu` → buat kategori (Kopi, Non-Kopi, Snack).
+2. **Kelola Stok Bahan Baku:** Menu `Bahan Baku` → daftarkan bahan (Biji Kopi, Susu, dll) dan atur **Batas Minimum Stok** untuk peringatan otomatis.
+3. **Buat Menu & Resep:** Menu `Katalog Menu` → `Tambah Menu`:
+   - Tetapkan harga dasar dan kategori.
+   - Tautkan resep dasar (misal: 1 Kopi Susu = 18g Kopi + 150ml Susu + 20ml Gula).
+   - Tambahkan opsi kustomisasi (Ukuran, Suhu, Topping) lengkap dengan tambahan harga dan resep.
 
 ### Fase Operasional (Tugas Kasir)
-Setelah menu siap, kasir bertugas di depan meja pelayanan:
-1. Kasir membuka halaman POS (`/pos`) dan login menggunakan **PIN 6-digit**.
-2. **[PENTING]** Saat pertama masuk, kasir wajib **Membuka Shift (Open Shift)** dengan memasukkan uang kas awal di laci kasir.
-3. Sistem akan menampilkan antarmuka modern berisi menu-menu yang aktif.
-4. Kasir menerima pesanan pelanggan:
-   - Pilih jenis pesanan: **Dine-in** (Nomor Meja 1-30) atau **Takeaway**.
-   - Pilih menu dan kustomisasi jika ada.
-   - Tambahkan ke Keranjang (*Cart*).
-5. Kasir memproses "Checkout", memilih metode pembayaran, dan sistem akan otomatis memotong stok "Bahan Baku" secara otomatis berdasarkan resep.
-6. Saat pergantian shift, kasir melakukan **Tutup Shift**, mencocokkan total uang tunai, lalu kasir berikutnya bisa login.
+1. Login ke halaman POS (`/pos`) menggunakan email & password.
+2. **Buka Shift** → masukkan jumlah kas awal di laci kasir.
+3. Terima pesanan pelanggan:
+   - Pilih **Dine-in** (pilih nomor meja 1-30) atau **Takeaway**.
+   - Pilih menu dan kustomisasi varian jika ada.
+   - Tambahkan ke keranjang.
+4. **Checkout** → pilih metode pembayaran → stok otomatis terpotong.
+5. **Kas Keluar** (jika perlu) → catat pengeluaran darurat dari laci (beli es batu, dll).
+6. **Pembatalan Pesanan** (jika ada kesalahan) → buka halaman Riwayat → pilih pesanan → masukkan alasan → stok otomatis dikembalikan.
+7. **Tutup Shift** → cocokkan total uang tunai fisik dengan ekspektasi sistem.
+
+### Fase Monitoring (Tugas Admin)
+1. **Dashboard Analitik** (`/dashboard`):
+   - Lihat KPI: Pendapatan, Transaksi, Petty Cash, Estimasi Saldo.
+   - Pilih rentang waktu untuk analisis lebih dalam.
+   - Pantau grafik tren penjualan dan menu terlaris.
+   - Perhatikan peringatan stok kritis (kotak merah di bawah).
 
 ---
 

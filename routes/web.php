@@ -14,9 +14,8 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
+Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'role:admin'])->name('dashboard');
 
 Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
     Route::get('/pos', [\App\Http\Controllers\PosController::class, 'index'])->name('pos');

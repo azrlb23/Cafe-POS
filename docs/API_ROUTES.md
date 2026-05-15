@@ -1,29 +1,76 @@
 # Denjavas POS - API & Route Documentation
 
-File ini mendokumentasikan semua rute (endpoint) aplikasi yang digunakan untuk komunikasi antara frontend Vue.js (Inertia) dan backend Laravel.
+Dokumentasi semua endpoint (rute) aplikasi yang digunakan untuk komunikasi antara frontend Vue.js (Inertia) dan backend Laravel.
 
-## Menu Catalog (Admin)
+> **Terakhir diperbarui:** 15 Mei 2026
 
-### `[GET] /admin/menus`
-- **Deskripsi**: Menampilkan halaman daftar Menu.
-- **Middleware**: `auth`, `role:admin`
-- **Response**: Mengembalikan komponen Inertia `Admin/Menus/Index` beserta data `menus` (termasuk relasi `category`).
+---
 
-### `[GET] /admin/menus/create`
-- **Deskripsi**: Menampilkan halaman form untuk membuat Menu baru.
-- **Response**: Mengembalikan komponen Inertia `Admin/Menus/Create` beserta referensi master data `categories` dan `raw_materials`.
+## 1. Public Routes
 
-### `[POST] /admin/menus`
-- **Deskripsi**: Menyimpan menu baru beserta resep dasar, option groups, option items, dan resep masing-masing option ke database dalam satu `DB::transaction()`.
-- **Payload / Parameter**:
+### `[GET] /`
+- **Deskripsi**: Landing page Denjavas Retro Café.
+- **Response**: Komponen Inertia `Welcome`.
+
+### `[GET] /login`
+- **Deskripsi**: Halaman login (Email + Password).
+
+### `[GET] /logout` *(Emergency)*
+- **Deskripsi**: Rute darurat untuk logout via GET jika sesi pengguna tersangkut.
+
+---
+
+## 2. Admin Routes
+
+Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
+
+### Dashboard Analitik
+
+#### `[GET] /dashboard`
+- **Controller**: `Admin\DashboardController@index`
+- **Deskripsi**: Dashboard analitik utama dengan KPI cards, grafik tren, dan peringatan stok.
+- **Query Parameters** (opsional):
+  - `start_date` (format: `YYYY-MM-DD`, default: awal bulan ini)
+  - `end_date` (format: `YYYY-MM-DD`, default: hari ini)
+- **Response**: Komponen Inertia `Dashboard` dengan data:
+  - `filters` — Rentang waktu aktif
+  - `kpis` — Pendapatan, transaksi, petty cash, estimasi saldo
+  - `salesTrend` — Data tren penjualan harian
+  - `topMenus` — Top 5 menu terlaris
+  - `lowStockItems` — Bahan baku di bawah batas minimum
+  - `activeShift` — Info shift kasir yang sedang berjalan
+
+---
+
+### Manajemen Kategori
+
+#### `[RESOURCE] /admin/categories`
+- **Controller**: `Admin\CategoryController`
+- **Fungsi**: CRUD kategori menu (Kopi, Snack, dll).
+
+---
+
+### Manajemen Menu
+
+#### `[GET] /admin/menus`
+- **Deskripsi**: Halaman daftar menu.
+- **Response**: Komponen Inertia `Admin/Menus/Index` + data `menus` (relasi `category`).
+
+#### `[GET] /admin/menus/create`
+- **Deskripsi**: Form membuat menu baru.
+- **Response**: Komponen Inertia `Admin/Menus/Create` + referensi `categories`, `raw_materials`.
+
+#### `[POST] /admin/menus`
+- **Deskripsi**: Menyimpan menu baru + resep + option groups dalam `DB::transaction()`.
+- **Payload**:
 ```json
 {
   "category_id": 1,
   "name": "Kopi Susu",
-  "description": "Deskripsi kopi",
+  "description": "Deskripsi",
   "base_price": 20000,
   "is_active": true,
-  "image": "File object (optional)",
+  "image": "File (optional)",
   "recipes": [
     { "raw_material_id": 1, "quantity": 18 }
   ],
@@ -45,43 +92,72 @@ File ini mendokumentasikan semua rute (endpoint) aplikasi yang digunakan untuk k
   ]
 }
 ```
-- **Response**: Redirect back to `/admin/menus` dengan flash message `success`.
 
-### `[GET] /admin/menus/{menu}/edit`
-- **Deskripsi**: Menampilkan halaman form edit untuk menu spesifik.
-- **Response**: Mengembalikan komponen Inertia `Admin/Menus/Edit` beserta data `menu` (ter-eager load dengan `recipes`, `menuOptionGroups.menuOptionItems.recipes`), `categories`, dan `raw_materials`.
+#### `[GET] /admin/menus/{menu}/edit`
+- **Deskripsi**: Form edit menu (eager load resep & option groups).
 
-### `[PUT/PATCH] /admin/menus/{menu}`
-- **Deskripsi**: Memperbarui data menu, melakukan sinkronisasi resep dasar, dan melakukan *recreate* option groups (sync).
-- **Payload / Parameter**: *Sama seperti `[POST] /admin/menus`.*
-- **Response**: Redirect back to `/admin/menus` dengan flash message `success`.
+#### `[PUT/PATCH] /admin/menus/{menu}`
+- **Deskripsi**: Update menu + sinkronisasi resep (pola Sync/Upsert, bukan delete-recreate).
 
-### `[DELETE] /admin/menus/{menu}`
-- **Deskripsi**: Menghapus menu dari database (termasuk *cascade delete* pada option groups dan resep).
-- **Response**: Redirect back to `/admin/menus` dengan flash message `success`.
+#### `[DELETE] /admin/menus/{menu}`
+- **Deskripsi**: Hapus menu + cascade delete options & resep.
 
 ---
 
-## Master Data Management (Admin)
+### Manajemen Bahan Baku
 
-### `[RESOURCE] /admin/categories`
-- **Controller**: `Admin/CategoryController`
-- **Fungsi**: Kelola kategori menu (Kopi, Snack, dll).
-
-### `[RESOURCE] /admin/raw-materials`
-- **Controller**: `Admin/RawMaterialController`
-- **Fungsi**: Kelola stok bahan baku (Coffee Beans, Milk, Syrup, dll).
+#### `[RESOURCE] /admin/raw-materials`
+- **Controller**: `Admin\RawMaterialController`
+- **Fungsi**: CRUD stok bahan baku (Coffee Beans, Milk, Syrup, dll).
 
 ---
 
-## POS Operations (Phase 1 & 2)
+## 3. POS / Kasir Routes
 
-### `[GET] /pos`
-- **Deskripsi**: Halaman utama aplikasi kasir (Tablet POS).
-- **Middleware**: `auth`, `role:kasir|admin`
+Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:kasir`.
 
-### `[POST] /pos/shifts/start`
-- **Deskripsi**: Kasir membuka shift dengan menginput kas awal (`opening_cash`).
+### Halaman Utama
 
-### `[POST] /pos/orders`
-- **Deskripsi**: Memproses transaksi baru (Checkout). Mengurangi stok secara otomatis dan mencatat mutasi.
+#### `[GET] /pos`
+- **Controller**: `PosController@index`
+- **Deskripsi**: Antarmuka kasir full-screen (tablet optimized).
+
+#### `[GET] /pos/history`
+- **Controller**: `PosController@history`
+- **Deskripsi**: Halaman riwayat transaksi & kas keluar hari ini.
+
+---
+
+### Shift Management
+
+#### `[POST] /pos/shifts/start`
+- **Controller**: `PosController@startShift`
+- **Payload**: `{ "opening_cash": 500000 }`
+- **Deskripsi**: Kasir membuka shift baru dengan kas awal.
+
+#### `[POST] /pos/shifts/end`
+- **Controller**: `PosController@endShift`
+- **Payload**: `{ "closing_cash": 750000, "notes": "Catatan opsional" }`
+- **Deskripsi**: Kasir menutup shift, mencatat kas akhir.
+
+---
+
+### Transaksi
+
+#### `[POST] /pos/orders`
+- **Controller**: `PosController@submitOrder`
+- **Deskripsi**: Memproses checkout. Otomatis mengurangi stok bahan baku dan mencatat mutasi.
+
+#### `[POST] /pos/orders/{order}/void`
+- **Controller**: `PosController@voidOrder`
+- **Payload**: `{ "void_reason": "Pelanggan salah pilih menu" }`
+- **Deskripsi**: Membatalkan pesanan. Otomatis mengembalikan stok dan mengoreksi saldo shift.
+
+---
+
+### Kas Keluar
+
+#### `[POST] /pos/petty-cash`
+- **Controller**: `PosController@storePettyCash`
+- **Payload**: `{ "amount": 25000, "description": "Beli es batu" }`
+- **Deskripsi**: Mencatat pengeluaran darurat dari laci kasir.
