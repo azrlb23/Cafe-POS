@@ -13,8 +13,21 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Plus Jakarta Sans', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                cafe: {
+                    base: 'var(--color-bg-base)',
+                    surface: 'var(--color-bg-surface)',
+                    overlay: 'var(--color-bg-overlay)',
+                    'overlay-hover': 'var(--color-bg-overlay-hover)',
+                    main: 'var(--color-text-main)',
+                    secondary: 'var(--color-text-secondary)',
+                    muted: 'var(--color-text-muted)',
+                    border: 'var(--color-border-subtle)',
+                    'border-strong': 'var(--color-border-strong)',
+                }
+            }
         },
     },
 

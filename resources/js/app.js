@@ -16,10 +16,16 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
+        const app = createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue)
-            .mount(el);
+            .use(ZiggyVue);
+            
+        app.config.errorHandler = (err, instance, info) => {
+            alert(`Vue Error: ${err.message}\nInfo: ${info}\nStack: ${err.stack}`);
+            console.error(err, info);
+        };
+        
+        return app.mount(el);
     },
     progress: {
         color: '#4B5563',

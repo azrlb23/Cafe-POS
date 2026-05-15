@@ -29,11 +29,31 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        try {
+            \Illuminate\Support\Facades\Log::info('Login process started', ['request_ip' => $request->ip(), 'email' => $request->email]);
+            
+            $request->authenticate();
+            $request->session()->regenerate();
 
-        $request->session()->regenerate();
+            $user = Auth::user();
+            \Illuminate\Support\Facades\Log::info('Authentication successful', ['user_id' => $user->id, 'email' => $user->email, 'role' => $user->role]);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+            if ($user->hasRole('admin') || $user->role === 'admin') {
+                \Illuminate\Support\Facades\Log::info('Redirecting to dashboard (Admin role detected)');
+                return redirect()->route('dashboard');
+            }
+
+            \Illuminate\Support\Facades\Log::info('Redirecting to pos (Non-admin role detected)');
+            return redirect()->route('pos');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Authentication exception caught', [
+                'message' => $e->getMessage(),
+                'email' => $request->email,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
     /**

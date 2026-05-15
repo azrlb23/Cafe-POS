@@ -42,8 +42,12 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        \Illuminate\Support\Facades\Log::info('Attempting login', ['email' => $this->email]);
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
+
+            \Illuminate\Support\Facades\Log::warning('Login failed: Invalid credentials', ['email' => $this->email]);
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
