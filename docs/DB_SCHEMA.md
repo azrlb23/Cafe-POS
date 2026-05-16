@@ -2,7 +2,7 @@
 
 Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjavas POS.
 
-> **Terakhir diperbarui:** 15 Mei 2026 — Mencakup semua migrasi termasuk `void_reason`, `minimum_stock`, `petty_cashes`, dan breakdown shift.
+> **Terakhir diperbarui:** 16 Mei 2026 — Mencakup semua migrasi termasuk `void_reason`, `minimum_stock`, `cost_per_unit`, `petty_cashes`, dan breakdown shift.
 
 ---
 
@@ -51,6 +51,7 @@ Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjava
 | `unit` | Enum: gram, ml, pcs | Satuan ukur |
 | `current_stock` | Decimal(10,2) | Stok saat ini |
 | `minimum_stock` | Decimal(10,2) | Batas minimum (untuk alert) |
+| `cost_per_unit` | Decimal(12,2) | Harga beli per satuan (untuk kalkulasi HPP/COGS) |
 
 ### 6. `recipes` *(Bill of Materials / BOM)*
 | Kolom | Tipe | Keterangan |
@@ -160,4 +161,4 @@ Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjava
 
 ---
 
-*Struktur ini mencakup seluruh migrasi hingga Sprint 2 (Dashboard Analitik).*
+*Struktur ini mencakup seluruh migrasi hingga Sprint 3 (Pencetakan Struk & Visualisasi Laporan).*

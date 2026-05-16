@@ -62,7 +62,26 @@ defineEmits(['open-table', 'clear', 'update-qty', 'remove', 'pay', 'close']);
                         <span class="w-8 text-center text-xs font-black">{{ item.quantity }}</span>
                         <button @click="$emit('update-qty', index, 1)" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-amber-600 hover:bg-white rounded-md transition-all font-bold">+</button>
                     </div>
-                    <button @click="$emit('remove', index)" class="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-all px-3 py-2 rounded-lg hover:bg-red-50">Hapus</button>
+                    <div class="flex gap-2">
+                        <button 
+                            @click="item.showNote = !item.showNote" 
+                            :class="item.notes ? 'text-amber-600 bg-amber-50' : 'text-slate-400 hover:bg-slate-50'"
+                            class="text-[9px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition-all"
+                        >
+                            {{ item.notes ? 'Edit Catatan' : '+ Catatan' }}
+                        </button>
+                        <button @click="$emit('remove', index)" class="text-[10px] font-black text-red-400 hover:text-red-600 uppercase tracking-widest transition-all px-3 py-2 rounded-lg hover:bg-red-50">Hapus</button>
+                    </div>
+                </div>
+
+                <!-- Item Note Input -->
+                <div v-if="item.showNote" class="mt-2 animate-in slide-in-from-top-2 duration-200">
+                    <textarea 
+                        v-model="item.notes" 
+                        placeholder="Contoh: Less sugar, extra pedas..." 
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl text-[11px] p-3 focus:border-amber-400 focus:ring-0 outline-none resize-none transition-all"
+                        rows="2"
+                    ></textarea>
                 </div>
             </div>
         </div>

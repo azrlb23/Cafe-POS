@@ -75,3 +75,41 @@ Layar putih atau blank screen pada framework Vue 3 (menggunakan Inertia) biasany
   SUM(subtotal) as total_revenue
   ```
 
+---
+
+## 5. Error Kompilasi Template Vue (Vite: Invalid end tag)
+
+### Kasus: Tag `</div>` Ekstra pada `Pos.vue`
+* **Gejala:** Vite memunculkan error merah berulang di terminal: `Invalid end tag` di `Pos.vue:297:13`. Halaman POS tidak bisa dimuat. Error memicu tiga kali *hot reload* berturut-turut.
+* **Penyebab Utama:** Saat menambahkan blok HTML dropdown baru (menu "Opsi Cetak" dengan 3 grup struk), proses *replace* menyisipkan satu tag penutup `</div>` ekstra di baris 295. Ini menyebabkan jumlah tag pembuka dan penutup tidak seimbang, sehingga parser Vue gagal membangun AST (Abstract Syntax Tree).
+* **Cara Mendeteksi:** Periksa hierarki tag secara manual dari atas ke bawah di sekitar baris yang ditunjukkan oleh error. Hitung pasangan buka-tutup `<div>` / `</div>`.
+* **Solusi/Pencegahan:**
+  1. Selalu verifikasi jumlah pasangan tag setelah menambahkan blok HTML besar ke dalam template Vue.
+  2. Gunakan fitur *bracket matching* di editor untuk memastikan setiap `<div>` memiliki pasangan `</div>`.
+  ```
+  Hierarki yang benar setelah diperbaiki:
+  L292: </div>   ← Tutup grup Struk Dapur
+  L293: </div>   ← Tutup kontainer Dropdown Menu
+  L294: </div>   ← Tutup kontainer v-if="lastOrderId"
+  L295: </div>   ← Tutup area ikon/tombol header
+  L296: </div>   ← Tutup kontainer header justify-between
+  ```
+
+---
+
+## 6. Error `Undefined property: stdClass::$id` pada ReportController
+
+### Kasus: Properti `id` Tidak Ada di Hasil Query `DB::table()`
+* **Gejala:** Internal Server Error (500) saat admin membuka halaman `/admin/reports`. Stack trace menunjuk ke `ReportController.php:108` di dalam callback `map()`.
+* **Penyebab Utama:** Query performa menu menggunakan `DB::table('order_items')->join(...)` yang mengembalikan `stdClass` (bukan Eloquent Model). Kolom `menus.id` **tidak diikutkan** dalam perintah `->select(...)`, padahal kode di `map()` mencoba mengakses `$item->id` untuk mencari model Menu dan menghitung HPP (COGS).
+* **Perbedaan Kunci:** `DB::table()` hanya mengembalikan kolom yang eksplisit di-`select()`, berbeda dengan Eloquent `Model::get()` yang mengembalikan semua kolom secara default (`SELECT *`).
+* **Solusi/Pencegahan:**
+  1. **Selalu sertakan `id`** dalam `select()` jika hasil query akan digunakan untuk lookup lebih lanjut.
+  2. Ketika menggunakan `DB::table()` (Query Builder), pastikan semua properti yang diakses di `map()` / `each()` sudah ada di daftar `select()`.
+  ```php
+  // SALAH (menyebabkan error)
+  ->select('menus.name', 'categories.name as category_name', ...)
+  
+  // BENAR (id tersedia untuk lookup COGS)
+  ->select('menus.id', 'menus.name', 'categories.name as category_name', ...)
+  ```

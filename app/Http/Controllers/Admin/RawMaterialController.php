@@ -10,10 +10,32 @@ use Inertia\Inertia;
 
 class RawMaterialController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $query = RawMaterial::with('defaultSupplier')
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            });
+
         return Inertia::render('Admin/RawMaterials/Index', [
-            'rawMaterials' => RawMaterial::latest()->get()
+            'rawMaterials' => $query->latest()->get(),
+            'suppliers' => \App\Models\Supplier::all(),
+            'filters' => $request->only(['search'])
+        ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Admin/RawMaterials/Create', [
+            'suppliers' => \App\Models\Supplier::all()
+        ]);
+    }
+
+    public function edit(RawMaterial $rawMaterial)
+    {
+        return Inertia::render('Admin/RawMaterials/Edit', [
+            'rawMaterial' => $rawMaterial,
+            'suppliers' => \App\Models\Supplier::all()
         ]);
     }
 
@@ -22,7 +44,11 @@ class RawMaterialController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'unit' => 'required|string|max:50',
+            'cost_per_unit' => 'required|numeric|min:0',
             'current_stock' => 'required|numeric|min:0',
+            'minimum_stock' => 'nullable|numeric|min:0',
+            'par_level' => 'nullable|numeric|min:0',
+            'default_supplier_id' => 'nullable|exists:suppliers,id',
         ]);
 
         $rawMaterial = RawMaterial::create($validated);
@@ -46,7 +72,11 @@ class RawMaterialController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'unit' => 'required|string|max:50',
+            'cost_per_unit' => 'required|numeric|min:0',
             'current_stock' => 'required|numeric|min:0',
+            'minimum_stock' => 'nullable|numeric|min:0',
+            'par_level' => 'nullable|numeric|min:0',
+            'default_supplier_id' => 'nullable|exists:suppliers,id',
         ]);
 
         $diff = $validated['current_stock'] - $rawMaterial->current_stock;

@@ -21,6 +21,15 @@ class CafeTable extends Model
     }
 
     /**
+     * Get the active order for this table.
+     */
+    public function activeOrder()
+    {
+        return $this->hasOne(Order::class, 'cafe_table_id')
+            ->whereIn('status', ['pending', 'preparing', 'ready']);
+    }
+
+    /**
      * Check if the table is currently available.
      */
     public function isAvailable(): bool

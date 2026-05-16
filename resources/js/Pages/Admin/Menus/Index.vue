@@ -62,20 +62,25 @@ const resetFilters = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h2 class="text-2xl font-serif font-bold text-[#292524] leading-tight">
-                    Katalog <span class="text-[#D97706]">Menu</span>
-                </h2>
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 animate-fade-in">
+                <div>
+                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight">
+                        Katalog <span class="text-amber-600 italic">Menu</span>
+                    </h2>
+                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
+                        Manajemen Produk, Harga, dan Ketersediaan Stok
+                    </p>
+                </div>
                 <Link
                     :href="route('admin.menus.create')"
-                    class="w-full md:w-auto bg-gradient-to-r from-[#D97706] to-[#B45309] hover:from-[#B45309] hover:to-[#92400E] text-[#FFFFFF] px-8 py-3 rounded-xl font-black transition-all duration-300 shadow-[0_10px_20px_rgba(217,119,6,0.2)] text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 text-center"
+                    class="w-full md:w-auto bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-xl font-black transition-all duration-300 shadow-xl shadow-amber-600/20 text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 text-center"
                 >
                     + Tambah Menu Baru
                 </Link>
             </div>
         </template>
 
-        <div class="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <!-- Flash Messages -->
             <Transition
                 enter-active-class="transform transition duration-500 ease-out"
@@ -96,7 +101,7 @@ const resetFilters = () => {
             </Transition>
 
             <!-- Top Toolbar: Search & Filters -->
-            <div class="flex flex-col lg:flex-row gap-6 mb-10 items-end">
+            <div class="flex flex-col lg:flex-row gap-6 mb-10 items-end delay-100">
                 <div class="flex-1 w-full">
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Pencarian Menu</label>
                     <div class="relative group">
@@ -118,13 +123,13 @@ const resetFilters = () => {
                     />
                 </div>
 
-                <button @click="resetFilters" class="px-8 py-4 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest border border-slate-200">
+                <button @click="resetFilters" class="px-8 py-4 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest border border-slate-200 active:scale-95">
                     Reset
                 </button>
             </div>
 
-            <!-- Main Content Area (No Outer Card Border) -->
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <!-- Main Content Area -->
+            <div class="overflow-x-auto -mx-4 sm:mx-0 delay-200">
                 <table class="w-full text-left border-separate border-spacing-y-4">
                     <thead>
                         <tr class="text-slate-400">
@@ -136,10 +141,10 @@ const resetFilters = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="menu in menus" :key="menu.id" class="group bg-white hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl">
+                        <tr v-for="menu in menus" :key="menu.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
                             <td class="py-6 px-8 first:rounded-l-[2rem]">
                                 <div class="flex items-center gap-6">
-                                    <div class="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500">
+                                    <div class="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-700">
                                         <img v-if="menu.image_path" :src="'/storage/' + menu.image_path" alt="Menu" class="w-full h-full object-cover" />
                                         <div v-else class="w-full h-full flex items-center justify-center text-slate-300">
                                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -176,7 +181,7 @@ const resetFilters = () => {
                                 <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
                                     <Link
                                         :href="route('admin.menus.edit', menu.id)"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-400 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg"
+                                        class="bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-400 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg active:scale-90"
                                         title="Edit Menu"
                                     >
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -184,7 +189,7 @@ const resetFilters = () => {
                                     
                                     <button
                                         @click="confirmDeletion(menu)"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg"
+                                        class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg active:scale-90"
                                         title="Hapus Menu"
                                     >
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>

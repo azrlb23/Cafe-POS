@@ -150,6 +150,7 @@ class PosController extends Controller
                     'quantity' => $itemData['quantity'],
                     'unit_price' => $menu->base_price, // Snapshot
                     'subtotal' => $menu->base_price * $itemData['quantity'],
+                    'notes' => $itemData['notes'] ?? null,
                 ]);
 
                 $itemTotalOptions = 0;
@@ -192,11 +193,11 @@ class PosController extends Controller
                 $shift->increment('total_cash_sales', $totalSubtotal);
             }
 
-            // 5. Deduct Stock
-            $inventoryService = new \App\Services\InventoryService();
-            $inventoryService->deductStockFromOrder($order);
-
-            return redirect()->route('pos')->with('success', 'Pesanan #' . $order->order_number . ' berhasil disimpan.');
+            // 6. Return with order data for printing
+            return redirect()->route('pos')->with([
+                'success' => 'Pesanan #' . $order->order_number . ' berhasil disimpan.',
+                'print_order' => $order->load(['orderItems.orderItemOptions', 'cafeTable', 'user'])
+            ]);
         });
     }
 
@@ -308,5 +309,26 @@ class PosController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login')->with('success', 'Shift berhasil ditutup. Total Penjualan: Rp ' . number_format($activeShift->total_sales, 0, ',', '.'));
+    }
+
+    /**
+     * Generate PDF receipt for an order.
+     */
+    public function printPdf(Request $request, \App\Models\Order $order)
+    {
+        $type = $request->query('type', 'customer');
+        $order->load(['orderItems.orderItemOptions', 'cafeTable', 'user']);
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pos.receipt_pdf', [
+            'order' => $order,
+            'type' => $type
+        ]);
+        
+        // Set paper size to 58mm width (approx 164pt)
+        // Adjust height based on type (kitchen usually shorter)
+        $height = ($type === 'kitchen') ? 400 : 600;
+        $pdf->setPaper([0, 0, 164, $height]); 
+        
+        return $pdf->stream("struk-{$type}-{$order->order_number}.pdf");
     }
 }

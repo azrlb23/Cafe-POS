@@ -2,7 +2,7 @@
 
 Dokumentasi semua endpoint (rute) aplikasi yang digunakan untuk komunikasi antara frontend Vue.js (Inertia) dan backend Laravel.
 
-> **Terakhir diperbarui:** 15 Mei 2026
+> **Terakhir diperbarui:** 16 Mei 2026
 
 ---
 
@@ -39,6 +39,40 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
   - `topMenus` — Top 5 menu terlaris
   - `lowStockItems` — Bahan baku di bawah batas minimum
   - `activeShift` — Info shift kasir yang sedang berjalan
+
+---
+
+### Laporan Operasional
+
+#### `[GET] /admin/reports`
+- **Controller**: `Admin\ReportController@index`
+- **Deskripsi**: Halaman laporan komprehensif dengan 8 tab: Dashboard Analitik, Penjualan Harian, Performa Menu, Audit Stok, Riwayat Shift, Riwayat Transaksi, Kas Keluar, dan Log Void.
+- **Query Parameters** (opsional):
+  - `start_date` (format: `YYYY-MM-DD`, default: awal bulan ini)
+  - `end_date` (format: `YYYY-MM-DD`, default: akhir bulan ini)
+  - `search` — Filter teks untuk kolom-kolom yang relevan per tab
+- **Response**: Komponen Inertia `Admin/Reports/Index` dengan data:
+  - `dailySales` — Ringkasan penjualan per hari
+  - `shifts` — Riwayat & audit shift kasir
+  - `voidLogs` — Log pembatalan pesanan
+  - `menuPerformance` — Ranking menu + HPP (COGS) + margin laba
+  - `pettyCashLogs` — Riwayat pengeluaran kas keluar
+  - `orderHistory` — Detail lengkap semua transaksi
+  - `stockMutations` — Ledger mutasi stok bahan baku
+  - `charts` — Data grafik (revenue trend, payment methods, busy hours)
+  - `profitability` — Analisis laba rugi (revenue, COGS, gross profit, net profit)
+  - `performance` — Performa kasir (penjualan & transaksi per kasir)
+  - `alerts` — Peringatan stok rendah
+
+#### `[GET] /admin/reports/export`
+- **Controller**: `Admin\ReportController@export`
+- **Deskripsi**: Ekspor data laporan ke PDF atau CSV/Excel.
+- **Query Parameters**:
+  - `format` — `pdf` atau `excel` (default: `pdf`)
+  - `type` — `sales`, `shifts`, `voids`, `menu_performance`, `expenses`, `transactions`, `stock_mutations`
+  - `start_date`, `end_date` — Rentang waktu
+  - `search` — Filter teks (opsional)
+- **Response**: File download (PDF via DomPDF atau CSV stream).
 
 ---
 
@@ -152,6 +186,21 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:kasir`.
 - **Controller**: `PosController@voidOrder`
 - **Payload**: `{ "void_reason": "Pelanggan salah pilih menu" }`
 - **Deskripsi**: Membatalkan pesanan. Otomatis mengembalikan stok dan mengoreksi saldo shift.
+
+---
+
+### Pencetakan Struk
+
+#### `[GET] /pos/orders/{order}/print-pdf`
+- **Controller**: `PosController@printPdf`
+- **Route Name**: `pos.orders.print-pdf`
+- **Query Parameters**:
+  - `type` — `customer` (default), `cashier`, `kitchen`
+- **Deskripsi**: Generate dan stream PDF struk sesuai format yang diminta.
+  - **Customer**: Struk standar pelanggan (semua detail + total + kembalian).
+  - **Cashier**: Struk arsip kasir (header "ARSIP KASIR" + detail metode bayar).
+  - **Kitchen**: Struk dapur (font besar + catatan item, tanpa harga).
+- **Response**: PDF stream (inline display) via DomPDF, lebar kertas 164pt (58mm thermal).
 
 ---
 

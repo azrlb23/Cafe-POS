@@ -9,6 +9,9 @@ import OptionSelectionModal from './Pos/Partials/OptionSelectionModal.vue';
 import PaymentModal from './Pos/Partials/PaymentModal.vue';
 import CartPanel from './Pos/Partials/CartPanel.vue';
 import PettyCashModal from './Pos/Partials/PettyCashModal.vue';
+import { PrinterService } from '@/Services/PrinterService';
+import { usePage } from '@inertiajs/vue3';
+import { watch } from 'vue';
 
 const props = defineProps({
     menus: Array,
@@ -31,8 +34,14 @@ const showOptionModal = ref(false);
 const showPaymentModal = ref(false);
 const showMobileCart = ref(false);
 const currentMenuForOptions = ref(null);
+const lastOrderId = ref(null);
+const showPrintDropdown = ref(false);
 
 // Computed
+const lastOrder = computed(() => {
+    if (!lastOrderId.value) return null;
+    return props.todayOrders.find(o => o.id === lastOrderId.value);
+});
 const filteredMenus = computed(() => {
     if (!activeCategoryId.value) return props.menus;
     return props.menus.filter(m => m.category_id === activeCategoryId.value);
@@ -110,6 +119,7 @@ const handlePaymentSubmit = (paymentData) => {
     orderForm.items = cart.map(item => ({
         menu_id: item.menu.id,
         quantity: item.quantity,
+        notes: item.notes || null,
         options: item.options.map(o => ({ id: o.id }))
     }));
     orderForm.payment_method = paymentData.payment_method;
@@ -133,12 +143,33 @@ const openPayment = () => {
     }
     showPaymentModal.value = true;
 };
-
 onMounted(() => {
     if (props.categories.length > 0) {
         activeCategoryId.value = props.categories[0].id;
     }
 });
+
+// Printing Logic
+const page = usePage();
+watch(() => page.props.flash?.print_order, (newOrder) => {
+    if (newOrder) {
+        lastOrderId.value = newOrder.id;
+        // Trigger sequence: Kitchen, then Cashier, then Customer (with delays to avoid browser cancellation)
+        PrinterService.printKitchen(newOrder);
+        
+        setTimeout(() => {
+            PrinterService.printCashier(newOrder);
+        }, 1200); 
+
+        setTimeout(() => {
+            PrinterService.printCustomer(newOrder);
+        }, 2400);
+    }
+});
+
+const handleManualPrint = (order) => {
+    PrinterService.printCustomer(order);
+};
 </script>
 
 <template>
@@ -180,6 +211,87 @@ onMounted(() => {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>
                         Tutup Shift
                     </button>
+
+                    <!-- Print Dropdown (Visible only after transaction) -->
+                    <div v-if="lastOrderId" class="relative">
+                        <button 
+                            @click="showPrintDropdown = !showPrintDropdown"
+                            class="bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-emerald-100 flex items-center gap-2"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            Opsi Cetak
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" :class="{'rotate-180': showPrintDropdown}" class="transition-transform ml-1"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div v-if="showPrintDropdown" class="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-[100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                            <!-- Customer Receipt Group -->
+                            <div class="px-5 py-3 border-b border-slate-50">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Struk Customer</p>
+                                <div class="flex gap-2">
+                                    <button 
+                                        @click="PrinterService.printCustomer(lastOrder); showPrintDropdown = false"
+                                        class="flex-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                                        Cetak
+                                    </button>
+                                    <a 
+                                        :href="route('pos.orders.print-pdf', { order: lastOrderId, type: 'customer' })"
+                                        target="_blank"
+                                        class="flex-1 bg-slate-50 text-slate-500 hover:bg-slate-900 hover:text-white px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                        PDF
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Cashier Receipt Group -->
+                            <div class="px-5 py-3 border-b border-slate-50">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Struk Kasir (Arsip)</p>
+                                <div class="flex gap-2">
+                                    <button 
+                                        @click="PrinterService.printCashier(lastOrder); showPrintDropdown = false"
+                                        class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                                        Cetak
+                                    </button>
+                                    <a 
+                                        :href="route('pos.orders.print-pdf', { order: lastOrderId, type: 'cashier' })"
+                                        target="_blank"
+                                        class="flex-1 bg-slate-50 text-slate-500 hover:bg-slate-900 hover:text-white px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                        PDF
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Kitchen Receipt Group -->
+                            <div class="px-5 py-3">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Struk Dapur</p>
+                                <div class="flex gap-2">
+                                    <button 
+                                        @click="PrinterService.printKitchen(lastOrder); showPrintDropdown = false"
+                                        class="flex-1 bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                                        Cetak
+                                    </button>
+                                    <a 
+                                        :href="route('pos.orders.print-pdf', { order: lastOrderId, type: 'kitchen' })"
+                                        target="_blank"
+                                        class="flex-1 bg-slate-50 text-slate-500 hover:bg-slate-900 hover:text-white px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                        PDF
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>

@@ -18,10 +18,10 @@ Sumber: `orders`, `petty_cashes`, `shifts`
 | A2 | **Perbandingan Periode** | Tren naik/turun pendapatan vs periode sebelumnya (%) | Kalkulasi di controller | ✅ |
 | A3 | **Total Kas Keluar (Petty Cash)** | Rekapitulasi uang keluar dari laci untuk kebutuhan operasional | `petty_cashes.amount` | ✅ |
 | A4 | **Estimasi Saldo Laci** | Saldo tunai yang seharusnya ada di kasir saat shift aktif | `shifts.running_balance` | ✅ |
-| A5 | **Distribusi Metode Pembayaran** | Proporsi Cash vs QRIS vs E-wallet vs Transfer | `orders.payment_method` | 🔲 |
-| A6 | **Pendapatan per Kategori Menu** | Revenue dikelompokkan berdasarkan kategori (Kopi, Makanan, dll) | `order_items → menus → categories` | 🔲 |
-| A7 | **Laba Kotor Harian** | Revenue dikurangi Petty Cash per hari | `orders.total - petty_cashes.amount` (per hari) | 🔲 |
-| A8 | **Rata-rata Nilai Pesanan (Avg. Basket)** | Rata-rata `total` per transaksi dalam periode | `AVG(orders.total)` | 🔲 |
+| A5 | **Distribusi Metode Pembayaran** | Proporsi Cash vs QRIS vs E-wallet vs Transfer | `orders.payment_method` | ✅ |
+| A6 | **Pendapatan per Kategori Menu** | Revenue dikelompokkan berdasarkan kategori (Kopi, Makanan, dll) | `order_items → menus → categories` | ✅ |
+| A7 | **Laba Kotor Harian** | Revenue dikurangi Petty Cash per hari | `orders.total - petty_cashes.amount` (per hari) | ✅ |
+| A8 | **Rata-rata Nilai Pesanan (Avg. Basket)** | Rata-rata `total` per transaksi dalam periode | `AVG(orders.total)` | ✅ |
 
 ---
 
@@ -34,11 +34,11 @@ Sumber: `orders`, `order_items`, `menus`, `categories`, `cafe_tables`
 | B1 | **Volume Transaksi** | Jumlah total pesanan sukses per hari | `COUNT(orders) WHERE status='completed'` | ✅ |
 | B2 | **Menu Terlaris (Best Seller)** | Top 5 menu berdasarkan kuantitas terjual | `order_items.quantity GROUP BY menu_id` | ✅ |
 | B3 | **Tren Penjualan Harian** | Grafik omzet per hari dalam rentang waktu | `SUM(orders.total) GROUP BY DATE(created_at)` | ✅ |
-| B4 | **Distribusi Dine-in vs Takeaway** | Rasio tipe pesanan | `orders.order_type` | 🔲 |
-| B5 | **Distribusi Pesanan per Meja** | Frekuensi penggunaan setiap nomor meja | `orders.cafe_table_id` | 🔲 |
-| B6 | **Jam Sibuk (Peak Hours)** | Distribusi pesanan berdasarkan jam dalam sehari | `HOUR(orders.created_at) GROUP BY hour` | 🔲 |
-| B7 | **Menu Kurang Diminati** | Menu yang jarang/tidak pernah terjual | `menus LEFT JOIN order_items (qty rendah)` | 🔲 |
-| B8 | **Kontribusi Varian** | Opsi/varian menu mana yang paling sering dipilih | `order_item_options → menu_option_items` | 🔲 |
+| B4 | **Distribusi Dine-in vs Takeaway** | Rasio tipe pesanan | `orders.order_type` | ✅ |
+| B5 | **Distribusi Pesanan per Meja** | Frekuensi penggunaan setiap nomor meja | `orders.cafe_table_id` | ✅ |
+| B6 | **Jam Sibuk (Peak Hours)** | Distribusi pesanan berdasarkan jam dalam sehari | `HOUR(orders.created_at) GROUP BY hour` | ✅ |
+| B7 | **Menu Kurang Diminati** | Menu yang jarang/tidak pernah terjual | `menus LEFT JOIN order_items (qty rendah)` | ✅ |
+| B8 | **Kontribusi Varian** | Opsi/varian menu mana yang paling sering dipilih | `order_item_options → menu_option_items` | ✅ |
 
 ---
 
@@ -50,9 +50,9 @@ Sumber: `raw_materials`, `stock_mutations`, `recipes`
 |---|-----------|-----------|-------------|--------|
 | C1 | **Stok Real-time** | Posisi stok bahan baku saat ini | `raw_materials.current_stock` | ✅ (alert) |
 | C2 | **Peringatan Stok Kritis** | Bahan baku yang sudah ≤ batas minimum | `current_stock <= minimum_stock` | ✅ |
-| C3 | **Riwayat Mutasi Stok** | Timeline masuk/keluarnya bahan baku | `stock_mutations (type, quantity, reference)` | 🔲 |
-| C4 | **Konsumsi Bahan per Periode** | Estimasi bahan baku terpakai berdasarkan penjualan & resep | `recipes.quantity × order_items.quantity` | 🔲 |
-| C5 | **Proyeksi Kehabisan Stok** | Estimasi kapan bahan akan habis berdasarkan rata-rata pemakaian harian | Kalkulasi (konsumsi harian / stok sisa) | 🔲 |
+| C3 | **Riwayat Mutasi Stok** | Timeline masuk/keluarnya bahan baku | `stock_mutations (type, quantity, reference)` | ✅ |
+| C4 | **Konsumsi Bahan per Periode** | Estimasi bahan baku terpakai berdasarkan penjualan & resep (HPP/COGS per menu) | `recipes.quantity × order_items.quantity` | ✅ |
+| C5 | **Proyeksi Kehabisan Stok** | Estimasi kapan bahan akan habis berdasarkan rata-rata pemakaian harian | Kalkulasi (konsumsi harian / stok sisa) | ✅ |
 
 ---
 
@@ -62,11 +62,11 @@ Sumber: `shifts`, `users`, `orders`
 
 | # | Data Point | Deskripsi | Kolom/Query | Status |
 |---|-----------|-----------|-------------|--------|
-| D1 | **Riwayat Shift** | Tabel buka/tutup shift: modal awal, total penjualan, selisih | `shifts.*` | 🔲 |
-| D2 | **Selisih Kas per Shift** | Perbedaan antara uang fisik dan ekspektasi sistem | `shifts.closing_cash - expected_closing_cash` | 🔲 |
-| D3 | **Log Pembatalan (Void Audit)** | Daftar pesanan void + alasan + kasir yang bertanggung jawab | `orders WHERE status='void' + void_reason` | 🔲 |
-| D4 | **Performa Kasir** | Jumlah & total transaksi per kasir | `orders GROUP BY user_id` | 🔲 |
-| D5 | **Durasi Shift** | Lama waktu kerja per shift | `shifts.closed_at - shifts.opened_at` | 🔲 |
+| D1 | **Riwayat Shift** | Tabel buka/tutup shift: modal awal, total penjualan, selisih | `shifts.*` | ✅ |
+| D2 | **Selisih Kas per Shift** | Perbedaan antara uang fisik dan ekspektasi sistem | `shifts.closing_cash - expected_closing_cash` | ✅ |
+| D3 | **Log Pembatalan (Void Audit)** | Daftar pesanan void + alasan + kasir yang bertanggung jawab | `orders WHERE status='void' + void_reason` | ✅ |
+| D4 | **Performa Kasir** | Jumlah & total transaksi per kasir | `orders GROUP BY user_id` | ✅ |
+| D5 | **Durasi Shift** | Lama waktu kerja per shift | `shifts.closed_at - shifts.opened_at` | ✅ |
 
 ---
 

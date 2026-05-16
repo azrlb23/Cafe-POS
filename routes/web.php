@@ -24,6 +24,7 @@ Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
     Route::post('/pos/shifts/start', [\App\Http\Controllers\PosController::class, 'startShift'])->name('pos.shifts.start');
     Route::post('/pos/shifts/end', [\App\Http\Controllers\PosController::class, 'endShift'])->name('pos.shifts.end');
     Route::post('/pos/orders', [\App\Http\Controllers\PosController::class, 'submitOrder'])->name('pos.orders');
+    Route::get('/pos/orders/{order}/print-pdf', [\App\Http\Controllers\PosController::class, 'printPdf'])->name('pos.orders.print-pdf');
     Route::post('/pos/petty-cash', [\App\Http\Controllers\PosController::class, 'storePettyCash'])->name('pos.petty-cash');
 });
 
@@ -31,6 +32,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class);
     Route::resource('menus', \App\Http\Controllers\Admin\MenuController::class);
     Route::resource('raw-materials', \App\Http\Controllers\Admin\RawMaterialController::class);
+    Route::get('tables', [\App\Http\Controllers\Admin\AdminTableController::class, 'index'])->name('tables.index');
+    Route::resource('suppliers', \App\Http\Controllers\Admin\SupplierController::class);
+    Route::resource('purchase-orders', \App\Http\Controllers\Admin\PurchaseOrderController::class);
+    Route::get('reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/export', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('reports.export');
 });
 
 Route::middleware('auth')->group(function () {

@@ -1,15 +1,50 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 
-defineProps({
+const props = defineProps({
     categories: {
         type: Array,
         required: true,
     },
+    filters: {
+        type: Object,
+        default: () => ({ search: '' }),
+    }
+});
+
+const search = ref(props.filters.search || '');
+
+// Vanilla Debounce
+const debounce = (fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            fn(...args);
+        }, delay);
+    };
+};
+
+const performSearch = debounce(() => {
+    router.get(route('admin.categories.index'), {
+        search: search.value,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    });
+}, 300);
+
+watch(search, () => {
+    performSearch();
 });
 
 const form = useForm({});
+const resetSearch = () => {
+    search.value = '';
+};
 </script>
 
 <template>
@@ -17,20 +52,46 @@ const form = useForm({});
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-serif font-bold text-[#292524] leading-tight">
-                    Kategori Menu
-                </h2>
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 animate-fade-in">
+                <div>
+                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight">
+                        Kategori <span class="text-amber-600 italic">Menu</span>
+                    </h2>
+                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
+                        Pengaturan Klasifikasi dan Pengelompokan Menu
+                    </p>
+                </div>
                 <Link
                     :href="route('admin.categories.create')"
-                    class="bg-gradient-to-r from-[#D97706] to-[#B45309] hover:from-[#B45309] hover:to-[#92400E] text-[#FFFFFF] px-6 py-2 rounded-md font-bold transition-all duration-300 shadow-[0_4px_15px_rgba(212,175,55,0.2)] text-sm uppercase tracking-widest hover:scale-105"
+                    class="w-full md:w-auto bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-xl font-black transition-all duration-300 shadow-xl shadow-amber-600/20 text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 text-center"
                 >
                     + Tambah Kategori
                 </Link>
             </div>
         </template>
 
-        <div class="max-w-[1200px] mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[1200px] mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+            <!-- Search Toolbar -->
+            <div class="flex flex-col md:flex-row gap-4 mb-8 delay-100">
+                <div class="flex-1 relative group">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-600 transition-colors">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
+                    <input 
+                        v-model="search" 
+                        type="text" 
+                        placeholder="Cari nama kategori..." 
+                        class="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-sm font-bold shadow-sm"
+                    >
+                    <button 
+                        v-if="search" 
+                        @click="resetSearch"
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 transition-colors"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
             <!-- Flash Messages -->
             <Transition
                 enter-active-class="transform transition duration-500 ease-out"
@@ -50,7 +111,7 @@ const form = useForm({});
                 </div>
             </Transition>
 
-            <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <div class="overflow-x-auto -mx-4 sm:mx-0 delay-200">
                 <table class="w-full text-left border-separate border-spacing-y-4">
                     <thead>
                         <tr class="text-slate-400">
@@ -61,7 +122,7 @@ const form = useForm({});
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="category in categories" :key="category.id" class="group bg-white hover:bg-slate-50 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl">
+                        <tr v-for="category in categories" :key="category.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
                             <td class="py-6 px-8 first:rounded-l-[2rem]">
                                 <span class="text-xs font-black text-slate-300">#{{ String(category.id).padStart(2, '0') }}</span>
                             </td>
@@ -77,7 +138,7 @@ const form = useForm({});
                                 <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
                                     <Link
                                         :href="route('admin.categories.edit', category.id)"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-400 p-3 rounded-2xl transition-all shadow-sm"
+                                        class="bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90"
                                         title="Edit Kategori"
                                     >
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -87,7 +148,7 @@ const form = useForm({});
                                         :href="route('admin.categories.destroy', category.id)"
                                         method="delete"
                                         as="button"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm"
+                                        class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90"
                                         title="Hapus Kategori"
                                         preserve-scroll
                                         @click="if(!confirm('Yakin ingin menghapus kategori ini? Menu yang berelasi mungkin akan terpengaruh.')) { $event.preventDefault(); }"

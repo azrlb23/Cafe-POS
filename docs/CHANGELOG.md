@@ -4,6 +4,59 @@ Semua perubahan signifikan pada proyek ini dicatat di file ini, diurutkan dari y
 
 ---
 
+## [2026-05-16] - Feature - Sistem Cetak Multi-Format (KF-04) & Visualisasi Laporan (KF-05)
+
+### Ditambahkan
+
+#### KF-04: Sistem Cetak & Struk
+- **Tiga Format Struk Thermal (RawBT/ESC-POS):**
+  - `PrinterService.printCustomer()` — Struk pelanggan dengan ringkasan pesanan dan total pembayaran.
+  - `PrinterService.printCashier()` — Struk arsip kasir dengan detail metode pembayaran dan header "ARSIP KASIR".
+  - `PrinterService.printKitchen()` — Struk dapur dengan font besar pada nama item, catatan instruksi koki, tanpa informasi harga.
+- **Tiga Format PDF (DomPDF):**
+  - `PosController@printPdf` menerima query parameter `?type=customer|cashier|kitchen` untuk menghasilkan PDF yang disesuaikan per format.
+  - Template `receipt_pdf.blade.php` menjadi dinamis: mengubah tata letak, ukuran font, dan konten berdasarkan tipe struk.
+- **Catatan Per Item (Order Notes):**
+  - Input catatan per item di `CartPanel.vue` (contoh: "Tanpa gula", "Extra pedas").
+  - Catatan disimpan ke kolom `order_items.notes` dan ditampilkan di struk Dapur.
+- **UI Dropdown "Opsi Cetak":**
+  - Tombol tunggal di POS diganti menjadi dropdown menu terstruktur.
+  - Tiga grup kategori (Customer/Kasir/Dapur), masing-masing memiliki dua aksi: **Cetak** (RawBT) dan **PDF** (download).
+  - Kode warna per grup: Hijau (Customer), Biru (Kasir), Oranye (Dapur).
+
+#### KF-05: Dashboard Analitik & Visualisasi Laporan
+- **Tab "Dashboard Analitik" (Baru):**
+  - Empat **KPI Cards** premium: Total Pendapatan, HPP (COGS), Laba Kotor, Laba Bersih.
+  - **Tren Penjualan Harian** — Line Chart (area fill) via Chart.js / vue-chartjs.
+  - **Metode Pembayaran** — Doughnut Chart dengan cutout 70%.
+  - **Jam Sibuk (Heatmap)** — Bar Chart distribusi pesanan per jam.
+  - **Performa Kasir** — Horizontal Bar Chart ranking kontribusi penjualan per staf.
+  - **Peringatan Stok Rendah** — Alert card merah menampilkan bahan baku di bawah batas minimum.
+- **Tab "Audit Stok Bahan" (Baru):**
+  - Tabel mutasi stok (masuk/keluar) bahan baku dengan kolom: Waktu, Bahan Baku, Tipe, Jumlah, Referensi/Catatan.
+  - Badge warna: Hijau untuk "Stok Masuk", Merah untuk "Stok Keluar".
+  - Data dari model `StockMutation` dengan relasi `rawMaterial`.
+- **Analisis Profitabilitas Menu (COGS):**
+  - Kolom baru di tabel Performa Menu: **Total HPP** dan **Margin Laba** (nominal + persentase).
+  - Perhitungan HPP per menu menggunakan harga beli bahan baku (`raw_materials.cost_per_unit`) × kuantitas resep.
+- **Navigasi Laporan Diperluas:**
+  - Dropdown pemilih laporan ditambahkan 2 opsi baru: "Dashboard Analitik" (default) dan "Audit Stok Bahan".
+  - Urutan tab dioptimalkan: Dashboard → Penjualan → Performa Menu → Audit Stok → Shift → Transaksi → Kas Keluar → Void.
+- **Ekspor Data Baru:**
+  - Dukungan ekspor CSV/PDF untuk data mutasi stok (`stock_mutations`).
+
+### Diperbaiki
+- **Bug HTML Tag Mismatch (Pos.vue):** Tag `</div>` ekstra pada dropdown cetak menyebabkan error Vite `Invalid end tag`. Dihapus untuk memperbaiki hierarki DOM.
+- **Bug `Undefined property: stdClass::$id` (ReportController):** Query performa menu tidak menyertakan `menus.id` dalam `SELECT`, padahal diperlukan oleh `map()` untuk menghitung COGS. Kolom `menus.id` ditambahkan ke query.
+
+### Keputusan Teknis
+- **Protokol Cetak Thermal:** Menggunakan `window.location.href = "rawbt:base64,..."` untuk silent print di Android.
+- **Rendering PDF:** DomPDF dengan lebar kertas `164pt` (setara 58mm thermal).
+- **Default Tab Laporan:** Diubah dari `sales` menjadi `dashboard` agar admin langsung melihat ringkasan visual.
+- **Snapshot Data Transaksi:** `menu_name` dan `unit_price` disimpan di `order_items` untuk menjaga integritas historis.
+
+---
+
 ## [2026-05-15] - Feature - Dashboard Analitik Admin
 
 ### Ditambahkan

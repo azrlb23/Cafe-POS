@@ -1,9 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import CategoryForm from './Partials/CategoryForm.vue';
 
 const props = defineProps({
     category: {
@@ -11,14 +9,6 @@ const props = defineProps({
         required: true,
     },
 });
-
-const form = useForm({
-    name: props.category.name,
-});
-
-const submit = () => {
-    form.put(route('admin.categories.update', props.category.id));
-};
 </script>
 
 <template>
@@ -26,49 +16,24 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-4">
-                <Link :href="route('admin.categories.index')" class="text-[#78716C] hover:text-[#292524] transition-colors">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <div class="flex items-center gap-6 animate-fade-in">
+                <Link :href="route('admin.categories.index')" class="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-amber-600 hover:border-amber-200 shadow-sm transition-all group active:scale-90">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="group-hover:-translate-x-1 transition-transform"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 </Link>
-                <h2 class="text-xl font-serif font-bold text-[#292524] leading-tight">
-                    Edit Kategori: <span class="text-[#D97706]">{{ category.name }}</span>
-                </h2>
+                <div>
+                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight">
+                        Edit <span class="text-amber-600 italic">Kategori</span>
+                    </h2>
+                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
+                        Memperbarui Klasifikasi: {{ category.name }}
+                    </p>
+                </div>
             </div>
         </template>
 
-        <div class="max-w-2xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 p-10 lg:p-14">
-                <form @submit.prevent="submit" class="space-y-8">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Nama Kategori</label>
-                        <input
-                            id="name"
-                            type="text"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-base font-bold shadow-sm"
-                            v-model="form.name"
-                            required
-                            autofocus
-                            placeholder="Misal: Minuman Panas, Snack, dll..."
-                        />
-                        <InputError class="mt-2" :message="form.errors.name" />
-                    </div>
-
-                    <div class="flex items-center justify-end gap-6 pt-10 border-t border-slate-100">
-                        <Link
-                            :href="route('admin.categories.index')"
-                            class="text-xs font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
-                        >
-                            Batal
-                        </Link>
-                        <button
-                            :class="{ 'opacity-25': form.processing }"
-                            :disabled="form.processing"
-                            class="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-10 py-4 rounded-2xl font-black transition-all duration-300 shadow-xl shadow-amber-600/20 text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95"
-                        >
-                            Simpan Perubahan
-                        </button>
-                    </div>
-                </form>
+        <div class="max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+            <div class="delay-100">
+                <CategoryForm :category="category" />
             </div>
         </div>
     </AuthenticatedLayout>

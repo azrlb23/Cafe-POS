@@ -18,15 +18,13 @@ class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Menu::with('category');
-
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
+        $query = Menu::with('category')
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })
+            ->when($request->category_id, function ($query, $categoryId) {
+                $query->where('category_id', $categoryId);
+            });
 
         $menus = $query->latest()->get();
 

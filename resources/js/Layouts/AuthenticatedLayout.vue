@@ -38,6 +38,14 @@ const showingNavigationDropdown = ref(false);
                                     Dashboard
                                 </NavLink>
                                 <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('admin.tables.index')"
+                                    :active="route().current('admin.tables.*')"
+                                    class="text-[#57534E] hover:text-[#D97706]"
+                                >
+                                    Layout Meja
+                                </NavLink>
+                                <NavLink
                                     v-if="$page.props.auth.user.role === 'kasir'"
                                     :href="route('pos')"
                                     :active="route().current('pos')"
@@ -68,6 +76,30 @@ const showingNavigationDropdown = ref(false);
                                     class="text-[#57534E] hover:text-[#D97706]"
                                 >
                                     Stok Bahan Baku
+                                </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('admin.suppliers.index')"
+                                    :active="route().current('admin.suppliers.*')"
+                                    class="text-[#57534E] hover:text-[#D97706]"
+                                >
+                                    Supplier
+                                </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('admin.purchase-orders.index')"
+                                    :active="route().current('admin.purchase-orders.*')"
+                                    class="text-[#57534E] hover:text-[#D97706]"
+                                >
+                                    Stok Masuk
+                                </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.role === 'admin'"
+                                    :href="route('admin.reports.index')"
+                                    :active="route().current('admin.reports.*')"
+                                    class="text-[#57534E] hover:text-[#D97706]"
+                                >
+                                    Laporan
                                 </NavLink>
                             </div>
                         </div>
@@ -217,6 +249,14 @@ const showingNavigationDropdown = ref(false);
                             Dashboard
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
+                            v-if="$page.props.auth.user.role === 'admin'"
+                            :href="route('admin.tables.index')"
+                            :active="route().current('admin.tables.*')"
+                            class="text-[#57534E]"
+                        >
+                            Layout Meja
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
                             v-if="$page.props.auth.user.role === 'kasir'"
                             :href="route('pos')"
                             :active="route().current('pos')"
@@ -247,6 +287,30 @@ const showingNavigationDropdown = ref(false);
                             class="text-[#57534E]"
                         >
                             Stok Bahan Baku
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user.role === 'admin'"
+                            :href="route('admin.suppliers.index')"
+                            :active="route().current('admin.suppliers.*')"
+                            class="text-[#57534E]"
+                        >
+                            Supplier
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user.role === 'admin'"
+                            :href="route('admin.purchase-orders.index')"
+                            :active="route().current('admin.purchase-orders.*')"
+                            class="text-[#57534E]"
+                        >
+                            Stok Masuk
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user.role === 'admin'"
+                            :href="route('admin.reports.index')"
+                            :active="route().current('admin.reports.*')"
+                            class="text-[#57534E]"
+                        >
+                            Laporan
                         </ResponsiveNavLink>
                     </div>
 
