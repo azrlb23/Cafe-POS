@@ -13,7 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Plus Jakarta Sans', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                serif: ['Playfair Display', ...defaultTheme.fontFamily.serif],
             },
             colors: {
                 cafe: {

@@ -97,6 +97,32 @@ Layar putih atau blank screen pada framework Vue 3 (menggunakan Inertia) biasany
 
 ---
 
+### Kasus: Tag `</div>` Ekstra pada `Dashboard.vue` (DealDeck Update)
+* **Gejala:** Vite memunculkan error `Invalid end tag` di `Dashboard.vue:941:13`.
+* **Penyebab Utama:** Saat melakukan pembaruan gaya "DealDeck", rentang baris pengganti tidak mencakup seluruh template lama. Ini menyisipkan struktur baru yang sudah tertutup, namun membiarkan tag penutup `</div>` dari struktur lama tetap ada di bagian bawah file.
+* **Solusi/Pencegahan:** Lakukan penggantian seluruh blok template secara utuh dan verifikasi akhir file sebelum menyimpan. Pastikan tidak ada kode "sampah" yang tertinggal di bawah penutup kontainer utama.
+
+### Kasus: Redeklarasi `radarOptions` pada `Dashboard.vue`
+* **Gejala:** Vite memunculkan error `Identifier 'radarOptions' has already been declared`.
+* **Penyebab Utama:** Saat melakukan restrukturisasi gaya grafik (mengganti Radar dengan PolarArea), terjadi kesalahan dalam proses *multi-replace* yang menduplikasi definisi variabel `radarOptions`.
+* **Solusi/Pencegahan:** Selalu periksa apakah ada variabel dengan nama yang sama sebelum menambahkan definisi baru. Gunakan `grep` atau fitur pencarian editor untuk memverifikasi keunikan variabel di dalam satu file.
+
+### Kasus: Dangling `</div>` setelah Penghapusan Konten Dashboard
+* **Gejala:** Vite memunculkan error `Invalid end tag` di `Admin/Reports/Index.vue:1167:9`. Halaman Laporan gagal dimuat karena kesalahan sintaks HTML.
+* **Penyebab Utama:** Saat memindahkan fitur Dashboard Analitik dari halaman Laporan ke halaman Dashboard Utama, proses penghapusan blok `v-if="activeTab === 'dashboard'"` meninggalkan satu tag penutup `</div>` yang tidak memiliki pasangan pembuka. Tag penutup yang menggantung ini mengacaukan seluruh hierarki `DOM` di bawahnya, menyebabkan tag penutup di baris-baris akhir file dianggap sebagai tag yang tidak valid.
+* **Solusi/Pencegahan:** 
+    1. Saat melakukan penghapusan blok HTML yang memiliki tingkatan *nesting* dalam, pastikan tag pembuka dan penutup dihapus secara berpasangan.
+    2. Verifikasi struktur template menggunakan linter atau *auto-formatter* segera setelah melakukan manipulasi teks besar pada file `.vue`.
+
+### Kasus: Missing End Tag `<header>` pada `AuthenticatedLayout.vue`
+* **Gejala:** Vite memunculkan error `Element is missing end tag` atau `Pre-transform error: Element is missing end tag` pada `AuthenticatedLayout.vue:128:17`. Aplikasi gagal dimuat dan parser compiler Vue mogok.
+* **Penyebab Utama:** Tag `<header>` pembuka dideklarasikan pada baris 128 untuk membungkus komponen Top Bar (navigasi atas), tetapi tag penutup `</header>`-nya hilang atau terhapus sebelum penanda komentar `<!-- PAGE CONTENT -->`. Ini mengakibatkan parser HTML Vue gagal membangun AST (Abstract Syntax Tree) karena struktur pohon DOM yang tidak seimbang.
+* **Solusi/Pencegahan:**
+    1. Menambahkan tag penutup `</header>` pada baris 181, tepat di bawah penutup `</div>` milik area kontrol kanan dan di atas blok penanda `<!-- PAGE CONTENT -->`.
+    2. Pastikan linter dan fitur auto-close tag aktif pada editor untuk mencegah terjadinya tag pembuka yang menggantung tanpa pasangan penutupnya.
+
+---
+
 ## 6. Error `Undefined property: stdClass::$id` pada ReportController
 
 ### Kasus: Properti `id` Tidak Ada di Hasil Query `DB::table()`

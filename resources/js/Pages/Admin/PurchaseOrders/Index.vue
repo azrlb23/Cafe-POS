@@ -33,26 +33,30 @@ const deletePO = (id) => {
     <Head title="Stok Masuk (Purchase Order)" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 animate-fade-in">
+        <div class="max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+            <!-- MODERN PAGE HEADER -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in">
                 <div>
-                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight">
-                        Riwayat <span class="text-amber-600 italic">Stok Masuk</span>
+                    <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                        Stok <span class="text-amber-600 italic">Masuk</span>
                     </h2>
-                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
-                        Pencatatan Inventaris dan Audit Barang Masuk
+                    <p class="text-slate-400 text-xs mt-2 font-medium">
+                        Catat dan pantau transaksi pembelian bahan baku, audit barang masuk, serta monitoring pengadaan otomatis di Denjavas Cafe.
                     </p>
+                    <div class="flex items-center gap-3 mt-3">
+                        <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                            Total Transaksi: {{ purchaseOrders.length }} PO
+                        </span>
+                    </div>
                 </div>
                 <Link
                     :href="route('admin.purchase-orders.create')"
-                    class="w-full md:w-auto bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-8 py-3 rounded-xl font-black transition-all duration-300 shadow-xl shadow-amber-600/20 text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 text-center"
+                    class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-8 py-4 rounded-2xl transition-all duration-300 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 text-xs font-black uppercase tracking-[0.2em] hover:scale-105 active:scale-95 text-center flex items-center justify-center gap-2 shrink-0"
                 >
-                    + Input Stok Baru
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Input Stok Baru
                 </Link>
             </div>
-        </template>
-
-        <div class="max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <!-- Smart Suggestions Section -->
             <div v-if="suggestions.length > 0" class="mb-16 animate-in slide-in-from-bottom-4 duration-700">
                 <div class="flex items-center gap-4 mb-8">

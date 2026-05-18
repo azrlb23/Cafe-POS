@@ -30,72 +30,104 @@ const getInitials = (name) => {
     <Head title="Manajemen Meja" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 animate-fade-in">
+        <div class="max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+            <!-- MODERN PAGE HEADER -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in">
                 <div>
-                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight">
+                    <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
                         Layout <span class="text-amber-600 italic">Meja Cafe</span>
                     </h2>
-                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
-                        Monitoring Okupansi dan Status Pesanan Meja
+                    <p class="text-slate-400 text-xs mt-2 font-medium">
+                        Pantau okupansi meja pelanggan, status pembayaran, dan pesanan aktif secara real-time di Denjavas Cafe.
                     </p>
+                    <div class="flex items-center gap-3 mt-3">
+                        <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                            Total Meja: {{ tables.length }} Meja
+                        </span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-8 bg-white px-8 py-4 rounded-[2rem] border border-slate-100 shadow-sm">
+                
+                <!-- Status Indicators -->
+                <div class="flex items-center gap-8 bg-white px-8 py-4 rounded-[2rem] border border-slate-100 shadow-sm shrink-0">
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tersedia</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tersedia ({{ tables.filter(t => t.status === 'available').length }})</span>
                     </div>
                     <div class="w-px h-4 bg-slate-100"></div>
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20 animate-pulse"></div>
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Terisi</span>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Terisi ({{ tables.filter(t => t.status !== 'available').length }})</span>
                     </div>
                 </div>
             </div>
-        </template>
-
-        <div class="max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <!-- Table Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-10 gap-6 delay-100">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 delay-100">
                 <div 
                     v-for="table in tables" 
                     :key="table.id"
                     @click="openTableDetails(table)"
                     :class="[
-                        'relative aspect-square rounded-[2.5rem] flex flex-col items-center justify-center transition-all duration-500 border-2 cursor-pointer group active:scale-90',
+                        'relative rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-500 border-2 cursor-pointer group active:scale-95 min-h-[220px]',
                         table.status === 'available' 
-                            ? 'bg-white border-slate-100 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10' 
-                            : 'bg-rose-50 border-rose-100 hover:border-rose-500 hover:shadow-2xl hover:shadow-rose-500/10'
+                            ? 'bg-white border-slate-100 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/5' 
+                            : 'bg-amber-50/40 border-amber-100 hover:border-amber-500 hover:shadow-2xl hover:shadow-amber-500/5'
                     ]"
                 >
-                    <!-- Table Number Decor -->
-                    <div class="absolute top-4 left-4 text-[10px] font-black text-slate-300 group-hover:text-amber-500 transition-colors">
-                        #{{ String(table.number).padStart(2, '0') }}
-                    </div>
-
-                    <!-- Main Icon/Indicator -->
-                    <div 
-                        :class="[
-                            'w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-3 transition-all duration-500 group-hover:scale-110',
-                            table.status === 'available' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-500 text-white shadow-xl shadow-rose-500/20'
-                        ]"
-                    >
-                        <svg v-if="table.status === 'available'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M2 6h20v6H2z"/><path d="M10 6V3a1 1 0 011-1h2a1 1 0 011 1v3"/></svg>
-                        <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                    </div>
-
-                    <span :class="[
-                        'text-sm font-black uppercase tracking-[0.2em]',
-                        table.status === 'available' ? 'text-slate-400' : 'text-rose-600'
-                    ]">
-                        Meja {{ table.number }}
-                    </span>
-
-                    <!-- Occupied Hint -->
-                    <div v-if="table.active_order" class="mt-2 flex flex-col items-center">
-                        <span class="text-[9px] font-bold text-rose-400 uppercase tracking-widest">
-                            {{ table.active_order.user.name.split(' ')[0] }}
+                    <!-- Top Section: Table Number & Status Indicator -->
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-black text-slate-300 group-hover:text-amber-500 transition-colors uppercase tracking-[0.2em]">
+                            #{{ String(table.number).padStart(2, '0') }}
                         </span>
+                        
+                        <!-- Status Badge -->
+                        <span 
+                            :class="[
+                                'px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm',
+                                table.status === 'available' 
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                    : 'bg-amber-100 text-amber-800 border-amber-200/60 animate-pulse'
+                            ]"
+                        >
+                            {{ table.status === 'available' ? 'Tersedia' : 'Terisi' }}
+                        </span>
+                    </div>
+
+                    <!-- Center Section: Elegant Table Branding -->
+                    <div class="flex flex-col items-center my-2">
+                        <!-- Table Number Styled in Serif -->
+                        <h3 class="text-3xl font-serif font-black text-slate-900 group-hover:text-amber-600 transition-colors mb-1">
+                            Meja {{ table.number }}
+                        </h3>
+                        
+                        <!-- Minimal Visual Table / Chair Representation -->
+                        <div class="mt-2 text-slate-400 group-hover:scale-110 transition-transform duration-500">
+                            <svg v-if="table.status === 'available'" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-emerald-500/80">
+                                <path d="M3 10h18v2H3zm3 2h12v7H6zm-3-5h18v3H3z" />
+                                <circle cx="12" cy="5" r="1.5" />
+                            </svg>
+                            <svg v-else width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-amber-600">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Section: Dynamic Order Info or Status Hint -->
+                    <div class="mt-4 pt-4 border-t border-dashed border-slate-100">
+                        <div v-if="table.active_order" class="flex flex-col items-center text-center">
+                            <span class="text-xs font-black text-amber-600">
+                                Rp {{ formatPrice(table.active_order.total) }}
+                            </span>
+                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                                Kasir: {{ table.active_order.user.name.split(' ')[0] }}
+                            </span>
+                        </div>
+                        <div v-else class="text-center">
+                            <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                                Siap Digunakan
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

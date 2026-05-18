@@ -1,9 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import DatePicker from '@/Components/DatePicker.vue';
-import { Line, Bar, Doughnut, Radar, Bubble } from 'vue-chartjs';
+import { Line, Bar, Doughnut, Radar, Bubble, PolarArea } from 'vue-chartjs';
 import {
   Chart as ChartJS,
   Title,
@@ -16,11 +16,12 @@ import {
   PointElement,
   Filler,
   ArcElement,
-  RadialLinearScale
+  RadialLinearScale,
+  PolarAreaController
 } from 'chart.js';
 
 ChartJS.register(
-  Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, LineElement, PointElement, Filler, ArcElement, RadialLinearScale
+  Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, LineElement, PointElement, Filler, ArcElement, RadialLinearScale, PolarAreaController
 );
 
 const props = defineProps({
@@ -61,6 +62,24 @@ const formatPrice = (price) => {
     return Number(price).toLocaleString('id-ID');
 };
 
+// --- Pagination Logic ---
+const orderPage = ref(1);
+const pettyCashPage = ref(1);
+const itemsPerPage = 5;
+
+const pagedOrders = computed(() => {
+    const start = (orderPage.value - 1) * itemsPerPage;
+    return props.recentOrders.slice(start, start + itemsPerPage);
+});
+
+const pagedPettyCash = computed(() => {
+    const start = (pettyCashPage.value - 1) * itemsPerPage;
+    return props.recentPettyCash.slice(start, start + itemsPerPage);
+});
+
+const totalOrderPages = computed(() => Math.ceil(props.recentOrders.length / itemsPerPage));
+const totalPettyCashPages = computed(() => Math.ceil(props.recentPettyCash.length / itemsPerPage));
+
 const salesTrendData = computed(() => {
     const dates = props.salesTrend.map(item => item.date);
     const expenseDates = props.expenseTrend.map(item => item.date);
@@ -91,10 +110,10 @@ const salesTrendData = computed(() => {
                     return found ? found.amount : 0;
                 }),
                 borderColor: '#ef4444',
-                backgroundColor: 'transparent',
+                backgroundColor: 'rgba(239, 68, 68, 0.05)',
                 borderWidth: 2,
                 borderDash: [5, 5],
-                fill: false,
+                fill: true,
                 tension: 0.4,
                 pointRadius: 0
             },
@@ -108,8 +127,8 @@ const salesTrendData = computed(() => {
                     return rev - exp;
                 }),
                 borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                borderWidth: 2,
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                borderWidth: 3,
                 fill: true,
                 tension: 0.4,
                 pointRadius: 3,
@@ -125,27 +144,30 @@ const chartOptions = {
     plugins: { 
         legend: { display: false },
         tooltip: {
-            padding: 12,
-            backgroundColor: 'rgba(28, 25, 23, 0.9)',
-            titleFont: { size: 12, weight: 'bold' },
-            bodyFont: { size: 12 },
-            cornerRadius: 12,
-            displayColors: true
+            padding: 16,
+            backgroundColor: '#1C1E23',
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
+            cornerRadius: 16,
+            displayColors: true,
+            boxPadding: 6
         }
     },
     scales: {
         y: {
             beginAtZero: true,
-            grid: { color: 'rgba(0,0,0,0.03)' },
+            grid: { display: false },
+            border: { display: false },
             ticks: { 
-                font: { size: 10, weight: 'bold' },
+                font: { size: 11, weight: '700' },
                 color: '#94a3b8',
                 callback: (value) => 'Rp ' + (value >= 1000000 ? (value/1000000).toFixed(1) + 'jt' : Number(value).toLocaleString('id-ID'))
             }
         },
         x: {
             grid: { display: false },
-            ticks: { font: { size: 10, weight: 'bold' }, color: '#94a3b8' }
+            border: { display: false },
+            ticks: { font: { size: 11, weight: '700' }, color: '#94a3b8' }
         }
     }
 };
@@ -194,11 +216,41 @@ const categoryRevenueData = computed(() => {
         datasets: [{
             label: 'Revenue',
             data: props.categoryRevenue.map(item => item.revenue),
-            backgroundColor: '#f59e0b',
-            borderRadius: 6
+            backgroundColor: [
+                '#d97706', // Brand Gold (Amber 600)
+                '#f59e0b', // Amber 500
+                '#1c1917', // Stone 900
+                '#10b981', // Emerald 500
+                '#8b5cf6', // Violet 500
+                '#06b6d4'  // Cyan 500
+            ],
+            borderWidth: 0,
+            borderRadius: 10,
+            spacing: 4
         }]
     };
 });
+
+const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { 
+        legend: { display: false },
+        tooltip: {
+            callbacks: {
+                label: (context) => {
+                    let label = context.label || '';
+                    if (label) label += ': ';
+                    if (context.parsed !== null) {
+                        label += 'Rp ' + context.parsed.toLocaleString('id-ID');
+                    }
+                    return label;
+                }
+            }
+        }
+    },
+    cutout: '82%'
+};
 
 const peakHoursData = computed(() => {
     return {
@@ -216,14 +268,13 @@ const peakHoursData = computed(() => {
 
 const popularTablesData = computed(() => {
     return {
+        labels: props.popularTables.map(item => `Meja ${item.cafe_table.number}`),
         datasets: [{
-            label: 'Populer',
-            data: props.popularTables.map(item => ({
-                x: item.cafe_table.number,
-                y: item.count,
-                r: Math.min(item.count * 5, 25)
-            })),
-            backgroundColor: 'rgba(217, 119, 6, 0.6)',
+            label: 'Total Pesanan',
+            data: props.popularTables.map(item => item.count),
+            backgroundColor: 'rgba(217, 119, 6, 0.8)',
+            borderRadius: 12,
+            barThickness: 24,
         }]
     };
 });
@@ -234,10 +285,9 @@ const slowMenusData = computed(() => {
         datasets: [{
             label: 'Qty Terjual',
             data: props.slowMenus.map(item => item.total_sold),
-            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-            borderColor: '#ef4444',
-            pointBackgroundColor: '#ef4444',
-            borderWidth: 2
+            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+            borderRadius: 12,
+            barThickness: 24,
         }]
     };
 });
@@ -248,9 +298,14 @@ const cashierPerformanceData = computed(() => {
         datasets: [{
             label: 'Revenue',
             data: props.cashierPerformance.map(item => item.revenue),
-            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-            borderColor: '#3b82f6',
-            borderWidth: 2
+            backgroundColor: [
+                'rgba(217, 119, 6, 0.7)', // Brand Gold (Amber 600)
+                'rgba(245, 158, 11, 0.7)', // Amber 500
+                'rgba(28, 25, 23, 0.7)',   // Stone 900
+                'rgba(16, 185, 129, 0.7)', // Emerald 500
+                'rgba(139, 92, 246, 0.7)'  // Violet 500
+            ],
+            borderWidth: 0
         }]
     };
 });
@@ -266,22 +321,24 @@ const variantContributionData = computed(() => {
     };
 });
 
-const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    cutout: '75%'
-};
-
 const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     indexAxis: 'y',
-    plugins: { legend: { display: false } },
+    plugins: { 
+        legend: { display: false },
+        tooltip: {
+            padding: 12,
+            backgroundColor: '#1C1E23',
+            cornerRadius: 12
+        }
+    },
     scales: { 
-        y: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } },
-        x: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { font: { size: 9 } } }
-    }
+        y: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } },
+        x: { grid: { color: 'rgba(0,0,0,0.03)', borderDash: [5, 5] }, border: { display: false }, ticks: { font: { size: 10 }, color: '#94a3b8' } }
+    },
+    borderRadius: 12,
+    barThickness: 24
 };
 
 const verticalBarOptions = {
@@ -291,16 +348,6 @@ const verticalBarOptions = {
     scales: { 
         y: { grid: { color: 'rgba(0,0,0,0.03)' }, ticks: { stepSize: 1, font: { size: 9 } } },
         x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } }
-    }
-};
-
-const bubbleOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-        y: { title: { display: true, text: 'Frekuensi', font: { size: 10 } } },
-        x: { title: { display: true, text: 'No. Meja', font: { size: 10 } } }
     }
 };
 
@@ -323,414 +370,360 @@ const radarOptions = {
     <Head title="Dashboard Analitik" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div class="animate-fade-in-up">
-                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight leading-tight">
-                        Insights <span class="text-amber-600 italic">Analitik</span>
-                    </h2>
-                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
-                        Periode: {{ new Date(filters.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }} - {{ new Date(filters.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
-                    </p>
-                </div>
+        <div class="py-10 bg-[#F8F9FD] min-h-screen">
+            <div class="max-w-[1600px] mx-auto px-6 lg:px-10 space-y-12">
                 
-                <div class="flex flex-wrap items-center gap-4 animate-fade-in-up delay-75">
-                    <form @submit.prevent="submitFilter" class="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/60 shadow-sm transition-all focus-within:shadow-md focus-within:border-amber-300">
-                        <div class="flex items-center gap-2 px-1">
-                            <DatePicker 
-                                v-model="form.start_date" 
-                                placeholder="Mulai"
-                                class="!w-60"
-                            />
-                            <span class="text-slate-300 font-light">—</span>
-                            <DatePicker 
-                                v-model="form.end_date" 
-                                placeholder="Selesai"
-                                class="!w-60"
-                            />
-                        </div>
-                        <button type="submit" class="bg-[#1C1917] hover:bg-black text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-black/10">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        </button>
-                    </form>
-
-                    <div v-if="activeShift" class="group bg-white border border-slate-200/60 px-5 py-2.5 rounded-2xl shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
-                        <div class="relative flex h-3 w-3">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Shift Aktif</span>
-                            <span class="text-xs font-bold text-slate-700 mt-0.5">{{ activeShift.user?.name }}</span>
+                <!-- MODERN DASHBOARD HEADER -->
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 animate-fade-in-up">
+                    <div>
+                        <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                            Insights <span class="text-amber-600 italic">Analitik</span>
+                        </h2>
+                        <p class="text-slate-400 text-xs mt-2 font-medium">
+                            Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
+                        </p>
+                        <div class="flex flex-wrap items-center gap-3 mt-3">
+                            <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                Periode: {{ new Date(filters.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }} — {{ new Date(filters.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
+                            </span>
+                            <span class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-full text-slate-500 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                Terakhir Diperbarui: Hari Ini
+                            </span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </template>
 
-        <div class="py-12 bg-[#FAFAF9]/50 min-h-screen">
-            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-                               <!-- KPI CARDS SECTION (Unified Design) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-                    <!-- Revenue KPI -->
-                    <div class="group relative bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 overflow-hidden">
-                        <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor" class="text-amber-600"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 12c-2.67 0-5.33-1.33-5.33-4v-1c0-.55.45-1 1-1h8.67c.55 0 1 .45 1 1v1c0 2.67-2.67 4-5.33 4z"/></svg>
-                        </div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Gross Revenue</p>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-sm font-bold text-slate-400">Rp</span>
-                            <h3 class="text-3xl font-black text-slate-900 tracking-tight">{{ formatPrice(kpis.revenuePeriod) }}</h3>
-                        </div>
-                        <div class="mt-6 flex items-center gap-3">
-                            <div :class="kpis.revenueChange >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'" class="px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5">
-                                <svg v-if="kpis.revenueChange >= 0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                                <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-                                {{ Math.abs(kpis.revenueChange).toFixed(1) }}%
+                    <!-- Actions Area (Filters & Active Shift) -->
+                    <div class="flex flex-wrap items-center gap-4">
+                        <!-- Date Filter Form -->
+                        <form @submit.prevent="submitFilter" class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-[2rem] border border-slate-100 shadow-sm transition-all focus-within:shadow-md focus-within:border-amber-300">
+                            <div class="flex items-center gap-2 px-2">
+                                <DatePicker 
+                                    v-model="form.start_date" 
+                                    placeholder="Mulai"
+                                    class="!w-48 sm:!w-56"
+                                />
+                                <span class="text-slate-300 font-light">—</span>
+                                <DatePicker 
+                                    v-model="form.end_date" 
+                                    placeholder="Selesai"
+                                    class="!w-48 sm:!w-56"
+                                />
                             </div>
-                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">vs Prev</span>
-                        </div>
-                    </div>
+                            <button type="submit" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white p-3 rounded-2xl transition-all active:scale-95 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 flex items-center justify-center">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </button>
+                        </form>
 
-                    <!-- Transactions KPI -->
-                    <div class="group relative bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 overflow-hidden">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Volume</p>
-                        <div class="flex items-baseline gap-2">
-                            <h3 class="text-4xl font-black text-slate-900 tracking-tight">{{ kpis.transactionsPeriod }}</h3>
-                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Orders</span>
-                        </div>
-                        <div class="mt-6 flex items-center gap-2">
-                            <div class="flex -space-x-2">
-                                <div v-for="i in 3" :key="i" class="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400">{{ i }}</div>
+                        <!-- Active Shift Status Card -->
+                        <div v-if="activeShift" class="group bg-white border border-slate-100 px-5 py-3 rounded-[2rem] shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
+                            <div class="relative flex h-3.5 w-3.5">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
                             </div>
-                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-2">Success</span>
-                        </div>
-                    </div>
-
-                    <!-- Expenses KPI -->
-                    <div class="group relative bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 overflow-hidden">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Expenses</p>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Rp</span>
-                            <h3 class="text-3xl font-black text-red-600 tracking-tight">{{ formatPrice(kpis.totalExpenses || 0) }}</h3>
-                        </div>
-                        <div class="mt-6 flex items-center gap-3">
-                            <div class="px-3 py-1 rounded-full text-[10px] font-black bg-red-50 text-red-600 flex items-center gap-1.5">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-                                COGS + Petty Cash
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] leading-none">Shift Aktif</span>
+                                <span class="text-xs font-bold text-slate-700 mt-1">{{ activeShift.user?.name }}</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Net Profit KPI (Accent Card) -->
-                    <div class="group relative bg-[#1C1917] rounded-[2rem] p-8 shadow-2xl transition-all hover:shadow-black/20 hover:-translate-y-1 overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/20 to-transparent rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Estimated Profit</p>
-                        <div class="flex items-baseline gap-1 text-white">
-                            <span class="text-sm font-bold opacity-40">Rp</span>
-                            <h3 class="text-3xl font-black text-amber-500 tracking-tight">{{ formatPrice(kpis.netProfit || 0) }}</h3>
-                        </div>
-                        <div class="mt-6 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl flex items-center justify-between">
-                            <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest leading-none">Net Growth</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-amber-500"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- MAIN CHARTS SECTION -->
+                <!-- SECTION: OVERVIEW -->
+                <div class="flex items-center gap-4 animate-fade-in-up">
+                    <div class="h-px flex-grow bg-slate-200/50"></div>
+                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] bg-white px-4 py-1.5 rounded-full border border-slate-100 shadow-sm">Ringkasan Performa</span>
+                    <div class="h-px flex-grow bg-slate-200/50"></div>
+                </div>
+
+                <!-- MAIN KPI GRID (DEALDECK STYLE) -->
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <!-- Primary Card: Total Sales -->
+                    <div class="lg:col-span-1 bg-gradient-to-br from-amber-500 to-amber-700 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-amber-200 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform"></div>
+                        <div class="flex items-start justify-between mb-8 relative z-10">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M7 15h.01"/><path d="M11 15h.01"/></svg>
+                            </div>
+                            <div class="bg-emerald-400 text-[#064e3b] px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 shadow-lg shadow-emerald-900/10">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="18 15 12 9 6 15"/></svg>
+                                {{ kpis.financial.revenueChange >= 0 ? '+' : '' }}{{ kpis.financial.revenueChange.toFixed(1) }}%
+                            </div>
+                        </div>
+                        <p class="text-amber-100 text-[11px] font-black uppercase tracking-widest relative z-10">Total Revenue</p>
+                        <h3 class="text-4xl font-black mt-2 tracking-tighter relative z-10">Rp {{ formatPrice(kpis.financial.revenue) }}</h3>
+                        <p class="text-amber-200 text-[9px] font-bold mt-4 uppercase tracking-widest relative z-10">Revenue vs last period</p>
+                    </div>
+
+                    <!-- Secondary Cards Grid -->
+                    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Card: Total Orders -->
+                        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50 hover:shadow-xl transition-all group">
+                            <div class="flex items-start justify-between mb-8">
+                                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                </div>
+                                <div class="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="18 15 12 9 6 15"/></svg>
+                                    +12.4%
+                                </div>
+                            </div>
+                            <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">Total Orders</p>
+                            <h3 class="text-3xl font-black text-[#1C1E23] mt-2 tracking-tighter">{{ kpis.orders.total }}</h3>
+                            <p class="text-slate-300 text-[9px] font-bold mt-4 uppercase tracking-widest">Orders vs last period</p>
+                        </div>
+
+                        <!-- Card: Net Profit -->
+                        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50 hover:shadow-xl transition-all group">
+                            <div class="flex items-start justify-between mb-8">
+                                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                                </div>
+                                <div :class="kpis.financial.revenueChange >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'" class="px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1">
+                                    <svg v-if="kpis.financial.revenueChange >= 0" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="18 15 12 9 6 15"/></svg>
+                                    <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="6 9 12 15 18 9"/></svg>
+                                    {{ Math.abs(kpis.financial.revenueChange).toFixed(1) }}%
+                                </div>
+                            </div>
+                            <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">Net Profit</p>
+                            <h3 class="text-3xl font-black text-[#1C1E23] mt-2 tracking-tighter">Rp {{ formatPrice(kpis.financial.netProfit) }}</h3>
+                            <p class="text-slate-300 text-[9px] font-bold mt-4 uppercase tracking-widest">Profit vs last period</p>
+                        </div>
+
+                        <!-- Card: Avg Basket -->
+                        <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50 hover:shadow-xl transition-all group">
+                            <div class="flex items-start justify-between mb-8">
+                                <div class="w-12 h-12 bg-stone-100 text-stone-700 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                                </div>
+                                <div class="bg-stone-100 text-stone-700 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="18 15 12 9 6 15"/></svg>
+                                    {{ kpis.orders.avgBasketChange.toFixed(1) }}%
+                                </div>
+                            </div>
+                            <p class="text-slate-400 text-[11px] font-black uppercase tracking-widest">Avg Basket Size</p>
+                            <h3 class="text-3xl font-black text-[#1C1E23] mt-2 tracking-tighter">Rp {{ formatPrice(kpis.orders.avgBasket) }}</h3>
+                            <p class="text-slate-300 text-[9px] font-bold mt-4 uppercase tracking-widest">Basket vs last period</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: FINANCIAL -->
+                <div class="flex items-center gap-4 pt-4">
+                    <div class="w-2 h-6 bg-amber-500 rounded-full"></div>
+                    <span class="text-[11px] font-black text-slate-800 uppercase tracking-[0.3em]">Analisis Finansial & Produk</span>
+                </div>
+
+                <!-- ANALYTICS GRID ROW 1: TRENDS & CATEGORIES -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <!-- Financial Performance Chart -->
-                    <div class="lg:col-span-8 bg-white rounded-[2rem] p-10 border border-slate-200/50 shadow-sm relative overflow-hidden transition-all hover:shadow-lg">
+                    <div class="lg:col-span-8 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
                         <div class="flex items-center justify-between mb-10">
                             <div>
-                                <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Performa Finansial</h3>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Tren Pendapatan & Pengeluaran Harian</p>
+                                <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Financial Trends</h3>
+                                <p class="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">Revenue and Expenses analysis</p>
                             </div>
                             <div class="flex items-center gap-6">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-                                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Income</span>
+                                    <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Revenue</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded-full border-2 border-red-400 border-dashed"></div>
+                                    <div class="w-3 h-3 rounded-full bg-slate-200"></div>
                                     <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Expenses</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm"></div>
-                                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net Profit</span>
-                                </div>
                             </div>
                         </div>
-                        <div class="h-96 w-full">
-                            <Line v-if="salesTrend.length > 0 || expenseTrend.length > 0" :data="salesTrendData" :options="chartOptions" />
-                            <div v-else class="h-full flex flex-col items-center justify-center space-y-4 text-slate-400 italic text-xs">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
-                                <span>Data transaksi belum tersedia</span>
-                            </div>
+                        <div class="h-[400px]">
+                            <Line :data="salesTrendData" :options="chartOptions" />
                         </div>
                     </div>
 
-                    <!-- Distributions Section -->
-                    <div class="lg:col-span-4 grid grid-cols-1 gap-8">
-                        <!-- Payment Methods Chart -->
-                        <div class="bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg flex flex-col">
-                            <div class="mb-6 text-center lg:text-left">
-                                <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Metode Bayar</h3>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Preferensi Transaksi</p>
-                            </div>
-                            <div class="h-44 relative flex-grow flex items-center justify-center">
-                                <div class="w-full h-full max-w-[200px] max-h-[200px]">
-                                    <Doughnut v-if="paymentMethods.length > 0" :data="paymentMethodsData" :options="doughnutOptions" />
-                                </div>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-2">
-                                    <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total</span>
-                                    <span class="text-xl font-black text-slate-800">{{ kpis.transactionsPeriod }}</span>
-                                </div>
-                            </div>
-                            <div class="mt-4 flex flex-wrap gap-2 justify-center">
-                                <div v-for="(method, idx) in paymentMethods" :key="idx" class="px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-1.5">
-                                    <div class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: ['#d97706', '#3b82f6', '#10b981', '#8b5cf6'][idx] || '#94a3b8' }"></div>
-                                    <span class="text-[8px] font-black text-slate-600 uppercase">{{ method.payment_method }}</span>
-                                </div>
+                    <div class="lg:col-span-4 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50 flex flex-col">
+                        <h3 class="text-xl font-black text-[#1C1E23] tracking-tight mb-8">Kategori Terlaris</h3>
+                        <div class="h-[250px] relative flex items-center justify-center">
+                            <Doughnut :data="categoryRevenueData" :options="doughnutOptions" />
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span class="text-3xl font-black text-[#1C1E23]">{{ categoryRevenue.length }}</span>
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Kategori</span>
                             </div>
                         </div>
-
-                        <!-- Order Types Chart -->
-                        <div class="bg-[#1C1917] rounded-[2rem] p-8 shadow-xl flex flex-col">
-                            <div class="mb-6">
-                                <h3 class="text-sm font-serif font-bold text-white tracking-tight">Tipe Pesanan</h3>
-                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Dine-in vs Takeaway</p>
-                            </div>
-                            <div class="h-44 relative flex-grow flex items-center justify-center">
-                                <div v-full h-full>
-                                    <Doughnut v-if="orderTypes.length > 0" :data="orderTypesData" :options="doughnutOptions" />
+                        <div class="mt-8 space-y-4 flex-grow overflow-y-auto pr-2">
+                            <div v-for="(item, idx) in categoryRevenue.slice(0, 4)" :key="idx" class="flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <div :style="{ backgroundColor: ['#D97706', '#F59E0B', '#1C1917', '#10B981'][idx] }" class="w-2 h-2 rounded-full"></div>
+                                    <span class="text-sm font-bold text-slate-600 group-hover:text-amber-600 transition-colors">{{ item.category_name }}</span>
                                 </div>
-                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span class="text-amber-500 font-serif italic text-2xl">v</span>
-                                </div>
-                            </div>
-                            <div class="mt-4 flex gap-4 justify-center">
-                                <div v-for="type in orderTypes" :key="type.order_type" class="flex flex-col items-center">
-                                    <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">{{ type.order_type === 'dine_in' ? 'In' : 'Out' }}</span>
-                                    <span class="text-sm font-black text-white">{{ type.count }}</span>
-                                </div>
+                                <span class="text-xs font-black text-[#1C1E23]">Rp {{ formatPrice(item.revenue) }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- DEEP INSIGHTS SECTION (Low Priority Features) -->
+                <!-- SECTION: OPERATIONAL -->
+                <div class="flex items-center gap-4 pt-4">
+                    <div class="w-2 h-6 bg-amber-500 rounded-full"></div>
+                    <span class="text-[11px] font-black text-slate-800 uppercase tracking-[0.3em]">Wawasan Operasional</span>
+                </div>
+
+                <!-- ANALYTICS GRID ROW 2: BUBBLES & RADAR (INSIGHTS) -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <!-- Popular Tables Bubble Chart -->
-                    <div class="lg:col-span-4 bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg">
+                    <div class="lg:col-span-4 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
                         <div class="mb-8">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Meja Populer</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Distribusi Penggunaan Meja</p>
+                            <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Meja Populer</h3>
+                            <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Distribusi Penggunaan Meja</p>
                         </div>
                         <div class="h-64">
-                            <Bubble v-if="popularTables.length > 0" :data="popularTablesData" :options="bubbleOptions" />
-                            <div v-else class="h-full flex items-center justify-center text-slate-400 italic text-xs">No Table Data</div>
+                            <Bar v-if="popularTables.length > 0" :data="popularTablesData" :options="barChartOptions" />
                         </div>
                     </div>
-
-                    <!-- Cashier Performance Radar Chart -->
-                    <div class="lg:col-span-4 bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg">
-                        <div class="mb-8">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Performa Kasir</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Kontribusi Revenue per Kasir</p>
+                    <div class="lg:col-span-8 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50 grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div>
+                            <div class="mb-8">
+                                <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Performa Kasir</h3>
+                                <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Kontribusi Revenue per Kasir</p>
+                            </div>
+                            <div class="h-64">
+                                <PolarArea v-if="cashierPerformance.length > 0" :data="cashierPerformanceData" :options="radarOptions" />
+                            </div>
                         </div>
-                        <div class="h-64">
-                            <Radar v-if="cashierPerformance.length > 0" :data="cashierPerformanceData" :options="radarOptions" />
-                            <div v-else class="h-full flex items-center justify-center text-slate-400 italic text-xs">No Staff Data</div>
-                        </div>
-                    </div>
-
-                    <!-- Slow Menus Radar Chart -->
-                    <div class="lg:col-span-4 bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg">
-                        <div class="mb-8">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Menu Kurang Diminati</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Analisis Menu Tidak Laku</p>
-                        </div>
-                        <div class="h-64">
-                            <Radar v-if="slowMenus.length > 0" :data="slowMenusData" :options="radarOptions" />
-                            <div v-else class="h-full flex items-center justify-center text-slate-400 italic text-xs">No Slow Menus</div>
+                        <div>
+                            <div class="mb-8">
+                                <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Menu Kurang Laku</h3>
+                                <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Analisis Menu Tidak Diminati</p>
+                            </div>
+                            <div class="h-64">
+                                <Bar v-if="slowMenus.length > 0" :data="slowMenusData" :options="barChartOptions" />
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- STOCK PROJECTION & VARIANT CONTRIBUTION -->
+                <!-- SECTION: INVENTORY & ACTIVITY -->
+                <div class="flex items-center gap-4 pt-4">
+                    <div class="w-2 h-6 bg-emerald-500 rounded-full"></div>
+                    <span class="text-[11px] font-black text-slate-800 uppercase tracking-[0.3em]">Manajemen Stok & Aktivitas</span>
+                </div>
+
+                <!-- ANALYTICS GRID ROW 3: STOCK & VARIANTS -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Stock Projection Indicators -->
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg">
-                        <div class="mb-10">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Proyeksi Persediaan</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Estimasi Hari Habis Stok</p>
+                    <div class="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Proyeksi Stok</h3>
+                            <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Estimasi Hari Habis Persediaan</p>
                         </div>
                         <div class="space-y-6">
                             <div v-for="item in stockProjection.slice(0, 5)" :key="item.id" class="flex items-center justify-between group">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-bold border border-slate-100 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-black border border-slate-100 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
                                         {{ item.name.charAt(0) }}
                                     </div>
                                     <div>
-                                        <p class="text-sm font-bold text-slate-800">{{ item.name }}</p>
-                                        <p class="text-[10px] text-slate-400 font-bold uppercase">{{ item.current_stock }} {{ item.unit }} Tersisa</p>
+                                        <p class="text-sm font-black text-[#1C1E23]">{{ item.name }}</p>
+                                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{ item.current_stock }} {{ item.unit }} Left</p>
+                                    </div>
+                                </div>
+                                <span :class="item.days_remaining < 3 ? 'text-red-600 bg-red-50' : 'text-emerald-600 bg-emerald-50'" class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                    {{ item.days_remaining }} Days Left
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Kontribusi Varian</h3>
+                            <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Pendapatan dari Opsi & Topping</p>
+                        </div>
+                        <div class="space-y-6">
+                            <div v-for="(variant, idx) in variantContribution.slice(0, 5)" :key="idx" class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[11px] font-black text-slate-600 uppercase tracking-widest">{{ variant.option_name }}</span>
+                                    <span class="text-xs font-black text-[#1C1E23]">Rp {{ formatPrice(variant.revenue) }}</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-amber-600 rounded-full" :style="{ width: (variant.revenue / variantContribution[0].revenue * 100) + '%' }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CRITICAL INVENTORY NOTIFICATION -->
+                <div v-if="lowStockItems.length > 0" class="bg-red-50 rounded-[3rem] p-10 border border-red-100 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <h3 class="text-2xl font-black text-red-900 tracking-tight">Critical Inventory <span class="text-red-400 font-bold ml-2">Needs Attention</span></h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div v-for="item in lowStockItems.slice(0, 4)" :key="item.id" class="bg-white p-6 rounded-[2rem] border border-red-100 shadow-sm flex items-center justify-between group hover:scale-105 transition-transform">
+                                <div>
+                                    <p class="text-sm font-black text-red-900">{{ item.name }}</p>
+                                    <p class="text-[10px] font-black text-red-400 uppercase tracking-widest mt-1">Min: {{ item.minimum_stock }} {{ item.unit }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-black text-red-600 tracking-tight">{{ item.current_stock }}</p>
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Current</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECENT ACTIVITY GRID: TRANSACTIONS & PETTY CASH -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10">
+                    <div class="lg:col-span-8 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Recent Transactions</h3>
+                                <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Monitor Pesanan Real-time</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="orderPage--" :disabled="orderPage === 1" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                <button @click="orderPage++" :disabled="orderPage === totalOrderPages" class="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center hover:bg-amber-700 shadow-lg shadow-amber-200 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"/></svg></button>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div v-for="order in pagedOrders" :key="order.id" class="flex items-center justify-between p-5 rounded-[2rem] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 font-black text-xs">#{{ order.order_number.slice(-2) }}</div>
+                                    <div>
+                                        <p class="text-sm font-black text-[#1C1E23]">{{ order.order_number }}</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{{ order.user?.name }} • {{ order.payment_method }}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span :class="item.days_remaining < 3 ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'" class="px-3 py-1 rounded-full text-[10px] font-black uppercase">
-                                        {{ item.days_remaining > 30 ? '> 30' : item.days_remaining }} Hari Lagi
-                                    </span>
+                                    <p class="text-sm font-black text-[#1C1E23]">Rp {{ formatPrice(order.total) }}</p>
+                                    <span :class="order.status === 'completed' ? 'text-emerald-500 bg-emerald-50' : 'text-amber-500 bg-amber-50'" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest">{{ order.status }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Variant Contribution Treemap-like Bar Chart -->
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg flex flex-col">
-                        <div class="mb-10">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Kontribusi Varian</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Revenue dari Topping/Opsi</p>
-                        </div>
-                        <div class="flex-grow flex flex-col justify-center space-y-4">
-                            <div v-for="(variant, idx) in variantContribution.slice(0, 6)" :key="idx" class="relative">
-                                <div class="flex justify-between items-center mb-1 relative z-10 px-1">
-                                    <span class="text-[11px] font-bold text-slate-700">{{ variant.option_name }}</span>
-                                    <span class="text-[11px] font-black text-slate-900">Rp {{ formatPrice(variant.revenue) }}</span>
-                                </div>
-                                <div class="w-full h-8 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
-                                    <div class="h-full bg-amber-500/20 border-r-2 border-amber-500 transition-all duration-1000" :style="{ width: (variant.revenue / variantContribution[0].revenue * 100) + '%' }"></div>
-                                </div>
-                            </div>
-                            <div v-if="variantContribution.length === 0" class="h-full flex items-center justify-center text-slate-400 italic text-xs">No Variant Data</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- OPERATIONS SECTION (Original Category & Peak Hours) -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Revenue per Category -->
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg flex flex-col">
+                    <div class="lg:col-span-4 bg-[#1C1E23] rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+                        <div class="absolute bottom-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -mr-32 -mb-32 blur-3xl"></div>
                         <div class="mb-8">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Profit Kategori</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Kontribusi per Kelompok</p>
+                            <h3 class="text-xl font-black text-white tracking-tight">Kas Keluar Terakhir</h3>
+                            <p class="text-slate-500 text-[10px] font-black mt-1 uppercase tracking-widest">Audit Pengeluaran Terbaru</p>
                         </div>
-                        <div class="h-80 w-full">
-                            <Bar v-if="categoryRevenue.length > 0" :data="categoryRevenueData" :options="barChartOptions" />
-                            <div v-else class="h-full flex items-center justify-center text-slate-400 italic text-xs">No Category Data</div>
-                        </div>
-                    </div>
-
-                    <!-- Peak Hours -->
-                    <div class="bg-white rounded-[2rem] p-8 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg flex flex-col">
-                        <div class="mb-8">
-                            <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Analisis Waktu</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Jam Sibuk Operasional</p>
-                        </div>
-                        <div class="h-80 w-full">
-                            <Bar v-if="peakHours.length > 0" :data="peakHoursData" :options="verticalBarOptions" />
-                            <div v-else class="h-full flex items-center justify-center text-slate-400 italic text-xs">Data belum mencukupi</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CRITICAL INVENTORY SECTION -->
-                <div v-if="lowStockItems.length > 0" class="space-y-6">
-                    <div class="flex items-center justify-between px-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-8 bg-red-500 rounded-full"></div>
-                            <div>
-                                <h3 class="text-xl font-serif font-bold text-slate-900 tracking-tight">Critical Inventory</h3>
-                                <p class="text-[10px] font-black text-red-500 uppercase tracking-widest">Restock diperlukan segera</p>
-                            </div>
-                        </div>
-                        <Link :href="route('admin.raw-materials.index')" class="text-[10px] font-black text-slate-400 hover:text-red-600 uppercase tracking-widest transition-colors flex items-center gap-2">
-                            Lihat Semua Stok
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
-                        </Link>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <div v-for="item in lowStockItems" :key="item.id" class="group bg-white rounded-[2rem] p-8 border border-red-100 shadow-sm transition-all hover:shadow-xl hover:border-red-200 overflow-hidden">
-                            <div class="flex justify-between items-start mb-6">
-                                <p class="font-bold text-slate-800 text-lg">{{ item.name }}</p>
-                                <div class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div></div>
-                            </div>
-                            <div class="flex items-end justify-between">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Available</span>
-                                    <span class="text-4xl font-black text-red-600 tracking-tighter">{{ item.current_stock }}</span>
+                        <div class="space-y-6">
+                            <div v-for="pc in pagedPettyCash" :key="pc.id" class="flex items-center justify-between border-b border-white/5 pb-4 last:border-0">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-300">{{ pc.notes || 'No description' }}</p>
+                                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">{{ new Date(pc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}</p>
                                 </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Min Level</span>
-                                    <p class="text-sm font-bold text-slate-500">{{ item.minimum_stock }} {{ item.unit }}</p>
-                                </div>
-                            </div>
-                            <div class="mt-6 w-full h-2 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                                <div class="h-full bg-gradient-to-r from-red-400 to-red-600 rounded-full transition-all duration-1000" :style="{ width: Math.min((item.current_stock / item.minimum_stock) * 100, 100) + '%' }"></div>
+                                <span class="text-xs font-black text-red-400">-Rp {{ formatPrice(pc.amount) }}</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- RECENT ACTIVITY SECTION (Live Feed) -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <!-- Recent Transactions -->
-                    <div class="lg:col-span-8 bg-white rounded-[2rem] p-10 border border-slate-200/50 shadow-sm transition-all hover:shadow-lg">
-                        <div class="flex items-center justify-between mb-10">
-                            <div>
-                                <h3 class="text-lg font-serif font-bold text-slate-900 tracking-tight">Transaksi Terakhir</h3>
-                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Monitor Pesanan Real-time</p>
+                        <div class="mt-8 flex justify-between items-center border-t border-white/5 pt-6">
+                            <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Page {{ pettyCashPage }} / {{ totalPettyCashPages }}</span>
+                            <div class="flex gap-2">
+                                <button @click="pettyCashPage--" :disabled="pettyCashPage === 1" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 flex items-center justify-center hover:bg-white/10 disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                <button @click="pettyCashPage++" :disabled="pettyCashPage === totalPettyCashPages" class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center hover:bg-white/20 disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"/></svg></button>
                             </div>
-                            <Link :href="route('pos.history')" class="text-[10px] font-black text-amber-600 uppercase tracking-widest hover:underline">Lihat Semua</Link>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead>
-                                    <tr class="border-b border-slate-100">
-                                        <th class="pb-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">Waktu</th>
-                                        <th class="pb-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">Order #</th>
-                                        <th class="pb-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">Kasir</th>
-                                        <th class="pb-4 text-[10px] font-black text-slate-300 uppercase tracking-widest text-right">Total</th>
-                                        <th class="pb-4 text-[10px] font-black text-slate-300 uppercase tracking-widest text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-50">
-                                    <tr v-for="order in recentOrders" :key="order.id" class="group hover:bg-slate-50 transition-colors">
-                                        <td class="py-4 text-xs font-bold text-slate-400">
-                                            {{ new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
-                                        </td>
-                                        <td class="py-4 text-xs font-black text-slate-800 tracking-tight">{{ order.order_number }}</td>
-                                        <td class="py-4 text-xs text-slate-500 font-medium">{{ order.user?.name }}</td>
-                                        <td class="py-4 text-xs font-black text-slate-900 text-right">Rp {{ formatPrice(order.total) }}</td>
-                                        <td class="py-4 text-center">
-                                            <span :class="order.status === 'completed' ? 'bg-green-50 text-green-600' : (order.status === 'void' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600')" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest">
-                                                {{ order.status }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Recent Petty Cash -->
-                    <div class="lg:col-span-4 bg-[#1C1917] rounded-[2rem] p-10 shadow-xl flex flex-col">
-                        <div class="mb-10">
-                            <h3 class="text-lg font-serif font-bold text-white tracking-tight">Kas Keluar Terakhir</h3>
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Audit Pengeluaran Terbaru</p>
-                        </div>
-                        <div class="space-y-6 flex-grow">
-                            <div v-for="pc in recentPettyCash" :key="pc.id" class="flex items-center justify-between border-b border-white/5 pb-4 last:border-0">
-                                <div class="flex flex-col">
-                                    <span class="text-xs font-bold text-slate-300 leading-tight">{{ pc.notes || 'No description' }}</span>
-                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">
-                                        {{ new Date(pc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }} • {{ new Date(pc.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
-                                    </span>
-                                </div>
-                                <span class="text-xs font-black text-red-400 tracking-tighter">-Rp {{ formatPrice(pc.amount) }}</span>
-                            </div>
-                            <div v-if="recentPettyCash.length === 0" class="h-full flex items-center justify-center text-slate-600 italic text-xs">No Recent Petty Cash</div>
                         </div>
                     </div>
                 </div>

@@ -12,27 +12,8 @@ const props = defineProps({
     menuPerformance: Array,
     pettyCashLogs: Array,
     orderHistory: Array,
-    charts: Object,
-    profitability: Object,
-    performance: Object,
-    alerts: Object,
     stockMutations: Array
 });
-
-// Chart.js Registration
-import { 
-    Chart as ChartJS, 
-    Title, Tooltip, Legend, 
-    LineElement, CategoryScale, LinearScale, PointElement, 
-    ArcElement, BarElement 
-} from 'chart.js';
-import { Line, Doughnut, Bar } from 'vue-chartjs';
-
-ChartJS.register(
-    Title, Tooltip, Legend, 
-    LineElement, CategoryScale, LinearScale, PointElement, 
-    ArcElement, BarElement
-);
 
 const form = useForm({
     start_date: props.filters.start_date,
@@ -52,7 +33,7 @@ const submitFilter = () => {
 
 const search = ref(props.filters.search || '');
 
-const activeTab = ref('dashboard');
+const activeTab = ref('sales');
 
 // Vanilla Debounce
 const debounce = (fn, delay) => {
@@ -171,11 +152,63 @@ const sortedVoidLogs = computed(() => getSortedData(props.voidLogs, sortKey.valu
 const sortedOrderHistory = computed(() => getSortedData(props.orderHistory, sortKey.value || 'created_at', sortDir.value));
 const sortedStockMutations = computed(() => getSortedData(props.stockMutations, sortKey.value || 'created_at', sortDir.value));
 
+// --- Pagination Logic ---
+const perPage = 10;
+const pages = ref({
+    sales: 1,
+    shifts: 1,
+    performance: 1,
+    expenses: 1,
+    voids: 1,
+    transactions: 1,
+    inventory: 1,
+});
+
+const paginate = (data, page) => {
+    const start = (page - 1) * perPage;
+    return data.slice(start, start + perPage);
+};
+
+const totalPages = (data) => Math.max(1, Math.ceil(data.length / perPage));
+
+const goPage = (tab, page) => {
+    const max = totalPages(getFullDataForTab(tab));
+    pages.value[tab] = Math.max(1, Math.min(page, max));
+};
+
+const getFullDataForTab = (tab) => {
+    const map = {
+        sales: sortedDailySales.value,
+        shifts: sortedShifts.value,
+        performance: filteredMenuPerformance.value,
+        expenses: sortedPettyCashLogs.value,
+        voids: sortedVoidLogs.value,
+        transactions: sortedOrderHistory.value,
+        inventory: sortedStockMutations.value,
+    };
+    return map[tab] || [];
+};
+
+// Reset pages when tab changes
+watch(activeTab, () => {
+    sortKey.value = '';
+    sortDir.value = 'asc';
+});
+
+const pagedDailySales = computed(() => paginate(sortedDailySales.value, pages.value.sales));
+const pagedShifts = computed(() => paginate(sortedShifts.value, pages.value.shifts));
+const pagedPettyCashLogs = computed(() => paginate(sortedPettyCashLogs.value, pages.value.expenses));
+const pagedVoidLogs = computed(() => paginate(sortedVoidLogs.value, pages.value.voids));
+const pagedOrderHistory = computed(() => paginate(sortedOrderHistory.value, pages.value.transactions));
+const pagedStockMutations = computed(() => paginate(sortedStockMutations.value, pages.value.inventory));
+const pagedMenuPerformance = computed(() => paginate(filteredMenuPerformance.value, pages.value.performance));
+
 const resetFilters = () => {
     search.value = '';
     form.start_date = props.filters.start_date;
     form.end_date = props.filters.end_date;
     selectedCategory.value = 'all';
+    Object.keys(pages.value).forEach(k => pages.value[k] = 1);
     submitFilter();
 };
 
@@ -280,21 +313,27 @@ const totals = computed(() => {
     <Head title="Laporan Operasional" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 animate-fade-in">
-                <div>
-                    <h2 class="text-3xl font-serif font-bold text-[#1C1917] tracking-tight">
-                        Laporan <span class="text-amber-600 italic">Operasional</span>
-                    </h2>
-                    <p class="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-black mt-2">
-                        Audit Keuangan, Shift, dan Pembatalan
-                    </p>
-                </div>
-            </div>
-        </template>
-
         <div class="py-12 bg-[#FAFAF9]/50 min-h-screen">
             <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                <!-- MODERN PAGE HEADER -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in">
+                    <div>
+                        <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                            Insights <span class="text-amber-600 italic">Analitik</span>
+                        </h2>
+                        <p class="text-slate-400 text-xs mt-2 font-medium">
+                            Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
+                        </p>
+                        <div class="flex flex-wrap items-center gap-3 mt-3">
+                            <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                Periode: {{ formatDate(form.start_date) }} — {{ formatDate(form.end_date) }}
+                            </span>
+                            <span class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100/50 rounded-full text-emerald-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                Terakhir Diperbarui: Hari Ini
+                            </span>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Centered Report Selector Dropdown -->
                 <div class="flex flex-col items-center justify-center gap-8 pt-4 animate-fade-in-up relative z-[50]">
@@ -322,6 +361,7 @@ const totals = computed(() => {
                                             activeTab === 'shifts' ? 'Riwayat Shift' : 
                                             activeTab === 'transactions' ? 'Riwayat Transaksi' : 
                                             activeTab === 'performance' ? 'Performa Menu' : 
+                                            activeTab === 'inventory' ? 'Audit Stok Bahan' : 
                                             activeTab === 'expenses' ? 'Buku Kas Keluar' : 'Log Void' 
                                         }}
                                     </h4>
@@ -342,7 +382,6 @@ const totals = computed(() => {
                             <div v-if="isReportDropdownOpen" class="absolute inset-x-0 mt-4 bg-white rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.15)] border border-slate-100 py-4 z-[100] overflow-hidden">
                                 <button 
                                     v-for="tab in [
-                                        {id: 'dashboard', label: 'Dashboard Analitik', icon: '📊'},
                                         {id: 'sales', label: 'Penjualan Harian', icon: '📅'},
                                         {id: 'performance', label: 'Performa Menu', icon: '🌟'},
                                         {id: 'inventory', label: 'Audit Stok Bahan', icon: '📦'},
@@ -464,100 +503,7 @@ const totals = computed(() => {
                 <!-- Tab Content -->
                 <div class="bg-white rounded-[2rem] border border-slate-200/50 shadow-sm overflow-hidden transition-all delay-200">
                     
-                    <!-- DASHBOARD ANALYTICS -->
-                    <div v-if="activeTab === 'dashboard'" class="animate-fade-in p-8 space-y-10">
-                        <!-- Profitability Cards -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden group">
-                                <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform"></div>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Pendapatan</p>
-                                <h4 class="text-2xl font-black">Rp {{ formatPrice(profitability.total_revenue) }}</h4>
-                                <div class="mt-4 flex items-center gap-2 text-[9px] font-bold text-emerald-400">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m19 12-7-7-7 7M12 19V5"/></svg>
-                                    Gross Sales
-                                </div>
-                            </div>
-                            <div class="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm relative overflow-hidden group">
-                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total HPP (COGS)</p>
-                                <h4 class="text-2xl font-black text-slate-900">Rp {{ formatPrice(profitability.total_cogs) }}</h4>
-                                <div class="mt-4 flex items-center gap-2 text-[9px] font-bold text-red-500">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 7 7 7-7M12 5v14"/></svg>
-                                    Modal Bahan Baku
-                                </div>
-                            </div>
-                            <div class="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm relative overflow-hidden group">
-                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Laba Kotor</p>
-                                <h4 class="text-2xl font-black text-emerald-600">Rp {{ formatPrice(profitability.gross_profit) }}</h4>
-                                <div class="mt-4 flex items-center gap-2 text-[9px] font-bold text-emerald-500">
-                                    {{ ((profitability.gross_profit / profitability.total_revenue) * 100).toFixed(1) }}% Margin
-                                </div>
-                            </div>
-                            <div class="bg-amber-600 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden group">
-                                <div class="absolute bottom-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mb-16 blur-2xl group-hover:scale-150 transition-transform"></div>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-amber-100 mb-2">Laba Bersih (Net)</p>
-                                <h4 class="text-2xl font-black">Rp {{ formatPrice(profitability.net_profit) }}</h4>
-                                <p class="mt-4 text-[9px] font-bold text-amber-200">Setelah dikurangi Petty Cash</p>
-                            </div>
-                        </div>
 
-                        <!-- Charts Row 1 -->
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div class="lg:col-span-2 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h5 class="text-sm font-black uppercase tracking-widest text-slate-900">Tren Penjualan Harian</h5>
-                                    <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase">Omzet (IDR)</span>
-                                </div>
-                                <div class="h-[300px]">
-                                    <Line :data="revenueChartData" :options="{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }" />
-                                </div>
-                            </div>
-                            <div class="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h5 class="text-sm font-black uppercase tracking-widest text-slate-900">Metode Pembayaran</h5>
-                                </div>
-                                <div class="h-[300px] flex items-center justify-center">
-                                    <Doughnut :data="paymentMethodsData" :options="{ responsive: true, maintainAspectRatio: false, cutout: '70%' }" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Charts Row 2 -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div class="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h5 class="text-sm font-black uppercase tracking-widest text-slate-900">Jam Sibuk (Heatmap)</h5>
-                                </div>
-                                <div class="h-[250px]">
-                                    <Bar :data="busyHoursData" :options="{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }" />
-                                </div>
-                            </div>
-                            <div class="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h5 class="text-sm font-black uppercase tracking-widest text-slate-900">Performa Kasir</h5>
-                                </div>
-                                <div class="h-[250px]">
-                                    <Bar :data="cashierPerformanceData" :options="{ indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Low Stock Alerts -->
-                        <div v-if="alerts.low_stock.length > 0" class="bg-red-50 border border-red-100 p-6 rounded-3xl">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-8 h-8 bg-red-500 text-white rounded-lg flex items-center justify-center">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                </div>
-                                <h5 class="text-xs font-black uppercase tracking-[0.2em] text-red-600">Peringatan Stok Tipis</h5>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                                <div v-for="item in alerts.low_stock" :key="item.id" class="bg-white p-3 rounded-xl border border-red-100 flex flex-col items-center text-center">
-                                    <span class="text-[10px] font-black text-slate-900 mb-1 line-clamp-1">{{ item.name }}</span>
-                                    <span class="text-xs font-black text-red-600">{{ item.current_stock }} {{ item.unit }}</span>
-                                    <span class="text-[8px] text-slate-400 uppercase tracking-tighter mt-1">Min: {{ item.minimum_stock }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- INVENTORY AUDIT TABLE -->
                     <div v-if="activeTab === 'inventory'" class="animate-fade-in">
@@ -587,7 +533,7 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <tr v-for="mutation in sortedStockMutations" :key="mutation.id" class="hover:bg-slate-50/50 transition-colors">
+                                    <tr v-for="mutation in pagedStockMutations" :key="mutation.id" class="hover:bg-slate-50/50 transition-colors">
                                         <td class="px-8 py-5 text-xs text-slate-500 font-medium">{{ formatDateTime(mutation.created_at) }}</td>
                                         <td class="px-8 py-5">
                                             <span class="text-sm font-bold text-slate-800">{{ mutation.raw_material?.name }}</span>
@@ -613,6 +559,14 @@ const totals = computed(() => {
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div v-if="sortedStockMutations.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.inventory }} dari {{ totalPages(sortedStockMutations) }} &middot; {{ sortedStockMutations.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('inventory', pages.inventory - 1)" :disabled="pages.inventory <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.inventory <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(sortedStockMutations)" :key="p" @click="goPage('inventory', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.inventory === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('inventory', pages.inventory + 1)" :disabled="pages.inventory >= totalPages(sortedStockMutations)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.inventory >= totalPages(sortedStockMutations) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
                         </div>
                     </div>
 
@@ -661,7 +615,7 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <template v-for="day in sortedDailySales" :key="day.date">
+                                    <template v-for="day in pagedDailySales" :key="day.date">
                                         <tr 
                                             @click="toggleDailySales(day.date)"
                                             class="hover:bg-amber-50/50 transition-all cursor-pointer group"
@@ -719,6 +673,14 @@ const totals = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
+                        <div v-if="sortedDailySales.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.sales }} dari {{ totalPages(sortedDailySales) }} &middot; {{ sortedDailySales.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('sales', pages.sales - 1)" :disabled="pages.sales <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.sales <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(sortedDailySales)" :key="p" @click="goPage('sales', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.sales === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('sales', pages.sales + 1)" :disabled="pages.sales >= totalPages(sortedDailySales)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.sales >= totalPages(sortedDailySales) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- SHIFT HISTORY TABLE -->
@@ -765,7 +727,7 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <template v-for="shift in sortedShifts" :key="shift.id">
+                                    <template v-for="shift in pagedShifts" :key="shift.id">
                                         <tr 
                                             @click="toggleShift(shift.id)"
                                             class="hover:bg-amber-50/50 transition-all cursor-pointer group"
@@ -863,6 +825,14 @@ const totals = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
+                        <div v-if="sortedShifts.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.shifts }} dari {{ totalPages(sortedShifts) }} &middot; {{ sortedShifts.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('shifts', pages.shifts - 1)" :disabled="pages.shifts <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.shifts <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(sortedShifts)" :key="p" @click="goPage('shifts', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.shifts === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('shifts', pages.shifts + 1)" :disabled="pages.shifts >= totalPages(sortedShifts)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.shifts >= totalPages(sortedShifts) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- MENU PERFORMANCE TABLE -->
@@ -917,10 +887,10 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <tr v-for="(menu, index) in filteredMenuPerformance" :key="menu.name" class="hover:bg-slate-50/50 transition-colors">
+                                    <tr v-for="(menu, index) in pagedMenuPerformance" :key="menu.name" class="hover:bg-slate-50/50 transition-colors">
                                         <td class="px-8 py-5">
                                             <div class="flex items-center gap-3">
-                                                <span class="text-xs font-black text-slate-300 w-4">#{{ index + 1 }}</span>
+                                                <span class="text-xs font-black text-slate-300 w-4">#{{ (pages.performance - 1) * perPage + index + 1 }}</span>
                                                 <div>
                                                     <span class="text-sm font-bold text-slate-800">{{ menu.name }}</span>
                                                     <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ menu.category_name }}</p>
@@ -951,6 +921,14 @@ const totals = computed(() => {
                                     </tr>
                                 </tfoot>
                             </table>
+                        </div>
+                        <div v-if="filteredMenuPerformance.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.performance }} dari {{ totalPages(filteredMenuPerformance) }} &middot; {{ filteredMenuPerformance.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('performance', pages.performance - 1)" :disabled="pages.performance <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.performance <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(filteredMenuPerformance)" :key="p" @click="goPage('performance', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.performance === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('performance', pages.performance + 1)" :disabled="pages.performance >= totalPages(filteredMenuPerformance)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.performance >= totalPages(filteredMenuPerformance) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
                         </div>
                     </div>
 
@@ -986,7 +964,7 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <tr v-for="log in sortedPettyCashLogs" :key="log.id" class="hover:bg-slate-50/50 transition-colors">
+                                    <tr v-for="log in pagedPettyCashLogs" :key="log.id" class="hover:bg-slate-50/50 transition-colors">
                                         <td class="px-8 py-5 text-xs text-slate-500 font-medium">{{ formatDateTime(log.created_at) }}</td>
                                         <td class="px-8 py-5 text-sm font-bold text-slate-700">{{ log.user?.name }}</td>
                                         <td class="px-8 py-5 text-sm text-slate-500 italic">{{ log.notes || 'Tanpa keterangan' }}</td>
@@ -1003,6 +981,14 @@ const totals = computed(() => {
                                     </tr>
                                 </tfoot>
                             </table>
+                        </div>
+                        <div v-if="sortedPettyCashLogs.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.expenses }} dari {{ totalPages(sortedPettyCashLogs) }} &middot; {{ sortedPettyCashLogs.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('expenses', pages.expenses - 1)" :disabled="pages.expenses <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.expenses <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(sortedPettyCashLogs)" :key="p" @click="goPage('expenses', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.expenses === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('expenses', pages.expenses + 1)" :disabled="pages.expenses >= totalPages(sortedPettyCashLogs)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.expenses >= totalPages(sortedPettyCashLogs) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1044,7 +1030,7 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <tr v-for="log in sortedVoidLogs" :key="log.id" class="hover:bg-red-50/30 transition-colors">
+                                    <tr v-for="log in pagedVoidLogs" :key="log.id" class="hover:bg-red-50/30 transition-colors">
                                         <td class="px-8 py-5 text-xs text-slate-500 font-medium">{{ formatDateTime(log.created_at) }}</td>
                                         <td class="px-8 py-5 text-sm font-black text-slate-800">{{ log.order_number }}</td>
                                         <td class="px-8 py-5 text-sm text-slate-600">{{ log.user?.name }}</td>
@@ -1062,6 +1048,14 @@ const totals = computed(() => {
                                     </tr>
                                 </tfoot>
                             </table>
+                        </div>
+                        <div v-if="sortedVoidLogs.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.voids }} dari {{ totalPages(sortedVoidLogs) }} &middot; {{ sortedVoidLogs.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('voids', pages.voids - 1)" :disabled="pages.voids <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.voids <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(sortedVoidLogs)" :key="p" @click="goPage('voids', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.voids === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('voids', pages.voids + 1)" :disabled="pages.voids >= totalPages(sortedVoidLogs)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.voids >= totalPages(sortedVoidLogs) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1110,7 +1104,7 @@ const totals = computed(() => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    <tr v-for="order in sortedOrderHistory" :key="order.id" class="hover:bg-slate-50/50 transition-colors">
+                                    <tr v-for="order in pagedOrderHistory" :key="order.id" class="hover:bg-slate-50/50 transition-colors">
                                         <td class="px-8 py-5 text-xs text-slate-500 font-medium">{{ formatDateTime(order.created_at) }}</td>
                                         <td class="px-8 py-5 text-sm font-black text-slate-800">{{ order.order_number }}</td>
                                         <td class="px-8 py-5 text-sm font-bold text-slate-600">
@@ -1145,6 +1139,14 @@ const totals = computed(() => {
                                     </tr>
                                 </tfoot>
                             </table>
+                        </div>
+                        <div v-if="sortedOrderHistory.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.transactions }} dari {{ totalPages(sortedOrderHistory) }} &middot; {{ sortedOrderHistory.length }} data</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="goPage('transactions', pages.transactions - 1)" :disabled="pages.transactions <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.transactions <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
+                                <button v-for="p in totalPages(sortedOrderHistory)" :key="p" @click="goPage('transactions', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.transactions === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
+                                <button @click="goPage('transactions', pages.transactions + 1)" :disabled="pages.transactions >= totalPages(sortedOrderHistory)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.transactions >= totalPages(sortedOrderHistory) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
+                            </div>
                         </div>
                     </div>
 

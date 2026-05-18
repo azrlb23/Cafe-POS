@@ -151,41 +151,7 @@ class ReportController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 7. Chart Data & Advanced Analytics
-        $revenueChart = $dailySales->map(fn($d) => ['date' => $d->date, 'revenue' => (float)$d->revenue])->reverse()->values();
-        
-        $paymentMethodsChart = Order::whereBetween('created_at', [$start, $end])
-            ->where('status', 'completed')
-            ->select('payment_method', DB::raw('SUM(total) as total'))
-            ->groupBy('payment_method')
-            ->get()
-            ->map(fn($o) => ['method' => $o->payment_method, 'total' => (float)$o->total]);
-
-        $busyHoursChart = Order::whereBetween('created_at', [$start, $end])
-            ->where('status', 'completed')
-            ->select(DB::raw("strftime('%H', created_at) as hour"), DB::raw('COUNT(*) as total_orders'))
-            ->groupBy('hour')
-            ->orderBy('hour')
-            ->get()
-            ->map(fn($o) => ['hour' => $o->hour . ':00', 'orders' => $o->total_orders]);
-
-        $cashierPerformance = Order::whereBetween('created_at', [$start, $end])
-            ->where('status', 'completed')
-            ->with('user:id,name')
-            ->select('user_id', DB::raw('SUM(total) as total_sales'), DB::raw('COUNT(*) as total_transactions'))
-            ->groupBy('user_id')
-            ->get()
-            ->map(fn($o) => [
-                'name' => $o->user ? $o->user->name : 'Unknown',
-                'sales' => (float)$o->total_sales,
-                'transactions' => $o->total_transactions
-            ]);
-
-        $lowStockAlerts = RawMaterial::whereColumn('current_stock', '<=', 'minimum_stock')
-            ->limit(5)
-            ->get();
-
-        // 8. Stock Mutations (Inventory Audit)
+        // 7. Stock Mutations (Inventory Audit)
         $stockMutations = \App\Models\StockMutation::with('rawMaterial')
             ->whereBetween('created_at', [$start, $end])
             ->when($search, function($query, $search) {
@@ -195,27 +161,6 @@ class ReportController extends Controller
             })
             ->orderBy('created_at', 'desc')
             ->get();
-
-        // 8. Profitability Analysis (COGS Calculation)
-        $totalRevenue = $dailySales->sum('revenue');
-        $totalPettyCash = $dailySales->sum('petty_cash');
-        $totalCogs = 0;
-
-        foreach ($orderHistory as $order) {
-            if ($order->status !== 'completed') continue;
-            
-            foreach ($order->orderItems as $item) {
-                if (!$item->menu) continue;
-                
-                $itemCogs = 0;
-                foreach ($item->menu->recipes as $recipe) {
-                    if ($recipe->rawMaterial) {
-                        $itemCogs += ($recipe->quantity * $recipe->rawMaterial->cost_per_unit);
-                    }
-                }
-                $totalCogs += ($itemCogs * $item->quantity);
-            }
-        }
 
         return Inertia::render('Admin/Reports/Index', [
             'filters' => [
@@ -229,24 +174,6 @@ class ReportController extends Controller
             'menuPerformance' => $menuPerformance,
             'pettyCashLogs' => $pettyCashLogs,
             'orderHistory' => $orderHistory,
-            'charts' => [
-                'revenue' => $revenueChart,
-                'paymentMethods' => $paymentMethodsChart,
-                'busyHours' => $busyHoursChart,
-            ],
-            'profitability' => [
-                'total_revenue' => $totalRevenue,
-                'total_cogs' => $totalCogs,
-                'total_petty_cash' => $totalPettyCash,
-                'gross_profit' => $totalRevenue - $totalCogs,
-                'net_profit' => $totalRevenue - $totalCogs - $totalPettyCash,
-            ],
-            'performance' => [
-                'cashiers' => $cashierPerformance,
-            ],
-            'alerts' => [
-                'low_stock' => $lowStockAlerts,
-            ],
             'stockMutations' => $stockMutations,
         ]);
     }

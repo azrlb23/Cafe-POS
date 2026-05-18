@@ -178,8 +178,29 @@ class DashboardController extends Controller
             ->get();
 
         // 18. Recent Activities
-        $recentOrders = Order::latest()->take(5)->with('user:id,name')->get();
-        $recentPettyCash = PettyCash::latest()->take(5)->get();
+        $recentOrders = Order::latest()->take(50)->with('user:id,name')->get();
+        $recentPettyCash = PettyCash::latest()->take(50)->get();
+
+        // 19. Profitability Analysis (COGS Calculation)
+        $totalCogs = 0;
+        $completedOrders = Order::whereBetween('created_at', [$start, $end])
+            ->where('status', 'completed')
+            ->with('orderItems.menu.recipes.rawMaterial')
+            ->get();
+
+        foreach ($completedOrders as $order) {
+            foreach ($order->orderItems as $item) {
+                if (!$item->menu) continue;
+                
+                $itemCogs = 0;
+                foreach ($item->menu->recipes as $recipe) {
+                    if ($recipe->rawMaterial) {
+                        $itemCogs += ($recipe->quantity * $recipe->rawMaterial->cost_per_unit);
+                    }
+                }
+                $totalCogs += ($itemCogs * $item->quantity);
+            }
+        }
 
         return Inertia::render('Dashboard', [
             'filters' => [
@@ -187,16 +208,26 @@ class DashboardController extends Controller
                 'end_date' => $endDate,
             ],
             'kpis' => [
-                'revenuePeriod' => (float) $revenuePeriod,
-                'revenueChange' => (float) $revenueChange,
-                'transactionsPeriod' => $transactionsPeriod,
-                'pettyCashPeriod' => (float) $pettyCashPeriod,
-                'estimatedBalance' => (float) $estimatedBalance,
-                'voidCount' => $voidStats->count ?? 0,
-                'voidTotal' => (float) ($voidStats->total ?? 0),
-                'cashDiff' => (float) $cashDifferences,
-                'avgBasket' => (float) $avgBasketPeriod,
-                'avgBasketChange' => (float) $avgBasketChange,
+                'financial' => [
+                    'revenue' => (float) $revenuePeriod,
+                    'revenueChange' => (float) $revenueChange,
+                    'cogs' => (float) $totalCogs,
+                    'grossProfit' => (float) ($revenuePeriod - $totalCogs),
+                    'netProfit' => (float) ($revenuePeriod - $totalCogs - $pettyCashPeriod),
+                ],
+                'orders' => [
+                    'total' => $transactionsPeriod,
+                    'avgBasket' => (float) $avgBasketPeriod,
+                    'avgBasketChange' => (float) $avgBasketChange,
+                    'voidCount' => $voidStats->count ?? 0,
+                    'voidTotal' => (float) ($voidStats->total ?? 0),
+                ],
+                'operations' => [
+                    'estimatedBalance' => (float) $estimatedBalance,
+                    'pettyCash' => (float) $pettyCashPeriod,
+                    'cashDiff' => (float) $cashDifferences,
+                    'lowStockCount' => $lowStockItems->count(),
+                ]
             ],
             'salesTrend' => $salesTrend,
             'expenseTrend' => $expenseTrend,
