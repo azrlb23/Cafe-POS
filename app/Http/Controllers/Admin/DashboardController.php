@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use App\Models\ActivityLog;
 use App\Models\Menu;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -245,6 +246,16 @@ class DashboardController extends Controller
             'recentOrders' => $recentOrders,
             'recentPettyCash' => $recentPettyCash,
             'activeShift' => $activeShift ? $activeShift->load('user:id,name') : null,
+
+            // Activity Log & Active Cashiers
+            'activityLogs' => ActivityLog::with('user:id,name')
+                ->whereDate('created_at', Carbon::today())
+                ->latest()
+                ->take(50)
+                ->get(),
+            'activeCashiers' => Shift::whereNull('closed_at')
+                ->with('user:id,name')
+                ->get(),
         ]);
     }
 }

@@ -2,7 +2,7 @@
 
 Dokumentasi semua endpoint (rute) aplikasi yang digunakan untuk komunikasi antara frontend Vue.js (Inertia) dan backend Laravel.
 
-> **Terakhir diperbarui:** 16 Mei 2026
+> **Terakhir diperbarui:** 19 Mei 2026
 
 ---
 
@@ -28,7 +28,7 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
 
 #### `[GET] /dashboard`
 - **Controller**: `Admin\DashboardController@index`
-- **Deskripsi**: Dashboard analitik utama dengan KPI cards, grafik tren, dan peringatan stok.
+- **Deskripsi**: Dashboard analitik utama dengan KPI cards, grafik tren, tabel transaksi/kas keluar terbaru, log aktivitas, dan peringatan stok.
 - **Query Parameters** (opsional):
   - `start_date` (format: `YYYY-MM-DD`, default: awal bulan ini)
   - `end_date` (format: `YYYY-MM-DD`, default: hari ini)
@@ -39,6 +39,9 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
   - `topMenus` — Top 5 menu terlaris
   - `lowStockItems` — Bahan baku di bawah batas minimum
   - `activeShift` — Info shift kasir yang sedang berjalan
+  - `recentTransactions` — 50 transaksi terbaru
+  - `recentPettyCash` — 50 kas keluar terbaru
+  - `activityLogs` — Log aktivitas hari ini
 
 ---
 
@@ -51,22 +54,11 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
   - `start_date` (format: `YYYY-MM-DD`, default: awal bulan ini)
   - `end_date` (format: `YYYY-MM-DD`, default: akhir bulan ini)
   - `search` — Filter teks untuk kolom-kolom yang relevan per tab
-- **Response**: Komponen Inertia `Admin/Reports/Index` dengan data:
-  - `dailySales` — Ringkasan penjualan per hari
-  - `shifts` — Riwayat & audit shift kasir
-  - `voidLogs` — Log pembatalan pesanan
-  - `menuPerformance` — Ranking menu + HPP (COGS) + margin laba
-  - `pettyCashLogs` — Riwayat pengeluaran kas keluar
-  - `orderHistory` — Detail lengkap semua transaksi
-  - `stockMutations` — Ledger mutasi stok bahan baku
-  - `charts` — Data grafik (revenue trend, payment methods, busy hours)
-  - `profitability` — Analisis laba rugi (revenue, COGS, gross profit, net profit)
-  - `performance` — Performa kasir (penjualan & transaksi per kasir)
-  - `alerts` — Peringatan stok rendah
+- **Response**: Komponen Inertia `Admin/Reports/Index` dengan data lengkap laporan.
 
 #### `[GET] /admin/reports/export`
 - **Controller**: `Admin\ReportController@export`
-- **Deskripsi**: Ekspor data laporan ke PDF atau CSV/Excel.
+- **Deskripsi**: Ekspor data laporan ke PDF atau CSV.
 - **Query Parameters**:
   - `format` — `pdf` atau `excel` (default: `pdf`)
   - `type` — `sales`, `shifts`, `voids`, `menu_performance`, `expenses`, `transactions`, `stock_mutations`
@@ -81,22 +73,17 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
 #### `[RESOURCE] /admin/categories`
 - **Controller**: `Admin\CategoryController`
 - **Fungsi**: CRUD kategori menu (Kopi, Snack, dll).
+- **Halaman**: `Index.vue`, `Create.vue`, `Edit.vue` + `Partials/CategoryForm.vue`.
 
 ---
 
 ### Manajemen Menu
 
-#### `[GET] /admin/menus`
-- **Deskripsi**: Halaman daftar menu.
-- **Response**: Komponen Inertia `Admin/Menus/Index` + data `menus` (relasi `category`).
-
-#### `[GET] /admin/menus/create`
-- **Deskripsi**: Form membuat menu baru.
-- **Response**: Komponen Inertia `Admin/Menus/Create` + referensi `categories`, `raw_materials`.
-
-#### `[POST] /admin/menus`
-- **Deskripsi**: Menyimpan menu baru + resep + option groups dalam `DB::transaction()`.
-- **Payload**:
+#### `[RESOURCE] /admin/menus`
+- **Controller**: `Admin\MenuController`
+- **Fungsi**: CRUD menu lengkap dengan upload gambar, option groups, dan resep BOM.
+- **Halaman**: `Index.vue`, `Create.vue`, `Edit.vue` + `Partials/MenuForm.vue`.
+- **Payload POST/PUT** (contoh):
 ```json
 {
   "category_id": 1,
@@ -127,22 +114,50 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:admin`.
 }
 ```
 
-#### `[GET] /admin/menus/{menu}/edit`
-- **Deskripsi**: Form edit menu (eager load resep & option groups).
-
-#### `[PUT/PATCH] /admin/menus/{menu}`
-- **Deskripsi**: Update menu + sinkronisasi resep (pola Sync/Upsert, bukan delete-recreate).
-
-#### `[DELETE] /admin/menus/{menu}`
-- **Deskripsi**: Hapus menu + cascade delete options & resep.
-
 ---
 
 ### Manajemen Bahan Baku
 
 #### `[RESOURCE] /admin/raw-materials`
 - **Controller**: `Admin\RawMaterialController`
-- **Fungsi**: CRUD stok bahan baku (Coffee Beans, Milk, Syrup, dll).
+- **Fungsi**: CRUD stok bahan baku (Coffee Beans, Milk, Syrup, dll) dengan supplier default dan par level.
+- **Halaman**: `Index.vue`, `Create.vue`, `Edit.vue` + `Partials/RawMaterialForm.vue`.
+
+---
+
+### Manajemen Supplier
+
+#### `[RESOURCE] /admin/suppliers`
+- **Controller**: `Admin\SupplierController`
+- **Fungsi**: CRUD data pemasok bahan baku.
+- **Halaman**: `Index.vue`, `Create.vue`, `Edit.vue` + `Partials/SupplierForm.vue`.
+
+---
+
+### Stok Masuk (Purchase Orders)
+
+#### `[RESOURCE] /admin/purchase-orders`
+- **Controller**: `Admin\PurchaseOrderController`
+- **Fungsi**: Pencatatan pembelian bahan baku dari supplier. Otomatis menambah stok dan mencatat mutasi stok saat status menjadi `received`.
+- **Halaman**: `Index.vue`, `Create.vue`, `Edit.vue` + `Partials/PurchaseOrderForm.vue`.
+
+---
+
+### Layout Meja
+
+#### `[GET] /admin/tables`
+- **Controller**: `Admin\AdminTableController@index`
+- **Route Name**: `admin.tables.index`
+- **Deskripsi**: Halaman visualisasi layout meja kafe (30 meja) dengan status real-time.
+
+---
+
+### Manajemen Kasir
+
+#### `[RESOURCE] /admin/cashiers`
+- **Controller**: `Admin\CashierController`
+- **Fungsi**: CRUD akun kasir (registrasi, edit profil/PIN/password, hapus). Monitoring status shift aktif dan log aktivitas.
+- **Halaman**: `Index.vue` (daftar + statistik + timeline log), `Create.vue`, `Edit.vue` + `Partials/CashierForm.vue`.
 
 ---
 
@@ -155,6 +170,10 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:kasir`.
 #### `[GET] /pos`
 - **Controller**: `PosController@index`
 - **Deskripsi**: Antarmuka kasir full-screen (tablet optimized).
+
+#### `[GET] /pos/active-orders`
+- **Controller**: `PosController@activeOrders`
+- **Deskripsi**: Halaman pesanan aktif yang sedang diproses.
 
 #### `[GET] /pos/history`
 - **Controller**: `PosController@history`
@@ -187,6 +206,10 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:kasir`.
 - **Payload**: `{ "void_reason": "Pelanggan salah pilih menu" }`
 - **Deskripsi**: Membatalkan pesanan. Otomatis mengembalikan stok dan mengoreksi saldo shift.
 
+#### `[POST] /pos/orders/{order}/status`
+- **Controller**: `PosController@updateStatus`
+- **Deskripsi**: Mengubah status pesanan (pending → completed/cancelled).
+
 ---
 
 ### Pencetakan Struk
@@ -197,9 +220,6 @@ Semua rute di bawah ini dilindungi middleware: `auth`, `verified`, `role:kasir`.
 - **Query Parameters**:
   - `type` — `customer` (default), `cashier`, `kitchen`
 - **Deskripsi**: Generate dan stream PDF struk sesuai format yang diminta.
-  - **Customer**: Struk standar pelanggan (semua detail + total + kembalian).
-  - **Cashier**: Struk arsip kasir (header "ARSIP KASIR" + detail metode bayar).
-  - **Kitchen**: Struk dapur (font besar + catatan item, tanpa harga).
 - **Response**: PDF stream (inline display) via DomPDF, lebar kertas 164pt (58mm thermal).
 
 ---

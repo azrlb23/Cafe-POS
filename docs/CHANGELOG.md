@@ -4,6 +4,67 @@ Semua perubahan signifikan pada proyek ini dicatat di file ini, diurutkan dari y
 
 ---
 
+## [2026-05-19] - Refinement - Manajemen Kasir & UI Polish
+
+### Diubah
+- **Form Kasir Halaman Mandiri:** Mengganti popup/modal Tambah & Edit kasir menjadi halaman mandiri (`Create.vue`, `Edit.vue`) dengan komponen form bersama `CashierForm.vue`, selaras dengan pattern form admin lainnya (Kategori, Menu, dll).
+- **Controller Methods:** Menambahkan method `create()` dan `edit()` pada `CashierController.php` untuk merender halaman Inertia baru.
+- **Pagination Timeline Log Kasir:** Membatasi tampilan log kasir menjadi 5 per halaman dengan navigasi Previous/Next dan safety bounds.
+- **Penyelarasan Warna Emas:** Memperbarui seluruh warna emas di halaman kasir dan komponen terkait ke skema `amber-700` / `#B45309`.
+
+### Diperbaiki
+- **Bug Pagination Dashboard:** Memperbaiki infinite loop pada navigasi pagination Recent Transaction dan Kas Keluar Terakhir di Dashboard.
+- **Bug SVG Arrow Rotation:** Menghapus rotasi 180° yang salah pada ikon panah navigasi pagination.
+- **Sesi Administrator Terjebak:** Menutup sesi shift administrator yang masih terbuka di database.
+
+---
+
+## [2026-05-18] - Feature - Manajemen Kasir & Aktivitas (Sprint 3)
+
+### Ditambahkan
+- **Halaman Manajemen Kasir** (`Admin/Cashiers/Index.vue`):
+  - Statistik: Total Kasir, Kasir Aktif, Transaksi Hari Ini.
+  - Card grid per kasir: status online/offline, PIN (toggle visibility), badge warna, tombol edit/hapus.
+  - Timeline Log Kasir: aktivitas harian (buka shift, tutup shift, pesanan, void, petty cash) dengan pagination.
+- **`CashierController.php`:** CRUD lengkap untuk akun kasir (role `kasir`).
+- **Model `ActivityLog`:** Logging otomatis untuk seluruh aksi operasional kasir.
+- **Migrasi `activity_logs`:** Tabel pencatatan aktivitas (`user_id`, `action`, `description`).
+
+---
+
+## [2026-05-17] - Feature - Sidebar Navigation & Dashboard Modernization
+
+### Ditambahkan
+- **Sidebar Navigasi Admin:** Sidebar vertikal 240px fixed di sisi kiri menggantikan navbar horizontal.
+  - Logo brand Denjavas Cafe di atas.
+  - Pengelompokan menu: Utama, Produk & Layout, Inventori, Karyawan, Laporan.
+  - User profile card di bawah sidebar.
+  - Responsive: drawer + overlay untuk layar < 1024px.
+- **Sidebar POS Kasir:** Sidebar sempit (~80px) untuk navigasi kasir (Menu, Pesanan Aktif, Riwayat, Kas Keluar, Tutup Shift, Logout).
+- **Breadcrumb Navigation:** Breadcrumb `ADMIN > Nama Halaman` di top bar.
+
+### Diubah
+- **Dashboard Admin:** Dimodernisasi ke desain SaaS premium:
+  - KPI Cards dengan ikon, perbandingan periode, dan filter rentang waktu.
+  - Grafik: Revenue Trend (Line), Top Menu (Bar), Metode Pembayaran (Donut), Jam Sibuk (Bar), Performa Kasir (Horizontal Bar).
+  - Tabel: Transaksi Terbaru, Kas Keluar Terakhir, Log Aktivitas Hari Ini.
+  - Peringatan Stok Kritis.
+- **AuthenticatedLayout.vue:** Refaktor total dari navbar horizontal ke sidebar + top bar + main content.
+- **Warna Emas Diselaraskan:** Seluruh warna emas diubah dari `amber-500`/`amber-600` ke `amber-700` (`#B45309`) / `amber-800` (`#92400E`).
+- **Font Harga:** Seluruh nominal harga/uang menggunakan font `Plus Jakarta Sans`.
+- **Custom Dropdown:** `CustomSelect.vue` digunakan pada seluruh form dropdown (termasuk form bahan baku).
+
+---
+
+## [2026-05-16] - Feature - Supplier, Purchase Orders & Stok Masuk
+
+### Ditambahkan
+- **Manajemen Supplier** (`Admin/Suppliers`): CRUD data pemasok bahan baku.
+- **Stok Masuk / Purchase Orders** (`Admin/PurchaseOrders`): Pencatatan pembelian bahan baku dari supplier dengan otomatis menambah stok dan mencatat mutasi.
+- **Kolom `default_supplier_id` dan `par_level`** pada `raw_materials`: Menghubungkan bahan baku ke supplier default dan level par untuk reorder otomatis.
+
+---
+
 ## [2026-05-16] - Feature - Sistem Cetak Multi-Format (KF-04) & Visualisasi Laporan (KF-05)
 
 ### Ditambahkan
@@ -129,5 +190,5 @@ Semua perubahan signifikan pada proyek ini dicatat di file ini, diurutkan dari y
 - Migrasi tabel inti: `users`, `categories`, `menus`, `menu_option_groups`, `menu_option_items`, `raw_materials`, `recipes`.
 - Nullable Foreign Keys untuk BOM pada tabel `recipes`.
 - Eloquent Models dengan relasi `hasMany`, `belongsTo`, `$fillable`, dan `$casts`.
-- `DatabaseSeeder.php` dengan skenario real-world: Admin, 2 Kasir, Kategori, 11 Bahan Baku, BOM kompleks (Kopi Susu Aren, Matcha Latte, French Fries).
+- `DatabaseSeeder.php` dengan skenario real-world: Admin, 4 Kasir, Kategori, 11 Bahan Baku, BOM kompleks (Kopi Susu Aren, Matcha Latte, French Fries).
 - Spatie Role & Permission: `admin` dan `kasir`.

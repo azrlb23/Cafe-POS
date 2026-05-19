@@ -8,6 +8,7 @@ use App\Models\CafeTable;
 use App\Models\Shift;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,7 @@ class PosController extends Controller
             ->first();
 
         // Fetch today's history for the kasir
-        $todayOrders = Order::with('orderItems')
+        $todayOrders = Order::with(['orderItems', 'cafeTable', 'user'])
             ->whereDate('created_at', now()->today())
             ->orderBy('created_at', 'desc')
             ->get();
@@ -53,7 +54,13 @@ class PosController extends Controller
      */
     public function history()
     {
-        $todayOrders = Order::with(['orderItems', 'user'])
+        $user = Auth::user();
+        
+        $activeShift = Shift::where('user_id', $user->id)
+            ->whereNull('closed_at')
+            ->first();
+
+        $todayOrders = Order::with(['orderItems', 'cafeTable', 'user'])
             ->whereDate('created_at', now()->today())
             ->orderBy('created_at', 'desc')
             ->get();
@@ -66,6 +73,7 @@ class PosController extends Controller
         return Inertia::render('Pos/History', [
             'todayOrders' => $todayOrders,
             'todayPettyCash' => $todayPettyCash,
+            'activeShift' => $activeShift,
         ]);
     }
 
@@ -95,9 +103,14 @@ class PosController extends Controller
             return back()->withErrors(['shift' => 'Anda masih memiliki shift yang belum ditutup.']);
         }
 
-        Shift::create([
+        $shift = Shift::create([
             'user_id' => $user->id,
             'opened_at' => now(),
+            'opening_cash' => $request->opening_cash,
+        ]);
+
+        ActivityLogger::log($user, 'shift_open', 'Membuka shift baru — Modal: Rp ' . number_format($request->opening_cash, 0, ',', '.'), [
+            'shift_id' => $shift->id,
             'opening_cash' => $request->opening_cash,
         ]);
 
@@ -134,7 +147,7 @@ class PosController extends Controller
                 'total' => 0,    // Will calculate below
                 'payment_method' => $request->payment_method,
                 'payment_amount' => $request->payment_amount,
-                'status' => 'completed',
+                'status' => $request->order_type === 'dine_in' ? 'pending' : 'completed',
                 'notes' => $request->notes,
             ]);
 
@@ -193,7 +206,15 @@ class PosController extends Controller
                 $shift->increment('total_cash_sales', $totalSubtotal);
             }
 
-            // 6. Return with order data for printing
+            // 6. Log the activity
+            ActivityLogger::log($user, 'order_create', 'Membuat pesanan #' . $order->order_number . ' — Rp ' . number_format($totalSubtotal, 0, ',', '.') . ' (' . ucfirst($request->payment_method) . ')', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'total' => $totalSubtotal,
+                'payment_method' => $request->payment_method,
+            ]);
+
+            // 7. Return with order data for printing
             return redirect()->route('pos')->with([
                 'success' => 'Pesanan #' . $order->order_number . ' berhasil disimpan.',
                 'print_order' => $order->load(['orderItems.orderItemOptions', 'cafeTable', 'user'])
@@ -235,6 +256,13 @@ class PosController extends Controller
             $inventoryService->restoreStockFromOrder($order);
         });
 
+        ActivityLogger::log(Auth::user(), 'order_void', 'Membatalkan pesanan #' . $order->order_number . ' — Alasan: ' . $request->void_reason, [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'total' => $order->total,
+            'void_reason' => $request->void_reason,
+        ]);
+
         return back()->with('success', "Pesanan #{$order->order_number} berhasil dibatalkan.");
     }
 
@@ -268,6 +296,12 @@ class PosController extends Controller
 
             $activeShift->increment('total_petty_cash', $request->amount);
         });
+
+        ActivityLogger::log($user, 'petty_cash', 'Kas keluar Rp ' . number_format($request->amount, 0, ',', '.') . ' — ' . $request->description, [
+            'shift_id' => $activeShift->id,
+            'amount' => $request->amount,
+            'description' => $request->description,
+        ]);
 
         return redirect()->route('pos')->with('success', 'Kas keluar berhasil dicatat.');
     }
@@ -303,6 +337,15 @@ class PosController extends Controller
             'notes' => $request->notes,
         ]);
 
+        $diff = $request->closing_cash - $expectedClosingCash;
+        ActivityLogger::log($user, 'shift_close', 'Menutup shift — Total: Rp ' . number_format($activeShift->total_sales, 0, ',', '.') . ', Selisih: Rp ' . number_format($diff, 0, ',', '.'), [
+            'shift_id' => $activeShift->id,
+            'total_sales' => $activeShift->total_sales,
+            'closing_cash' => $request->closing_cash,
+            'expected_closing_cash' => $expectedClosingCash,
+            'difference' => $diff,
+        ]);
+
         // Logout after closing shift to allow the next cashier to login
         Auth::guard('web')->logout();
         $request->session()->invalidate();
@@ -330,5 +373,52 @@ class PosController extends Controller
         $pdf->setPaper([0, 0, 164, $height]); 
         
         return $pdf->stream("struk-{$type}-{$order->order_number}.pdf");
+    }
+
+    /**
+     * Display the Active Orders grid card interface.
+     */
+    public function activeOrders()
+    {
+        $user = Auth::user();
+        
+        // Check for active shift
+        $activeShift = Shift::where('user_id', $user->id)
+            ->whereNull('closed_at')
+            ->first();
+
+        // Fetch all active orders for today (pending, completed, except void/cancelled ones)
+        $todayOrders = Order::with(['orderItems.orderItemOptions', 'cafeTable', 'user'])
+            ->whereDate('created_at', now()->today())
+            ->where('status', '!=', 'cancelled')
+            ->where('status', '!=', 'void')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Pos/ActiveOrders', [
+            'todayOrders' => $todayOrders,
+            'activeShift' => $activeShift,
+        ]);
+    }
+
+    /**
+     * Update order kitchen status.
+     */
+    public function updateStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,completed',
+        ]);
+
+        $order->update([
+            'status' => $request->status,
+        ]);
+
+        ActivityLogger::log(Auth::user(), 'order_update', "Mengubah status pesanan #{$order->order_number} menjadi " . ($request->status === 'pending' ? 'Pending' : 'Completed'), [
+            'order_id' => $order->id,
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Status pesanan berhasil diperbarui.');
     }
 }

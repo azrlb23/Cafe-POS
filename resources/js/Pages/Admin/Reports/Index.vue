@@ -81,8 +81,14 @@ const handleExport = (format) => {
     }), '_blank');
 };
 
+const safeNumber = (val) => {
+    const num = Number(val);
+    return isNaN(num) ? 0 : num;
+};
+
 const formatPrice = (price) => {
-    return Number(price).toLocaleString('id-ID');
+    const num = Number(price);
+    return isNaN(num) ? '0' : num.toLocaleString('id-ID');
 };
 
 const formatDateTime = (dateTime) => {
@@ -133,11 +139,20 @@ const getSortedData = (data, key, dir) => {
             valB = key.split('.').reduce((obj, i) => obj?.[i], b);
         }
 
-        // Logic for different types
-        if (typeof valA === 'string') {
+        // Normalize null/undefined values safely
+        if (valA === null || valA === undefined) valA = '';
+        if (valB === null || valB === undefined) valB = '';
+
+        // Safely check if string comparison is needed
+        const isStringA = typeof valA === 'string';
+        const isStringB = typeof valB === 'string';
+
+        if (isStringA || isStringB) {
+            const strA = String(valA);
+            const strB = String(valB);
             return dir === 'asc' 
-                ? valA.localeCompare(valB) 
-                : valB.localeCompare(valA);
+                ? strA.localeCompare(strB) 
+                : strB.localeCompare(strA);
         }
         
         return dir === 'asc' ? valA - valB : valB - valA;
@@ -284,27 +299,36 @@ const cashierPerformanceData = computed(() => ({
 const totals = computed(() => {
     return {
         dailySales: {
-            orders: props.dailySales.reduce((sum, item) => sum + Number(item.total_orders), 0),
-            revenue: props.dailySales.reduce((sum, item) => sum + Number(item.revenue), 0),
-            petty: props.dailySales.reduce((sum, item) => sum + Number(item.petty_cash), 0),
-            net: props.dailySales.reduce((sum, item) => sum + Number(item.net_profit), 0),
+            orders: props.dailySales.reduce((sum, item) => sum + safeNumber(item.total_orders), 0),
+            revenue: props.dailySales.reduce((sum, item) => sum + safeNumber(item.revenue), 0),
+            petty: props.dailySales.reduce((sum, item) => sum + safeNumber(item.petty_cash), 0),
+            net: props.dailySales.reduce((sum, item) => sum + safeNumber(item.net_profit), 0),
         },
         shifts: {
-            sales: props.shifts.reduce((sum, item) => sum + Number(item.total_cash_sales), 0),
-            physical: props.shifts.reduce((sum, item) => sum + Number(item.closing_cash || 0), 0),
+            sales: props.shifts.reduce((sum, item) => sum + safeNumber(item.total_cash_sales), 0),
+            physical: props.shifts.reduce((sum, item) => sum + safeNumber(item.closing_cash), 0),
             diff: props.shifts.reduce((sum, item) => {
                 if (!item.closed_at) return sum;
-                const expected = Number(item.opening_balance) + Number(item.total_cash_sales) - Number(item.petty_cash_sum || 0);
-                return sum + (Number(item.closing_cash) - expected);
+                const expected = safeNumber(item.opening_balance) + safeNumber(item.total_cash_sales) - safeNumber(item.petty_cash_sum);
+                return sum + (safeNumber(item.closing_cash) - expected);
             }, 0)
         },
         performance: {
-            qty: filteredMenuPerformance.value.reduce((sum, item) => sum + Number(item.total_qty), 0),
-            revenue: filteredMenuPerformance.value.reduce((sum, item) => sum + Number(item.total_revenue), 0),
+            qty: filteredMenuPerformance.value.reduce((sum, item) => sum + safeNumber(item.total_qty), 0),
+            revenue: filteredMenuPerformance.value.reduce((sum, item) => sum + safeNumber(item.total_revenue), 0),
         },
-        expenses: props.pettyCashLogs.reduce((sum, item) => sum + Number(item.amount), 0),
-        voids: props.voidLogs.reduce((sum, item) => sum + Number(item.total), 0),
-        transactions: props.orderHistory.reduce((sum, item) => sum + Number(item.total), 0)
+        expenses: props.pettyCashLogs.reduce((sum, item) => sum + safeNumber(item.amount), 0),
+        voids: props.voidLogs.reduce((sum, item) => sum + safeNumber(item.total), 0),
+        transactions: props.orderHistory.reduce((sum, item) => sum + safeNumber(item.total), 0)
+    };
+});
+
+const profitability = computed(() => {
+    const total_cogs = filteredMenuPerformance.value.reduce((sum, item) => sum + safeNumber(item.total_cogs), 0);
+    const gross_profit = filteredMenuPerformance.value.reduce((sum, item) => sum + safeNumber(item.margin), 0);
+    return {
+        total_cogs,
+        gross_profit
     };
 });
 </script>
@@ -749,10 +773,10 @@ const totals = computed(() => {
                                             <td class="px-8 py-5 text-center">
                                                 <span 
                                                     v-if="shift.closed_at"
-                                                    :class="shift.closing_cash - (shift.opening_balance + shift.total_cash_sales - (shift.petty_cash_sum || 0)) === 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'" 
+                                                    :class="safeNumber(shift.closing_cash) - (safeNumber(shift.opening_balance) + safeNumber(shift.total_cash_sales) - safeNumber(shift.petty_cash_sum)) === 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'" 
                                                     class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest"
                                                 >
-                                                    {{ formatPrice(shift.closing_cash - (shift.opening_balance + shift.total_cash_sales - (shift.petty_cash_sum || 0))) }}
+                                                    {{ formatPrice(safeNumber(shift.closing_cash) - (safeNumber(shift.opening_balance) + safeNumber(shift.total_cash_sales) - safeNumber(shift.petty_cash_sum))) }}
                                                 </span>
                                                 <span v-else class="text-[9px] font-black text-amber-500 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">Active</span>
                                             </td>
@@ -781,7 +805,7 @@ const totals = computed(() => {
                                                             <div class="h-px bg-slate-800"></div>
                                                             <div class="flex justify-between text-sm font-black text-amber-500">
                                                                 <span>Ekspektasi:</span>
-                                                                <span>Rp {{ formatPrice(Number(shift.opening_balance) + Number(shift.total_cash_sales) - Number(shift.petty_cash_sum || 0)) }}</span>
+                                                                <span>Rp {{ formatPrice(safeNumber(shift.opening_balance) + safeNumber(shift.total_cash_sales) - safeNumber(shift.petty_cash_sum)) }}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -903,7 +927,7 @@ const totals = computed(() => {
                                         <td class="px-8 py-5 text-sm font-black text-emerald-600 text-right">
                                             Rp {{ formatPrice(menu.margin) }}
                                             <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                                                {{ ((menu.margin / menu.total_revenue) * 100).toFixed(1) }}%
+                                                {{ menu.total_revenue ? ((menu.margin / menu.total_revenue) * 100).toFixed(1) : '0.0' }}%
                                             </p>
                                         </td>
                                     </tr>

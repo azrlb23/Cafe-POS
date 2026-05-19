@@ -59,29 +59,29 @@ const submit = () => {
                 <div class="bg-slate-50 rounded-2xl p-4 mb-6 space-y-3 border border-slate-100">
                     <div class="flex justify-between text-xs">
                         <span class="text-slate-500 font-medium uppercase tracking-wider">Saldo Awal</span>
-                        <span class="font-bold text-slate-700">Rp {{ Number(activeShift?.opening_cash || 0).toLocaleString('id-ID') }}</span>
+                        <span class="font-bold text-slate-700 font-jakarta">Rp {{ Number(activeShift?.opening_cash || 0).toLocaleString('id-ID') }}</span>
                     </div>
                     <div class="flex justify-between text-xs">
                         <span class="text-slate-500 font-medium uppercase tracking-wider">Penjualan Tunai (+)</span>
-                        <span class="font-bold text-slate-700">Rp {{ Number(activeShift?.total_cash_sales || 0).toLocaleString('id-ID') }}</span>
+                        <span class="font-bold text-slate-700 font-jakarta">Rp {{ Number(activeShift?.total_cash_sales || 0).toLocaleString('id-ID') }}</span>
                     </div>
                     <div class="flex justify-between text-xs">
                         <span class="text-slate-500 font-medium uppercase tracking-wider">Kas Keluar (-)</span>
-                        <span class="font-bold text-red-600">- Rp {{ Number(activeShift?.total_petty_cash || 0).toLocaleString('id-ID') }}</span>
+                        <span class="font-bold text-red-600 font-jakarta">- Rp {{ Number(activeShift?.total_petty_cash || 0).toLocaleString('id-ID') }}</span>
                     </div>
                     <div class="pt-2 border-t border-slate-200 flex justify-between items-center">
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Seharusnya Ada</span>
-                        <span class="text-lg font-black text-amber-600">Rp {{ expectedCash.toLocaleString('id-ID') }}</span>
+                        <span class="text-lg font-black text-amber-600 font-jakarta">Rp {{ expectedCash.toLocaleString('id-ID') }}</span>
                     </div>
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 text-center">Input Kas Fisik (Di Laci)</label>
-                        <input v-model.number="form.closing_cash" type="number" min="0" step="1000" class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 text-center text-2xl font-black text-slate-900 focus:border-red-400 outline-none transition-all" required>
+                        <input v-model.number="form.closing_cash" type="number" min="0" step="1000" class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 text-center text-2xl font-black text-slate-900 focus:border-red-400 outline-none transition-all font-jakarta" required>
                         
                         <div v-if="form.closing_cash > 0" class="mt-3 text-center">
-                            <span :class="discrepancy === 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'" class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            <span :class="discrepancy === 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'" class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest font-jakarta">
                                 Selisih: Rp {{ discrepancy.toLocaleString('id-ID') }} 
                                 ({{ discrepancy === 0 ? 'Sesuai' : (discrepancy > 0 ? 'Surplus' : 'Kurang') }})
                             </span>

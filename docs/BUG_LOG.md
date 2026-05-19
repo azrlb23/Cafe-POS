@@ -51,6 +51,23 @@ Layar putih atau blank screen pada framework Vue 3 (menggunakan Inertia) biasany
 
 ---
 
+## 7. Bug Alur Pilihan Layanan POS (Takeaway Langsung Diarahkan ke Dine In)
+
+### Kasus: Pilihan "Takeaway" Tidak Bisa Dipilih (Selalu Kembali ke Dine In)
+* **Gejala:** Saat kasir mengklik tombol layanan "Takeout" di panel pesanan kanan, tombol tersebut tidak menyala aktif (tetap abu-abu) dan status order di header kanan tetap menampilkan "Pilih Layanan...". Akibatnya, pesanan takeaway sering kali salah diarahkan atau kasir terpaksa memilih meja "Dine In" terlebih dahulu.
+* **Penyebab Utama:**
+  1. Komponen `CartPanel.vue` sebelumnya menggunakan logika kelas `:class="!selectedTable && cart.length > 0 ? ... : ..."` untuk menyalakan tombol Takeout. Ini menyebabkan tombol Takeout **tidak bisa menyala jika keranjang belanja masih kosong**.
+  2. Klik pada tombol Takeout memicu emit `@clear-table` ke parent `Pos.vue`, namun di `Pos.vue` **tidak ada handler** untuk menangani `@clear-table`, sehingga state `selectedTable` tidak pernah direset menjadi `null` dan tombol Dine In tetap menyala jika sebelumnya aktif.
+  3. Status tipe layanan diikat secara tidak langsung (*implicit binding*) hanya berdasarkan apakah `selectedTable` bernilai `null` atau tidak. Hal ini membuat alur logika rentan bentrok dan tidak konsisten.
+* **Solusi/Pencegahan:**
+  1. **Dekopel State Tipe Layanan (Explicit Binding)**: Menambahkan reactive ref baru `orderType = ref('dine_in')` di `Pos.vue` untuk menyimpan pilihan tipe layanan secara eksplisit (`'dine_in'` atau `'takeaway'`).
+  2. **Interaksi Tab yang Konsisten**:
+     - Memilih **Takeout** langsung mengubah `orderType` menjadi `'takeaway'`, menghapus `selectedTable` menjadi `null`, dan menyalakan highlight tombol Takeout tanpa bergantung pada isi keranjang.
+     - Memilih **Dine In** langsung mengubah `orderType` menjadi `'dine_in'` dan membuka modal pemilihan meja (`TableSelectionModal`).
+  3. **Penyempurnaan Submit**: Menyesuaikan payload submit `orderForm.order_type` dan `orderForm.cafe_table_id` agar terikat secara deterministik ke nilai `orderType` tersebut.*
+
+---
+
 ## 3. Error Resolusi Import (Vite)
 
 ### Kasus: `Failed to resolve import "moment"`

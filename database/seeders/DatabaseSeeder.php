@@ -69,6 +69,32 @@ class DatabaseSeeder extends Seeder
             $cashier2->assignRole($roleCashier);
         }
 
+        $cashier3 = User::firstOrCreate(
+            ['email' => 'kasir3@denjavas.com'],
+            [
+                'name' => 'Kasir 3',
+                'password' => Hash::make('password'),
+                'pin' => '333444',
+                'role' => 'kasir',
+            ]
+        );
+        if (!$cashier3->hasRole('kasir')) {
+            $cashier3->assignRole($roleCashier);
+        }
+
+        $cashier4 = User::firstOrCreate(
+            ['email' => 'kasir4@denjavas.com'],
+            [
+                'name' => 'Kasir 4',
+                'password' => Hash::make('password'),
+                'pin' => '555666',
+                'role' => 'kasir',
+            ]
+        );
+        if (!$cashier4->hasRole('kasir')) {
+            $cashier4->assignRole($roleCashier);
+        }
+
 
         // ==========================================
         // 2. SETUP CATEGORIES

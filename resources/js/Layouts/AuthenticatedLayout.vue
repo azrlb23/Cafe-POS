@@ -17,13 +17,13 @@ const sidebarOpen = ref(false);
             >
                 <!-- Logo -->
                 <div class="h-20 flex items-center px-8 border-b border-slate-50">
-                    <Link :href="route('dashboard')" class="text-2xl font-serif font-bold tracking-wider text-[#D97706]">
+                    <Link :href="route('dashboard')" class="text-2xl font-serif font-bold tracking-wider text-[#B45309]">
                         Denjavas <span class="text-slate-800 font-serif font-medium italic text-xl">Cafe</span>
                     </Link>
                 </div>
 
                 <!-- Navigation Menu -->
-                <div class="flex-1 overflow-y-auto py-6 px-4 space-y-8 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div class="flex-1 overflow-y-auto py-6 px-4 space-y-8 no-scrollbar">
                     <!-- Section: UTAMA -->
                     <div class="space-y-2">
                         <p class="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Utama</p>
@@ -78,6 +78,17 @@ const sidebarOpen = ref(false);
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                             </template>
                             Stok Masuk
+                        </SidebarLink>
+                    </div>
+
+                    <!-- Section: KASIR -->
+                    <div class="space-y-2">
+                        <p class="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Karyawan</p>
+                        <SidebarLink :href="route('admin.cashiers.index')" :active="route().current('admin.cashiers.*')">
+                            <template #icon>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </template>
+                            Manajemen Kasir
                         </SidebarLink>
                     </div>
 
@@ -143,7 +154,7 @@ const sidebarOpen = ref(false);
                         
                         <!-- Premium Minimal Breadcrumbs -->
                         <div v-else class="flex items-center gap-2.5 text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 select-none animate-fade-in">
-                            <span class="hover:text-amber-600 transition-colors">Admin</span>
+                            <span class="hover:text-amber-700 transition-colors">Admin</span>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" class="text-slate-300 shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
                             <span v-if="route().current('dashboard')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Dashboard</span>
                             <span v-else-if="route().current('admin.menus.*')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Katalog Menu</span>
@@ -152,33 +163,14 @@ const sidebarOpen = ref(false);
                             <span v-else-if="route().current('admin.raw-materials.*')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Bahan Baku</span>
                             <span v-else-if="route().current('admin.suppliers.*')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Supplier</span>
                             <span v-else-if="route().current('admin.purchase-orders.*')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Stok Masuk</span>
+                            <span v-else-if="route().current('admin.cashiers.*')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Manajemen Kasir</span>
                             <span v-else-if="route().current('admin.reports.*')" class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Laporan</span>
                             <span v-else class="text-slate-800 font-serif font-black normal-case text-sm italic tracking-normal">Portal</span>
                         </div>
                     </div>
 
                     <!-- Right Side Controls -->
-                    <div class="flex items-center gap-4">
-                        <!-- Kasir View Toggle (If Kasir) -->
-                        <div v-if="$page.props.auth.user.role === 'kasir'" class="flex items-center gap-2">
-                            <Link
-                                v-if="!route().current('pos.history')"
-                                :href="route('pos.history')"
-                                class="inline-flex items-center px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all gap-2"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Riwayat
-                            </Link>
-                            <Link
-                                v-else
-                                :href="route('pos')"
-                                class="inline-flex items-center px-4 py-2 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all gap-2"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
-                                Buka POS
-                            </Link>
-                        </div>
-
+                    <div v-if="$page.props.auth.user.role !== 'kasir'" class="flex items-center gap-4">
                         <!-- Logout (If Not Admin, Mobile Hamburger handles Admin logout) -->
                         <Link 
                             v-if="$page.props.auth.user.role !== 'admin'"
@@ -193,7 +185,7 @@ const sidebarOpen = ref(false);
                 </header>
 
                 <!-- PAGE CONTENT -->
-                <main class="flex-1 overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <main class="flex-1 overflow-x-hidden no-scrollbar">
                     <slot />
                 </main>
             </div>
@@ -211,16 +203,6 @@ const sidebarOpen = ref(false);
     font-family: 'Playfair Display', serif;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-}
-.scrollbar-track-transparent::-webkit-scrollbar-track {
-    background: transparent;
-}
-.scrollbar-thumb-slate-200::-webkit-scrollbar-thumb {
-    background-color: #e2e8f0;
-    border-radius: 20px;
-}
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }

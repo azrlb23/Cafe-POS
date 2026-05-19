@@ -15,6 +15,7 @@ export default {
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
                 serif: ['Playfair Display', ...defaultTheme.fontFamily.serif],
+                jakarta: ['Plus Jakarta Sans', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 cafe: {

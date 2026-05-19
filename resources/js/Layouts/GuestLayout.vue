@@ -20,7 +20,7 @@ import { Link } from '@inertiajs/vue3';
             <div class="absolute inset-0 flex flex-col items-center justify-center p-20">
                 <div class="max-w-xl text-center">
                     <div class="w-24 h-24 bg-amber-100 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-amber-500/10">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17 8h1a4 4 0 1 1 0 8h-1"></path>
                             <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path>
                             <line x1="6" y1="2" x2="6" y2="4"></line>
@@ -29,7 +29,7 @@ import { Link } from '@inertiajs/vue3';
                         </svg>
                     </div>
                     <h2 class="text-6xl font-serif font-black text-[#1C1917] mb-8 leading-tight tracking-tight">
-                        Authentic <span class="text-[#D97706]">Coffee</span> Experience.
+                        Authentic <span class="text-[#B45309]">Coffee</span> Experience.
                     </h2>
                     <p class="text-[#78716C] text-xl leading-relaxed font-medium">
                         Denjavas Café POS — Solusi manajemen kasir modern yang intuitif dan bertenaga untuk bisnis kuliner Anda.
@@ -39,7 +39,7 @@ import { Link } from '@inertiajs/vue3';
             
             <!-- Bottom Accent -->
             <div class="absolute bottom-12 left-12 flex items-center gap-4">
-                <div class="w-12 h-0.5 bg-[#D97706]"></div>
+                <div class="w-12 h-0.5 bg-[#B45309]"></div>
                 <span class="text-[10px] font-black uppercase tracking-[0.4em] text-[#A8A29E]">Denjavas Café Ecosystem</span>
             </div>
         </div>
@@ -49,10 +49,10 @@ import { Link } from '@inertiajs/vue3';
             <!-- Header Logo Area -->
             <div class="flex flex-col items-center mb-12">
                 <Link href="/" class="group flex flex-col items-center">
-                    <h1 class="text-3xl font-serif font-black tracking-tighter text-[#1C1917] group-hover:text-[#D97706] transition-colors">
-                        Denjavas<span class="text-[#D97706]">.</span>
+                    <h1 class="text-3xl font-serif font-black tracking-tighter text-[#1C1917] group-hover:text-[#B45309] transition-colors">
+                        Denjavas<span class="text-[#B45309]">.</span>
                     </h1>
-                    <div class="h-1 w-8 bg-amber-500 rounded-full mt-1 transform group-hover:w-12 transition-all"></div>
+                    <div class="h-1 w-8 bg-amber-700 rounded-full mt-1 transform group-hover:w-12 transition-all"></div>
                 </Link>
             </div>
 

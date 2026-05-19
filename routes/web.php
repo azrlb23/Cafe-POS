@@ -19,8 +19,10 @@ Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class
 
 Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
     Route::get('/pos', [\App\Http\Controllers\PosController::class, 'index'])->name('pos');
+    Route::get('/pos/active-orders', [\App\Http\Controllers\PosController::class, 'activeOrders'])->name('pos.active-orders');
     Route::get('/pos/history', [\App\Http\Controllers\PosController::class, 'history'])->name('pos.history');
     Route::post('/pos/orders/{order}/void', [\App\Http\Controllers\PosController::class, 'voidOrder'])->name('pos.orders.void');
+    Route::post('/pos/orders/{order}/status', [\App\Http\Controllers\PosController::class, 'updateStatus'])->name('pos.orders.update-status');
     Route::post('/pos/shifts/start', [\App\Http\Controllers\PosController::class, 'startShift'])->name('pos.shifts.start');
     Route::post('/pos/shifts/end', [\App\Http\Controllers\PosController::class, 'endShift'])->name('pos.shifts.end');
     Route::post('/pos/orders', [\App\Http\Controllers\PosController::class, 'submitOrder'])->name('pos.orders');
@@ -35,6 +37,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('tables', [\App\Http\Controllers\Admin\AdminTableController::class, 'index'])->name('tables.index');
     Route::resource('suppliers', \App\Http\Controllers\Admin\SupplierController::class);
     Route::resource('purchase-orders', \App\Http\Controllers\Admin\PurchaseOrderController::class);
+    Route::resource('cashiers', \App\Http\Controllers\Admin\CashierController::class);
     Route::get('reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/export', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('reports.export');
 });

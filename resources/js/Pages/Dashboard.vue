@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import DatePicker from '@/Components/DatePicker.vue';
@@ -44,6 +44,9 @@ const props = defineProps({
     variantContribution: Array,
     recentOrders: Array,
     recentPettyCash: Array,
+    // Activity Monitoring
+    activityLogs: Array,
+    activeCashiers: Array,
 });
 
 const form = useForm({
@@ -69,16 +72,60 @@ const itemsPerPage = 5;
 
 const pagedOrders = computed(() => {
     const start = (orderPage.value - 1) * itemsPerPage;
-    return props.recentOrders.slice(start, start + itemsPerPage);
+    return (props.recentOrders || []).slice(start, start + itemsPerPage);
 });
 
 const pagedPettyCash = computed(() => {
     const start = (pettyCashPage.value - 1) * itemsPerPage;
-    return props.recentPettyCash.slice(start, start + itemsPerPage);
+    return (props.recentPettyCash || []).slice(start, start + itemsPerPage);
 });
 
-const totalOrderPages = computed(() => Math.ceil(props.recentOrders.length / itemsPerPage));
-const totalPettyCashPages = computed(() => Math.ceil(props.recentPettyCash.length / itemsPerPage));
+const totalOrderPages = computed(() => Math.max(1, Math.ceil((props.recentOrders || []).length / itemsPerPage)));
+const totalPettyCashPages = computed(() => Math.max(1, Math.ceil((props.recentPettyCash || []).length / itemsPerPage)));
+
+// --- Activity Log Pagination ---
+const activityPage = ref(1);
+const activityPerPage = 4;
+
+const pagedActivityLogs = computed(() => {
+    const logs = props.activityLogs || [];
+    const start = (activityPage.value - 1) * activityPerPage;
+    return logs.slice(start, start + activityPerPage);
+});
+
+const totalActivityPages = computed(() => Math.max(1, Math.ceil((props.activityLogs || []).length / activityPerPage)));
+
+// Watchers to reset pagination when props change
+watch(() => props.recentOrders, () => {
+    orderPage.value = 1;
+});
+watch(() => props.recentPettyCash, () => {
+    pettyCashPage.value = 1;
+});
+watch(() => props.activityLogs, () => {
+    activityPage.value = 1;
+});
+
+const actionConfig = {
+    shift_open: { icon: '▶', color: 'emerald', label: 'Buka Shift' },
+    shift_close: { icon: '⏹', color: 'slate', label: 'Tutup Shift' },
+    order_create: { icon: '🧾', color: 'amber', label: 'Pesanan Baru' },
+    order_void: { icon: '✕', color: 'red', label: 'Void' },
+    petty_cash: { icon: '💸', color: 'violet', label: 'Kas Keluar' },
+};
+
+const formatTime = (dateTime) => {
+    if (!dateTime) return '-';
+    return new Date(dateTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatShiftDuration = (openedAt) => {
+    if (!openedAt) return '-';
+    const diff = Math.floor((Date.now() - new Date(openedAt).getTime()) / 60000);
+    const hours = Math.floor(diff / 60);
+    const mins = diff % 60;
+    return hours > 0 ? `${hours}j ${mins}m` : `${mins}m`;
+};
 
 const salesTrendData = computed(() => {
     const dates = props.salesTrend.map(item => item.date);
@@ -94,8 +141,8 @@ const salesTrendData = computed(() => {
                     const found = props.salesTrend.find(item => item.date === date);
                     return found ? found.revenue : 0;
                 }),
-                borderColor: '#d97706',
-                backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                borderColor: '#B45309',
+                backgroundColor: 'rgba(180, 83, 9, 0.1)',
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
@@ -178,7 +225,7 @@ const topMenusData = computed(() => {
         datasets: [{
             label: 'Qty',
             data: props.topMenus.map(item => item.total_quantity),
-            backgroundColor: '#d97706',
+            backgroundColor: '#B45309',
             borderRadius: 8,
             barThickness: 20
         }]
@@ -186,7 +233,7 @@ const topMenusData = computed(() => {
 });
 
 const paymentMethodsData = computed(() => {
-    const colors = { 'cash': '#d97706', 'qris': '#3b82f6', 'ewallet': '#10b981', 'transfer': '#8b5cf6' };
+    const colors = { 'cash': '#B45309', 'qris': '#3b82f6', 'ewallet': '#10b981', 'transfer': '#8b5cf6' };
     return {
         labels: props.paymentMethods.map(item => item.payment_method.toUpperCase()),
         datasets: [{
@@ -203,7 +250,7 @@ const orderTypesData = computed(() => {
         labels: props.orderTypes.map(item => item.order_type === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY'),
         datasets: [{
             data: props.orderTypes.map(item => item.count),
-            backgroundColor: ['#d97706', '#1c1917'],
+            backgroundColor: ['#B45309', '#1c1917'],
             borderWidth: 0,
             hoverOffset: 10
         }]
@@ -217,8 +264,8 @@ const categoryRevenueData = computed(() => {
             label: 'Revenue',
             data: props.categoryRevenue.map(item => item.revenue),
             backgroundColor: [
-                '#d97706', // Brand Gold (Amber 600)
-                '#f59e0b', // Amber 500
+                '#B45309', // Brand Gold (Amber 700)
+                '#d97706', // Amber 600
                 '#1c1917', // Stone 900
                 '#10b981', // Emerald 500
                 '#8b5cf6', // Violet 500
@@ -258,8 +305,8 @@ const peakHoursData = computed(() => {
         datasets: [{
             label: 'Pesanan',
             data: props.peakHours.map(item => item.count),
-            backgroundColor: 'rgba(217, 119, 6, 0.4)',
-            borderColor: '#d97706',
+            backgroundColor: 'rgba(180, 83, 9, 0.4)',
+            borderColor: '#B45309',
             borderWidth: 1,
             borderRadius: 4,
         }]
@@ -272,7 +319,7 @@ const popularTablesData = computed(() => {
         datasets: [{
             label: 'Total Pesanan',
             data: props.popularTables.map(item => item.count),
-            backgroundColor: 'rgba(217, 119, 6, 0.8)',
+            backgroundColor: 'rgba(180, 83, 9, 0.8)',
             borderRadius: 12,
             barThickness: 24,
         }]
@@ -299,8 +346,8 @@ const cashierPerformanceData = computed(() => {
             label: 'Revenue',
             data: props.cashierPerformance.map(item => item.revenue),
             backgroundColor: [
-                'rgba(217, 119, 6, 0.7)', // Brand Gold (Amber 600)
-                'rgba(245, 158, 11, 0.7)', // Amber 500
+                'rgba(180, 83, 9, 0.7)', // Brand Gold (Amber 700)
+                'rgba(217, 119, 6, 0.7)', // Amber 600
                 'rgba(28, 25, 23, 0.7)',   // Stone 900
                 'rgba(16, 185, 129, 0.7)', // Emerald 500
                 'rgba(139, 92, 246, 0.7)'  // Violet 500
@@ -315,7 +362,7 @@ const variantContributionData = computed(() => {
         labels: props.variantContribution.map(item => item.option_name),
         datasets: [{
             data: props.variantContribution.map(item => item.revenue),
-            backgroundColor: ['#d97706', '#1c1917', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6'],
+            backgroundColor: ['#B45309', '#1c1917', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6'],
             borderWidth: 0
         }]
     };
@@ -377,7 +424,7 @@ const radarOptions = {
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 animate-fade-in-up">
                     <div>
                         <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
-                            Insights <span class="text-amber-600 italic">Analitik</span>
+                            Insights <span class="text-amber-700 italic">Analitik</span>
                         </h2>
                         <p class="text-slate-400 text-xs mt-2 font-medium">
                             Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
@@ -397,21 +444,21 @@ const radarOptions = {
                     <!-- Actions Area (Filters & Active Shift) -->
                     <div class="flex flex-wrap items-center gap-4">
                         <!-- Date Filter Form -->
-                        <form @submit.prevent="submitFilter" class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-[2rem] border border-slate-100 shadow-sm transition-all focus-within:shadow-md focus-within:border-amber-300">
+                        <form @submit.prevent="submitFilter" class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-[2rem] border border-slate-100 shadow-sm transition-all focus-within:shadow-md focus-within:border-amber-500">
                             <div class="flex items-center gap-2 px-2">
                                 <DatePicker 
                                     v-model="form.start_date" 
                                     placeholder="Mulai"
                                     class="!w-48 sm:!w-56"
-                                />
+                                 />
                                 <span class="text-slate-300 font-light">—</span>
                                 <DatePicker 
                                     v-model="form.end_date" 
                                     placeholder="Selesai"
                                     class="!w-48 sm:!w-56"
-                                />
+                                 />
                             </div>
-                            <button type="submit" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white p-3 rounded-2xl transition-all active:scale-95 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20 flex items-center justify-center">
+                            <button type="submit" class="bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white p-3 rounded-2xl transition-all active:scale-95 shadow-lg shadow-amber-700/10 hover:shadow-amber-700/20 flex items-center justify-center">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             </button>
                         </form>
@@ -440,7 +487,7 @@ const radarOptions = {
                 <!-- MAIN KPI GRID (DEALDECK STYLE) -->
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     <!-- Primary Card: Total Sales -->
-                    <div class="lg:col-span-1 bg-gradient-to-br from-amber-500 to-amber-700 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-amber-200 relative overflow-hidden group">
+                    <div class="lg:col-span-1 bg-gradient-to-br from-amber-700 to-amber-800 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-amber-700/20 relative overflow-hidden group">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform"></div>
                         <div class="flex items-start justify-between mb-8 relative z-10">
                             <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
@@ -461,10 +508,10 @@ const radarOptions = {
                         <!-- Card: Total Orders -->
                         <div class="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-50 hover:shadow-xl transition-all group">
                             <div class="flex items-start justify-between mb-8">
-                                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <div class="w-12 h-12 bg-amber-50/70 text-amber-700 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                                 </div>
-                                <div class="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1">
+                                <div class="bg-amber-50/70 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1">
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="18 15 12 9 6 15"/></svg>
                                     +12.4%
                                 </div>
@@ -511,7 +558,7 @@ const radarOptions = {
 
                 <!-- SECTION: FINANCIAL -->
                 <div class="flex items-center gap-4 pt-4">
-                    <div class="w-2 h-6 bg-amber-500 rounded-full"></div>
+                    <div class="w-2 h-6 bg-amber-700 rounded-full"></div>
                     <span class="text-[11px] font-black text-slate-800 uppercase tracking-[0.3em]">Analisis Finansial & Produk</span>
                 </div>
 
@@ -525,7 +572,7 @@ const radarOptions = {
                             </div>
                             <div class="flex items-center gap-6">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-amber-700"></div>
                                     <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Revenue</span>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -551,8 +598,8 @@ const radarOptions = {
                         <div class="mt-8 space-y-4 flex-grow overflow-y-auto pr-2">
                             <div v-for="(item, idx) in categoryRevenue.slice(0, 4)" :key="idx" class="flex items-center justify-between group">
                                 <div class="flex items-center gap-3">
-                                    <div :style="{ backgroundColor: ['#D97706', '#F59E0B', '#1C1917', '#10B981'][idx] }" class="w-2 h-2 rounded-full"></div>
-                                    <span class="text-sm font-bold text-slate-600 group-hover:text-amber-600 transition-colors">{{ item.category_name }}</span>
+                                    <div :style="{ backgroundColor: ['#B45309', '#D97706', '#1C1917', '#10B981'][idx] }" class="w-2 h-2 rounded-full"></div>
+                                    <span class="text-sm font-bold text-slate-600 group-hover:text-amber-700 transition-colors">{{ item.category_name }}</span>
                                 </div>
                                 <span class="text-xs font-black text-[#1C1E23]">Rp {{ formatPrice(item.revenue) }}</span>
                             </div>
@@ -562,7 +609,7 @@ const radarOptions = {
 
                 <!-- SECTION: OPERATIONAL -->
                 <div class="flex items-center gap-4 pt-4">
-                    <div class="w-2 h-6 bg-amber-500 rounded-full"></div>
+                    <div class="w-2 h-6 bg-amber-700 rounded-full"></div>
                     <span class="text-[11px] font-black text-slate-800 uppercase tracking-[0.3em]">Wawasan Operasional</span>
                 </div>
 
@@ -615,7 +662,7 @@ const radarOptions = {
                         <div class="space-y-6">
                             <div v-for="item in stockProjection.slice(0, 5)" :key="item.id" class="flex items-center justify-between group">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-black border border-slate-100 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-black border border-slate-100 group-hover:bg-amber-50/70 group-hover:text-amber-700 transition-colors">
                                         {{ item.name.charAt(0) }}
                                     </div>
                                     <div>
@@ -641,7 +688,7 @@ const radarOptions = {
                                     <span class="text-xs font-black text-[#1C1E23]">Rp {{ formatPrice(variant.revenue) }}</span>
                                 </div>
                                 <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div class="h-full bg-amber-600 rounded-full" :style="{ width: (variant.revenue / variantContribution[0].revenue * 100) + '%' }"></div>
+                                    <div class="h-full bg-amber-700 rounded-full" :style="{ width: (variant.revenue / variantContribution[0].revenue * 100) + '%' }"></div>
                                 </div>
                             </div>
                         </div>
@@ -681,15 +728,18 @@ const radarOptions = {
                                 <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Recent Transactions</h3>
                                 <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Monitor Pesanan Real-time</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button @click="orderPage--" :disabled="orderPage === 1" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
-                                <button @click="orderPage++" :disabled="orderPage === totalOrderPages" class="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center hover:bg-amber-700 shadow-lg shadow-amber-200 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"/></svg></button>
+                            <div class="flex items-center gap-4">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Page {{ orderPage }} / {{ totalOrderPages }}</span>
+                                <div class="flex gap-2">
+                                    <button @click="orderPage--" :disabled="orderPage <= 1" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                    <button @click="orderPage++" :disabled="orderPage >= totalOrderPages" class="w-8 h-8 rounded-lg bg-amber-700 text-white flex items-center justify-center hover:bg-amber-800 shadow-lg shadow-amber-700/20 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg></button>
+                                </div>
                             </div>
                         </div>
                         <div class="space-y-4">
                             <div v-for="order in pagedOrders" :key="order.id" class="flex items-center justify-between p-5 rounded-[2rem] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
                                 <div class="flex items-center gap-5">
-                                    <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 font-black text-xs">#{{ order.order_number.slice(-2) }}</div>
+                                    <div class="w-12 h-12 rounded-2xl bg-amber-50/70 flex items-center justify-center text-amber-700 font-black text-xs">#{{ order.order_number.slice(-2) }}</div>
                                     <div>
                                         <p class="text-sm font-black text-[#1C1E23]">{{ order.order_number }}</p>
                                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{{ order.user?.name }} • {{ order.payment_method }}</p>
@@ -697,7 +747,7 @@ const radarOptions = {
                                 </div>
                                 <div class="text-right">
                                     <p class="text-sm font-black text-[#1C1E23]">Rp {{ formatPrice(order.total) }}</p>
-                                    <span :class="order.status === 'completed' ? 'text-emerald-500 bg-emerald-50' : 'text-amber-500 bg-amber-50'" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest">{{ order.status }}</span>
+                                    <span :class="order.status === 'completed' ? 'text-emerald-500 bg-emerald-50' : 'text-amber-700 bg-amber-50/70'" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest">{{ order.status }}</span>
                                 </div>
                             </div>
                         </div>
@@ -721,9 +771,131 @@ const radarOptions = {
                         <div class="mt-8 flex justify-between items-center border-t border-white/5 pt-6">
                             <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Page {{ pettyCashPage }} / {{ totalPettyCashPages }}</span>
                             <div class="flex gap-2">
-                                <button @click="pettyCashPage--" :disabled="pettyCashPage === 1" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 flex items-center justify-center hover:bg-white/10 disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
-                                <button @click="pettyCashPage++" :disabled="pettyCashPage === totalPettyCashPages" class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center hover:bg-white/20 disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6" transform="rotate(180 12 12)"/></svg></button>
+                                <button @click="pettyCashPage--" :disabled="pettyCashPage <= 1" class="w-8 h-8 rounded-lg bg-white/5 text-slate-400 flex items-center justify-center hover:bg-white/10 disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                <button @click="pettyCashPage++" :disabled="pettyCashPage >= totalPettyCashPages" class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center hover:bg-white/20 disabled:opacity-20"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg></button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION: MONITOR KASIR -->
+                <div class="flex items-center gap-4 animate-fade-in-up">
+                    <div class="h-px flex-grow bg-slate-200/50"></div>
+                    <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] bg-white px-4 py-1.5 rounded-full border border-slate-100 shadow-sm">Monitor Kasir</span>
+                    <div class="h-px flex-grow bg-slate-200/50"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10">
+                    <!-- Active Cashiers Cards -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
+                            <div class="mb-8">
+                                <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Kasir Aktif</h3>
+                                <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Shift yang sedang berjalan</p>
+                            </div>
+                            <div v-if="activeCashiers && activeCashiers.length > 0" class="space-y-4">
+                                <div v-for="shift in activeCashiers" :key="shift.id" class="flex items-center justify-between p-5 rounded-[2rem] bg-emerald-50/50 border border-emerald-100/50 group hover:bg-emerald-50 transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="relative">
+                                            <div class="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-200">
+                                                {{ shift.user?.name?.charAt(0) }}
+                                            </div>
+                                            <span class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white">
+                                                <span class="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75"></span>
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-black text-slate-800">{{ shift.user?.name }}</p>
+                                            <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-0.5">Online · {{ formatShiftDuration(shift.opened_at) }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs font-black text-slate-800">Rp {{ formatPrice(shift.total_sales || 0) }}</p>
+                                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="flex flex-col items-center justify-center py-12 text-center">
+                                <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                </div>
+                                <p class="text-xs font-bold text-slate-400">Tidak ada kasir aktif</p>
+                                <p class="text-[9px] text-slate-300 mt-1">Belum ada yang membuka shift hari ini</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity Timeline -->
+                    <div class="lg:col-span-8 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
+                        <div class="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Log Aktivitas Hari Ini</h3>
+                                <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Timeline semua aksi kasir</p>
+                            </div>
+                            <div v-if="totalActivityPages > 1" class="flex items-center gap-2">
+                                <button @click="activityPage--" :disabled="activityPage <= 1" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"/></svg></button>
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ activityPage }}/{{ totalActivityPages }}</span>
+                                <button @click="activityPage++" :disabled="activityPage >= totalActivityPages" class="w-8 h-8 rounded-lg bg-amber-700 text-white flex items-center justify-center hover:bg-amber-800 shadow-lg shadow-amber-700/20 disabled:opacity-30"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg></button>
+                            </div>
+                        </div>
+
+                        <div v-if="pagedActivityLogs.length > 0" class="relative">
+                            <!-- Timeline Line -->
+                            <div class="absolute left-[23px] top-4 bottom-4 w-px bg-slate-100"></div>
+
+                            <div class="space-y-1">
+                                <div v-for="log in pagedActivityLogs" :key="log.id" class="flex items-start gap-5 p-4 rounded-[1.5rem] hover:bg-slate-50/70 transition-all group relative">
+                                    <!-- Timeline Dot -->
+                                    <div class="relative z-10 flex-shrink-0">
+                                        <div 
+                                            class="w-[46px] h-[46px] rounded-2xl flex items-center justify-center text-lg shadow-sm border"
+                                            :class="{
+                                                'bg-emerald-50 border-emerald-100 text-emerald-600': (actionConfig[log.action] || {}).color === 'emerald',
+                                                'bg-slate-100 border-slate-200 text-slate-500': (actionConfig[log.action] || {}).color === 'slate',
+                                                'bg-amber-50/70 border-amber-100/50 text-amber-700': (actionConfig[log.action] || {}).color === 'amber',
+                                                'bg-red-50 border-red-100 text-red-500': (actionConfig[log.action] || {}).color === 'red',
+                                                'bg-violet-50 border-violet-100 text-violet-500': (actionConfig[log.action] || {}).color === 'violet',
+                                            }"
+                                        >
+                                            {{ (actionConfig[log.action] || { icon: '•' }).icon }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex-1 min-w-0 pt-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span 
+                                                class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest"
+                                                :class="{
+                                                    'bg-emerald-50 text-emerald-600': (actionConfig[log.action] || {}).color === 'emerald',
+                                                    'bg-slate-100 text-slate-500': (actionConfig[log.action] || {}).color === 'slate',
+                                                    'bg-amber-50/70 text-amber-700': (actionConfig[log.action] || {}).color === 'amber',
+                                                    'bg-red-50 text-red-500': (actionConfig[log.action] || {}).color === 'red',
+                                                    'bg-violet-50 text-violet-500': (actionConfig[log.action] || {}).color === 'violet',
+                                                }"
+                                            >
+                                                {{ (actionConfig[log.action] || { label: log.action }).label }}
+                                            </span>
+                                            <span class="text-[9px] font-bold text-slate-300">•</span>
+                                            <span class="text-[10px] font-bold text-slate-400">{{ log.user?.name }}</span>
+                                        </div>
+                                        <p class="text-[13px] font-medium text-slate-700 leading-relaxed truncate">{{ log.description }}</p>
+                                    </div>
+
+                                    <!-- Timestamp -->
+                                    <div class="flex-shrink-0 pt-2 text-right">
+                                        <p class="text-[11px] font-black text-slate-400">{{ formatTime(log.created_at) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else class="flex flex-col items-center justify-center py-16 text-center">
+                            <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-300"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-xs font-bold text-slate-400">Belum ada aktivitas hari ini</p>
+                            <p class="text-[9px] text-slate-300 mt-1">Log akan muncul saat kasir mulai beroperasi</p>
                         </div>
                     </div>
                 </div>
@@ -737,8 +909,4 @@ const radarOptions = {
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .delay-75 { animation-delay: 0.1s; }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #E7E5E4; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #D6D3D1; }
 </style>

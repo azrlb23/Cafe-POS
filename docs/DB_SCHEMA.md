@@ -2,7 +2,7 @@
 
 Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjavas POS.
 
-> **Terakhir diperbarui:** 16 Mei 2026 — Mencakup semua migrasi termasuk `void_reason`, `minimum_stock`, `cost_per_unit`, `petty_cashes`, dan breakdown shift.
+> **Terakhir diperbarui:** 19 Mei 2026 — Mencakup semua migrasi termasuk `suppliers`, `purchase_orders`, `activity_logs`, dan field tambahan `par_level`/`default_supplier_id`.
 
 ---
 
@@ -13,6 +13,7 @@ Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjava
 |-------|------|------------|
 | `id` | PK | |
 | `name` | String | Nama kategori (Kopi, Snack, dll) |
+| `slug` | String, Unique | URL-friendly slug |
 
 ### 2. `menus`
 | Kolom | Tipe | Keterangan |
@@ -52,6 +53,8 @@ Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjava
 | `current_stock` | Decimal(10,2) | Stok saat ini |
 | `minimum_stock` | Decimal(10,2) | Batas minimum (untuk alert) |
 | `cost_per_unit` | Decimal(12,2) | Harga beli per satuan (untuk kalkulasi HPP/COGS) |
+| `par_level` | Decimal(10,2), Nullable | Level par untuk reorder |
+| `default_supplier_id` | FK → suppliers, Nullable | Supplier default |
 
 ### 6. `recipes` *(Bill of Materials / BOM)*
 | Kolom | Tipe | Keterangan |
@@ -117,7 +120,7 @@ Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjava
 | `quantity` | Integer | |
 | `unit_price` | Decimal(12,2) | **Snapshot** base_price |
 | `subtotal` | Decimal(12,2) | (unit_price + modifiers) × qty |
-| `notes` | Text, Nullable | |
+| `notes` | Text, Nullable | Catatan per item (instruksi dapur) |
 
 ### 11. `order_item_options`
 | Kolom | Tipe | Keterangan |
@@ -159,6 +162,40 @@ Dokumentasi struktur tabel, kolom, dan relasi *foreign key* dalam sistem Denjava
 | `key` | String, Unique | Nama pengaturan |
 | `value` | Text, Nullable | Nilai pengaturan |
 
+### 15. `suppliers`
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| `id` | PK | |
+| `name` | String | Nama pemasok |
+| `contact` | String, Nullable | Kontak (telepon/email) |
+| `address` | Text, Nullable | Alamat pemasok |
+
+### 16. `purchase_orders`
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| `id` | PK | |
+| `supplier_id` | FK → suppliers | *Restrict On Delete* |
+| `po_number` | String, Unique | Nomor PO auto-generated |
+| `status` | Enum: draft, ordered, received | |
+| `notes` | Text, Nullable | |
+
+### 17. `purchase_order_items`
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| `id` | PK | |
+| `purchase_order_id` | FK → purchase_orders | *Cascade On Delete* |
+| `raw_material_id` | FK → raw_materials | *Restrict On Delete* |
+| `quantity` | Decimal(10,2) | Jumlah yang dipesan |
+| `unit_cost` | Decimal(12,2) | Harga per unit saat pembelian |
+
+### 18. `activity_logs`
+| Kolom | Tipe | Keterangan |
+|-------|------|------------|
+| `id` | PK | |
+| `user_id` | FK → users, Nullable | Pengguna yang melakukan aksi |
+| `action` | String | Tipe aksi (shift_open, shift_close, order_create, order_void, petty_cash) |
+| `description` | Text | Deskripsi lengkap aksi |
+
 ---
 
-*Struktur ini mencakup seluruh migrasi hingga Sprint 3 (Pencetakan Struk & Visualisasi Laporan).*
+*Struktur ini mencakup seluruh 18 tabel bisnis + tabel framework (users, sessions, cache, jobs, permissions).*

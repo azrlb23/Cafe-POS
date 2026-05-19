@@ -2,7 +2,7 @@
 
 Dokumen ini berisi panduan lengkap untuk mengoperasikan sistem *Point of Sales* (POS) Denjavas. Sistem ini dirancang untuk dua jenis pengguna utama: **Administrator (Pemilik/Manajer)** dan **Kasir**.
 
-> **Terakhir diperbarui:** 16 Mei 2026
+> **Terakhir diperbarui:** 19 Mei 2026
 
 ---
 
@@ -11,23 +11,20 @@ Dokumen ini berisi panduan lengkap untuk mengoperasikan sistem *Point of Sales* 
 Sistem dilengkapi dengan dua level otorisasi (*Role-Based Access Control*). Saat pertama kali sistem diinstal dan di-seed, akun berikut otomatis terbuat:
 
 ### Akun Administrator (Admin)
-Admin memiliki akses penuh ke seluruh sistem, termasuk mengelola data master (Kategori, Menu, Bahan Baku), melihat Dashboard Analitik, dan memantau operasional kasir.
+Admin memiliki akses penuh ke seluruh sistem, termasuk mengelola data master (Kategori, Menu, Bahan Baku, Supplier, Kasir), melihat Dashboard Analitik, dan memantau operasional kasir.
 - **Email Login:** `admin@denjavas.com`
 - **Password:** `password`
 - **PIN Kasir:** `123456`
 
 ### Akun Kasir (Cashier)
-Kasir memiliki akses ke modul Tablet POS untuk melayani pelanggan, memproses pesanan, mencatat petty cash, dan melihat riwayat transaksi hari ini. Terdapat 2 akun kasir default untuk sistem 2 shift:
+Kasir memiliki akses ke modul Tablet POS untuk melayani pelanggan, memproses pesanan, mencatat petty cash, dan melihat riwayat transaksi hari ini. Terdapat 4 akun kasir default:
 
-**Kasir 1 (Shift Pagi-Siang)**
-- **Email Login:** `kasir@denjavas.com`
-- **Password:** `password`
-- **PIN Kasir:** `654321`
-
-**Kasir 2 (Shift Siang-Malam)**
-- **Email Login:** `kasir2@denjavas.com`
-- **Password:** `password`
-- **PIN Kasir:** `111222`
+| # | Nama | Email | Password | PIN |
+|---|------|-------|----------|-----|
+| 1 | Kasir 1 | `kasir@denjavas.com` | `password` | `654321` |
+| 2 | Kasir 2 | `kasir2@denjavas.com` | `password` | `111222` |
+| 3 | Kasir 3 | `kasir3@denjavas.com` | `password` | `333444` |
+| 4 | Kasir 4 | `kasir4@denjavas.com` | `password` | `555666` |
 
 ---
 
@@ -44,20 +41,44 @@ Perintah di atas akan secara otomatis menjalankan:
 
 ---
 
-## 3. Alur Kerja Sistem (Workflow)
+## 3. Navigasi Sistem
+
+### Sidebar Admin
+Setelah login sebagai Admin, sidebar navigasi vertikal akan tampil di sisi kiri dengan pengelompokan menu:
+- **Utama:** Dashboard
+- **Produk & Layout:** Katalog Menu, Kategori Menu, Layout Meja
+- **Inventori:** Bahan Baku, Supplier, Stok Masuk
+- **Karyawan:** Manajemen Kasir
+- **Laporan:** Laporan & Riwayat
+
+### Sidebar POS Kasir
+Setelah login sebagai Kasir, sidebar sempit akan tampil di sisi kiri:
+- Menu (halaman POS utama)
+- Pesanan Aktif
+- Riwayat Transaksi
+- Kas Keluar
+- Tutup Shift
+- Logout
+
+---
+
+## 4. Alur Kerja Sistem (Workflow)
 
 ### Fase Setup (Tugas Admin)
 Sebelum kasir bisa berjualan, Admin harus menyiapkan master data:
-1. **Tambah Kategori:** Menu `Kategori Menu` → buat kategori (Kopi, Non-Kopi, Snack).
-2. **Kelola Stok Bahan Baku:** Menu `Bahan Baku` → daftarkan bahan (Biji Kopi, Susu, dll) dan atur **Batas Minimum Stok** untuk peringatan otomatis.
-3. **Buat Menu & Resep:** Menu `Katalog Menu` → `Tambah Menu`:
+1. **Tambah Kategori:** Sidebar → `Kategori Menu` → buat kategori (Kopi, Non-Kopi, Snack).
+2. **Daftarkan Supplier:** Sidebar → `Supplier` → daftarkan pemasok bahan baku.
+3. **Kelola Stok Bahan Baku:** Sidebar → `Bahan Baku` → daftarkan bahan (Biji Kopi, Susu, dll), atur **Batas Minimum Stok**, dan pilih **Supplier Default**.
+4. **Catat Stok Masuk:** Sidebar → `Stok Masuk` → buat Purchase Order dari supplier, ubah status menjadi `Received` untuk otomatis menambah stok.
+5. **Buat Menu & Resep:** Sidebar → `Katalog Menu` → `Tambah Menu`:
    - Tetapkan harga dasar dan kategori.
    - Tautkan resep dasar (misal: 1 Kopi Susu = 18g Kopi + 150ml Susu + 20ml Gula).
    - Tambahkan opsi kustomisasi (Ukuran, Suhu, Topping) lengkap dengan tambahan harga dan resep.
+6. **Daftarkan Kasir:** Sidebar → `Manajemen Kasir` → `Tambah Kasir Baru` → isi nama, email, PIN 6-digit, dan password.
 
 ### Fase Operasional (Tugas Kasir)
 1. Login ke halaman POS (`/pos`) menggunakan email & password.
-2. **Buka Shift** → masukkan jumlah kas awal di laci kasir.
+2. **Buka Shift** → masukkan PIN dan jumlah kas awal di laci kasir.
 3. Terima pesanan pelanggan:
    - Pilih **Dine-in** (pilih nomor meja 1-30) atau **Takeaway**.
    - Pilih menu dan kustomisasi varian jika ada.
@@ -79,23 +100,29 @@ Sebelum kasir bisa berjualan, Admin harus menyiapkan master data:
 1. **Dashboard Analitik** (`/dashboard`):
    - Lihat KPI: Pendapatan, Transaksi, Petty Cash, Estimasi Saldo.
    - Pilih rentang waktu untuk analisis lebih dalam.
-   - Pantau grafik tren penjualan dan menu terlaris.
-   - Perhatikan peringatan stok kritis (kotak merah di bawah).
+   - Pantau grafik: Tren penjualan (Line), Metode pembayaran (Donut), Jam sibuk (Bar), Performa kasir (Horizontal Bar).
+   - Pantau tabel: Transaksi terbaru, Kas keluar terakhir, Log aktivitas kasir.
+   - Perhatikan peringatan stok kritis (kotak merah).
 
-2. **Laporan Operasional** (`/admin/reports`):
-   - **Dashboard Analitik** — Grafik interaktif: Tren penjualan (Line), Metode pembayaran (Donut), Jam sibuk (Bar), Performa kasir (Horizontal Bar). Kartu profitabilitas: Pendapatan, HPP, Laba Kotor, Laba Bersih.
-   - **Penjualan Harian** — Ringkasan per hari dengan drill-down ke detail transaksi.
-   - **Performa Menu** — Ranking menu terlaris + kolom HPP (COGS) + margin laba (%) per menu.
-   - **Audit Stok Bahan** — Ledger mutasi stok (masuk/keluar) bahan baku.
-   - **Riwayat Shift** — Audit pertanggungjawaban kasir per sesi (selisih kas).
+2. **Manajemen Kasir** (`/admin/cashiers`):
+   - Pantau status kasir aktif/offline.
+   - Lihat timeline log aktivitas kasir hari ini.
+   - Tambah, edit, atau hapus akun kasir.
+
+3. **Laporan Operasional** (`/admin/reports`):
+   - **Dashboard Analitik** — Grafik interaktif dan kartu profitabilitas.
+   - **Penjualan Harian** — Ringkasan per hari.
+   - **Performa Menu** — Ranking menu + HPP + margin laba.
+   - **Audit Stok Bahan** — Ledger mutasi stok.
+   - **Riwayat Shift** — Audit pertanggungjawaban kasir per sesi.
    - **Riwayat Transaksi** — Daftar lengkap semua pesanan.
    - **Buku Kas Keluar** — Rekapitulasi petty cash.
-   - **Log Void** — Rekam jejak pembatalan pesanan beserta alasan.
-   - **Ekspor**: Semua tab mendukung unduh dalam format **PDF** dan **CSV/Excel**.
+   - **Log Void** — Rekam jejak pembatalan pesanan.
+   - **Ekspor**: Semua tab mendukung unduh dalam format **PDF** dan **CSV**.
 
 ---
 
-## 4. Persyaratan Perangkat Cetak
+## 5. Persyaratan Perangkat Cetak
 
 Untuk fitur cetak struk otomatis, diperlukan:
 - **Perangkat:** Tablet Android (tempat sistem POS dijalankan).
@@ -105,5 +132,5 @@ Untuk fitur cetak struk otomatis, diperlukan:
 
 ---
 
-## 5. Standar Tampilan (UI/UX)
-Sistem ini menggunakan antarmuka **Premium Light Mode (Amber & Slate)** secara eksklusif. Desain menggunakan font **Plus Jakarta Sans** untuk keterbacaan tinggi dan **Playfair Display** untuk kesan retro-modern. Pengaturan tema sudah dikunci untuk menjaga konsistensi identitas brand *Denjavas Retro Café*.
+## 6. Standar Tampilan (UI/UX)
+Sistem ini menggunakan antarmuka **Premium Light Mode** dengan skema warna emas gelap (`#B45309` / Amber-700) secara eksklusif. Desain menggunakan font **Plus Jakarta Sans** untuk harga dan nominal, **Inter** untuk teks umum, dan **Playfair Display** untuk heading serif. Pengaturan tema sudah dikunci untuk menjaga konsistensi identitas brand *Denjavas Retro Café*.

@@ -60,13 +60,13 @@ onUnmounted(() => {
         <!-- Trigger -->
         <div 
             @click="toggleDropdown"
-            class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 flex items-center justify-between cursor-pointer transition-all hover:border-amber-500 focus:border-amber-500 shadow-sm group"
-            :class="{ 'border-amber-500 ring-4 ring-amber-500/10': isOpen }"
+            class="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 flex items-center justify-between cursor-pointer transition-all hover:border-amber-700 focus:border-amber-700 shadow-sm group"
+            :class="{ 'border-amber-700 ring-4 ring-amber-700/10': isOpen }"
         >
             <span class="text-sm font-bold" :class="selectedOption ? 'text-slate-900' : 'text-slate-400'">
                 {{ selectedOption ? selectedOption[labelKey] : placeholder }}
             </span>
-            <div class="text-slate-400 group-hover:text-amber-500 transition-colors">
+            <div class="text-slate-400 group-hover:text-amber-700 transition-colors">
                 <svg 
                     width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" 
                     class="transition-transform duration-300"
@@ -96,10 +96,10 @@ onUnmounted(() => {
                         :key="option[valueKey]"
                         @click="selectOption(option)"
                         class="px-6 py-4 text-xs font-black uppercase tracking-widest cursor-pointer transition-all hover:bg-slate-50 flex items-center justify-between group/item"
-                        :class="modelValue === option[valueKey] ? 'text-amber-600 bg-amber-50/50' : 'text-slate-600'"
+                        :class="modelValue === option[valueKey] ? 'text-amber-700 bg-amber-50/70' : 'text-slate-600'"
                     >
                         <span>{{ option[labelKey] }}</span>
-                        <svg v-if="modelValue === option[valueKey]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-amber-600">
+                        <svg v-if="modelValue === option[valueKey]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-amber-700">
                             <polyline points="20 6 9 17 4 12"/>
                         </svg>
                     </div>
