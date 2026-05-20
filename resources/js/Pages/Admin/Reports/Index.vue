@@ -360,7 +360,7 @@ const profitability = computed(() => {
                 </div>
                 
                 <!-- Centered Report Selector Dropdown -->
-                <div class="flex flex-col items-center justify-center gap-8 pt-4 animate-fade-in-up relative z-[50]">
+                <div class="flex flex-col items-center justify-center gap-8 pt-4 animate-fade-in-up relative z-20">
                     <div class="relative w-full max-w-md">
                         <button 
                             @click="isReportDropdownOpen = !isReportDropdownOpen"

@@ -156,3 +156,16 @@ Layar putih atau blank screen pada framework Vue 3 (menggunakan Inertia) biasany
   // BENAR (id tersedia untuk lookup COGS)
   ->select('menus.id', 'menus.name', 'categories.name as category_name', ...)
   ```
+
+---
+
+## 8. Bug Z-Index Overlap pada Laporan (Filter Header Menutupi Top Bar saat Scroll)
+
+### Kasus: Elemen Filter Laporan Menutupi Sticky Top Bar (Navbar) saat Di-scroll
+* **Gejala:** Saat admin membuka halaman Laporan (`/admin/reports`) dan menggulir (scroll) halaman ke bawah, elemen pilihan jenis laporan (dropdown), kolom pencarian, dan filter tanggal melintas di atas (menutupi) Top Bar navigasi utama, alih-alih meluncur di belakangnya.
+* **Penyebab Utama:** Kontainer pembungkus filter laporan di `Reports/Index.vue` dideklarasikan menggunakan class `relative z-[50]`. Sementara itu, komponen Top Bar navigasi utama di `AuthenticatedLayout.vue` dideklarasikan dengan `sticky top-0 z-30`. Karena `50 > 30`, elemen filter tersebut bertumpuk di atas Top Bar.
+* **Solusi/Pencegahan:** 
+  1. Mengubah z-index kontainer filter laporan di `Reports/Index.vue` dari `z-[50]` menjadi `z-20` (lebih rendah dibanding `z-30` milik Top Bar).
+  2. Dengan `z-20`, seluruh area filter laporan akan meluncur di bawah Top Bar secara visual saat di-scroll.
+  3. Konteks tumpukan (*stacking context*) lokal tetap terjaga, sehingga menu dropdown (`z-[100]`) dan kalender (`z-[200]`) di dalam area filter tetap tampil di atas elemen tabel di bawahnya secara sempurna.
+
