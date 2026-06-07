@@ -17,10 +17,12 @@ dotenv.config();
 
 const app = express();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'storage', 'menus');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Ensure uploads directory exists (only locally, not on Vercel)
+if (!process.env.VERCEL) {
+  const uploadsDir = path.join(process.cwd(), 'storage', 'menus');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
 }
 const PORT: number | string = process.env.PORT || 5000;
 
