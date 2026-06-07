@@ -26,3 +26,22 @@ Thumbs.db
 *.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
+
+# Ignored project documentation
+docs/
+cafe-pos-v2/docs/
+README.md
+cafe-pos-v2/README.md
+
+# Ignored subproject environments & builds
+cafe-pos-v2/server/.env
+cafe-pos-v2/server/.env.*
+!cafe-pos-v2/server/.env.production.example
+cafe-pos-v2/server/node_modules/
+cafe-pos-v2/server/dist/
+
+cafe-pos-v2/client/.env
+cafe-pos-v2/client/.env.*
+cafe-pos-v2/client/node_modules/
+cafe-pos-v2/client/dist/
+

@@ -1,0 +1,287 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              Int           @id @default(autoincrement())
+  name            String
+  email           String?       @unique
+  emailVerifiedAt DateTime?     @map("email_verified_at")
+  password        String?
+  pin             String?       @unique
+  role            String        @default("kasir") // admin, kasir
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  shifts          Shift[]
+  orders          Order[]
+  pettyCashes     PettyCash[]
+  activityLogs    ActivityLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  
+  menus     Menu[]
+
+  @@map("categories")
+}
+
+model Menu {
+  id          Int               @id @default(autoincrement())
+  categoryId  Int               @map("category_id")
+  category    Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name        String
+  description String?
+  imagePath   String?           @map("image_path")
+  basePrice   Decimal @map("base_price")
+  isActive    Boolean           @default(true) @map("is_active")
+  
+  menuOptionGroups MenuOptionGroup[]
+  recipes          Recipe[]
+  orderItems       OrderItem[]
+
+  @@map("menus")
+}
+
+model MenuOptionGroup {
+  id              Int               @id @default(autoincrement())
+  menuId          Int               @map("menu_id")
+  menu            Menu              @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name            String
+  minSelect       Int               @map("min_select")
+  maxSelect       Int               @map("max_select")
+  
+  menuOptionItems MenuOptionItem[]
+
+  @@map("menu_option_groups")
+}
+
+model MenuOptionItem {
+  id                Int             @id @default(autoincrement())
+  menuOptionGroupId Int             @map("menu_option_group_id")
+  menuOptionGroup   MenuOptionGroup @relation(fields: [menuOptionGroupId], references: [id], onDelete: Cascade)
+  name              String
+  priceModifier     Decimal @map("price_modifier")
+  isAvailable       Boolean         @default(true) @map("is_available")
+  
+  recipes           Recipe[]
+  orderItemOptions  OrderItemOption[]
+
+  @@map("menu_option_items")
+}
+
+model Supplier {
+  id             Int             @id @default(autoincrement())
+  name           String
+  contactPerson  String?         @map("contact_person")
+  phone          String?
+  email          String?
+  address        String?
+  
+  rawMaterials   RawMaterial[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model RawMaterial {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  unit               String              // gram, ml, pcs
+  currentStock       Decimal @map("current_stock")
+  minimumStock       Decimal @map("minimum_stock")
+  costPerUnit        Decimal @map("cost_per_unit")
+  parLevel           Decimal? @map("par_level")
+  defaultSupplierId  Int?                @map("default_supplier_id")
+  defaultSupplier    Supplier?           @relation(fields: [defaultSupplierId], references: [id], onDelete: SetNull)
+  
+  recipes            Recipe[]
+  stockMutations     StockMutation[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@map("raw_materials")
+}
+
+model Recipe {
+  id               Int             @id @default(autoincrement())
+  rawMaterialId    Int             @map("raw_material_id")
+  rawMaterial      RawMaterial     @relation(fields: [rawMaterialId], references: [id], onDelete: Restrict)
+  menuId           Int?            @map("menu_id")
+  menu             Menu?           @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  menuOptionItemId Int?            @map("menu_option_item_id")
+  menuOptionItem   MenuOptionItem? @relation(fields: [menuOptionItemId], references: [id], onDelete: Cascade)
+  quantity         Decimal
+
+  @@unique([rawMaterialId, menuId])
+  @@unique([rawMaterialId, menuOptionItemId])
+  @@map("recipes")
+}
+
+model CafeTable {
+  id      Int      @id @default(autoincrement())
+  number  Int      @unique
+  status  String   @default("available") // available, occupied
+  
+  orders  Order[]
+
+  @@map("cafe_tables")
+}
+
+model Shift {
+  id                  Int         @id @default(autoincrement())
+  userId              Int         @map("user_id")
+  user                User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  openedAt            DateTime    @map("opened_at")
+  closedAt            DateTime?   @map("closed_at")
+  openingCash         Decimal @map("opening_cash")
+  closingCash         Decimal? @map("closing_cash")
+  totalSales          Decimal     @default(0) @map("total_sales")
+  totalCashSales      Decimal     @default(0) @map("total_cash_sales")
+  expectedClosingCash Decimal     @default(0) @map("expected_closing_cash")
+  totalPettyCash      Decimal     @default(0) @map("total_petty_cash")
+  notes               String?
+  
+  orders              Order[]
+  pettyCashes         PettyCash[]
+
+  @@map("shifts")
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  orderNumber   String      @unique @map("order_number")
+  shiftId       Int         @map("shift_id")
+  shift         Shift       @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+  userId        Int         @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  cafeTableId   Int?        @map("cafe_table_id")
+  cafeTable     CafeTable?  @relation(fields: [cafeTableId], references: [id], onDelete: SetNull)
+  orderType     String      @map("order_type") // dine_in, takeaway
+  subtotal      Decimal
+  total         Decimal
+  paymentMethod String      @map("payment_method") // cash, qris, ewallet, transfer
+  paymentAmount Decimal @map("payment_amount")
+  change        Decimal
+  status        String      @default("pending") // pending, completed, cancelled, void
+  voidReason    String?     @map("void_reason")
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  
+  orderItems    OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int         @id @default(autoincrement())
+  orderId   Int         @map("order_id")
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuId    Int         @map("menu_id")
+  menu      Menu        @relation(fields: [menuId], references: [id], onDelete: Restrict)
+  menuName  String      @map("menu_name")
+  quantity  Int
+  unitPrice Decimal @map("unit_price")
+  subtotal  Decimal
+  notes     String?
+  
+  orderItemOptions OrderItemOption[]
+
+  @@map("order_items")
+}
+
+model OrderItemOption {
+  id               Int            @id @default(autoincrement())
+  orderItemId      Int            @map("order_item_id")
+  orderItem        OrderItem      @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  menuOptionItemId Int            @map("menu_option_item_id")
+  menuOptionItem   MenuOptionItem @relation(fields: [menuOptionItemId], references: [id], onDelete: Restrict)
+  optionGroupName  String         @map("option_group_name")
+  optionName       String         @map("option_name")
+  priceModifier    Decimal @map("price_modifier")
+
+  @@map("order_item_options")
+}
+
+model PettyCash {
+  id          Int      @id @default(autoincrement())
+  shiftId     Int      @map("shift_id")
+  shift       Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  userId      Int      @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Decimal
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("petty_cashes")
+}
+
+model StockMutation {
+  id            Int         @id @default(autoincrement())
+  rawMaterialId Int         @map("raw_material_id")
+  rawMaterial   RawMaterial @relation(fields: [rawMaterialId], references: [id], onDelete: Cascade)
+  type          String      // in, out
+  quantity      Decimal
+  reference     String?
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@map("stock_mutations")
+}
+
+model StoreSetting {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique
+  value String?
+
+  @@map("store_settings")
+}
+
+model PurchaseOrder {
+  id         Int                 @id @default(autoincrement())
+  supplierId Int                 @map("supplier_id")
+  supplier   Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  poNumber   String              @unique @map("po_number")
+  status     String              @default("draft") // draft, ordered, received
+  notes      String?
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+  
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int           @map("purchase_order_id")
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  rawMaterialId   Int           @map("raw_material_id")
+  rawMaterial     RawMaterial   @relation(fields: [rawMaterialId], references: [id], onDelete: Restrict)
+  quantity        Decimal
+  unitCost        Decimal @map("unit_cost")
+
+  @@map("purchase_order_items")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("activity_logs")
+}

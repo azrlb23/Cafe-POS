@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://cafe-pos-api.vercel.app/api/:path*"
+    },
+    {
+      "source": "/storage/:path*",
+      "destination": "https://cafe-pos-api.vercel.app/storage/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://cafe-pos-api.vercel.app/health"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

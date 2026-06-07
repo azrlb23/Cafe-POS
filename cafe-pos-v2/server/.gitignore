@@ -1,0 +1,24 @@
+# Server - Node.js + Express Backend
+
+# Dependencies
+node_modules/
+
+# TypeScript build output
+dist/
+
+# Environment config (NEVER commit!)
+.env
+
+# SQLite database file (development only)
+prisma/dev.db
+prisma/dev.db-journal
+
+# Uploaded files (menu images) — keep the folder, ignore contents
+storage/menus/*
+!storage/menus/.gitkeep
+
+# Test files
+test_*.cjs
+test_*.ts
+out.txt
+test_output.txt
