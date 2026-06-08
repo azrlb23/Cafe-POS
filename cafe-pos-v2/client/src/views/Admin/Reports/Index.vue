@@ -321,22 +321,22 @@ const profitability = computed(() => {
 
 <template>
 
-            <div class="py-12 bg-[#FAFAF9]/50 min-h-screen">
-            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div class="py-6 sm:py-8 lg:py-12 bg-[#FAFAF9]/50 min-h-screen">
+            <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 lg:space-y-8">
                 <!-- MODERN PAGE HEADER -->
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in">
+                <div class="flex flex-col gap-4 mb-6 lg:mb-10 animate-fade-in">
                     <div>
-                        <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
                             Insights <span class="text-amber-600 italic">Analitik</span>
                         </h2>
-                        <p class="text-slate-400 text-xs mt-2 font-medium">
+                        <p class="text-slate-400 text-[10px] sm:text-xs mt-1.5 sm:mt-2 font-medium">
                             Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
                         </p>
-                        <div class="flex flex-wrap items-center gap-3 mt-3">
-                            <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
+                            <span class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
                                 Periode: {{ formatDate(form.start_date) }} — {{ formatDate(form.end_date) }}
                             </span>
-                            <span class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100/50 rounded-full text-emerald-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                            <span class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 border border-emerald-100/50 rounded-full text-emerald-700 text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
                                 Terakhir Diperbarui: Hari Ini
                             </span>
                         </div>
@@ -344,14 +344,14 @@ const profitability = computed(() => {
                 </div>
                 
                 <!-- Centered Report Selector Dropdown -->
-                <div class="flex flex-col items-center justify-center gap-8 pt-4 animate-fade-in-up relative z-20">
-                    <div class="relative w-full max-w-md">
+                <div class="flex flex-col items-center justify-center gap-4 sm:gap-6 lg:gap-8 pt-2 sm:pt-4 animate-fade-in-up relative z-20">
+                    <div class="relative w-full sm:max-w-md">
                         <button 
                             @click="isReportDropdownOpen = !isReportDropdownOpen"
-                            class="w-full bg-white border-2 border-slate-100 rounded-[2rem] px-8 py-5 flex items-center justify-between shadow-xl shadow-slate-200/40 hover:border-amber-500/50 transition-all group active:scale-95"
+                            class="w-full bg-white border-2 border-slate-100 rounded-2xl sm:rounded-[2rem] px-4 sm:px-8 py-3.5 sm:py-5 flex items-center justify-between shadow-xl shadow-slate-200/40 hover:border-amber-500/50 transition-all group active:scale-95"
                         >
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-600/20 text-white transition-transform group-hover:scale-110">
+                            <div class="flex items-center gap-3 sm:gap-4">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-amber-600/20 text-white transition-transform group-hover:scale-110">
                                     <svg v-if="activeTab === 'dashboard'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
                                     <svg v-else-if="activeTab === 'sales'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                                     <svg v-else-if="activeTab === 'performance'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -363,7 +363,7 @@ const profitability = computed(() => {
                                 </div>
                                 <div class="text-left">
                                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">Pilih Jenis Laporan</p>
-                                    <h4 class="text-xl font-serif font-black text-slate-900 leading-none">
+                                    <h4 class="text-base sm:text-xl font-serif font-black text-slate-900 leading-none">
                                         {{ 
                                             activeTab === 'sales' ? 'Penjualan Harian' : 
                                             activeTab === 'shifts' ? 'Riwayat Shift' : 
@@ -387,7 +387,7 @@ const profitability = computed(() => {
                             leave-from-class="transform scale-100 opacity-100 translate-y-0"
                             leave-to-class="transform scale-95 opacity-0 -translate-y-4"
                         >
-                            <div v-if="isReportDropdownOpen" class="absolute inset-x-0 mt-4 bg-white rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.15)] border border-slate-100 py-4 z-[100] overflow-hidden">
+                            <div v-if="isReportDropdownOpen" class="absolute inset-x-0 mt-2 sm:mt-4 bg-white rounded-2xl sm:rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.15)] border border-slate-100 py-2 sm:py-4 z-[100] overflow-hidden">
                                 <button 
                                     v-for="tab in [
                                         {id: 'sales', label: 'Penjualan Harian', icon: '📅'},
@@ -400,7 +400,7 @@ const profitability = computed(() => {
                                     ]" 
                                     :key="tab.id"
                                     @click="activeTab = tab.id; isReportDropdownOpen = false"
-                                    class="w-full px-8 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                                    class="w-full px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group"
                                 >
                                     <div class="flex items-center gap-4">
                                         <span class="text-xl grayscale group-hover:grayscale-0 transition-all">{{ tab.icon }}</span>
@@ -413,40 +413,40 @@ const profitability = computed(() => {
                     </div>
 
                      <!-- Toolbar: Filter, Search, and Export -->
-                     <div class="flex flex-col md:flex-row items-stretch md:items-center justify-center gap-4 w-full delay-100">
+                     <div class="flex flex-col gap-3 sm:gap-4 w-full delay-100">
                          <!-- Date Filter -->
-                         <form @submit.prevent="submitFilter" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-3 sm:p-2 rounded-[2rem] border border-slate-200/60 shadow-sm flex-1 md:flex-initial">
-                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                         <form @submit.prevent="submitFilter" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-white p-2.5 sm:p-2 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm">
+                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-1">
                                  <DatePicker 
                                      v-model="form.start_date" 
                                      label="Mulai"
                                      placeholder="Awal"
-                                     class="w-full sm:min-w-[200px] md:min-w-[220px]"
+                                     class="w-full"
                                  />
-                                 <span class="text-slate-300 font-bold px-1 text-xs uppercase tracking-widest text-center">to</span>
+                                 <span class="text-slate-300 font-bold px-1 text-xs uppercase tracking-widest text-center hidden sm:block">to</span>
                                  <DatePicker 
                                      v-model="form.end_date" 
                                      label="Sampai"
                                      placeholder="Akhir"
-                                     class="w-full sm:min-w-[200px] md:min-w-[220px]"
+                                     class="w-full"
                                  />
                              </div>
-                             <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-amber-600/20 active:scale-95 text-center whitespace-nowrap">
+                             <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-amber-600/20 active:scale-95 text-center whitespace-nowrap">
                                  Filter
                              </button>
                          </form>
  
-                         <div class="flex items-center gap-3 w-full md:w-auto">
+                         <div class="flex items-center gap-2 sm:gap-3 w-full">
                              <!-- Search Input -->
-                             <div class="relative group flex-1 md:w-80 lg:w-96">
-                                 <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-600 transition-colors">
-                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                             <div class="relative group flex-1 min-w-0">
+                                 <span class="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-600 transition-colors">
+                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="sm:w-[22px] sm:h-[22px]"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                  </span>
                                  <input 
                                      v-model="search" 
                                      type="text" 
                                      :placeholder="'Cari dalam ' + (activeTab === 'sales' ? 'Penjualan' : (activeTab === 'shifts' ? 'Shift' : (activeTab === 'transactions' ? 'Transaksi' : 'Laporan'))) + '...'" 
-                                     class="w-full bg-white border border-slate-200 rounded-[2rem] pl-16 pr-8 py-[1.125rem] focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-sm font-bold shadow-sm"
+                                     class="w-full bg-white border border-slate-200 rounded-2xl sm:rounded-[2rem] pl-12 sm:pl-16 pr-6 sm:pr-8 py-3 sm:py-[1.125rem] focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all text-xs sm:text-sm font-bold shadow-sm"
                                  >
                                  <button 
                                      v-if="search" 
@@ -462,7 +462,7 @@ const profitability = computed(() => {
                                  <button 
                                      @click="isExportOpen = !isExportOpen"
                                      title="Export Laporan"
-                                     class="w-[60px] h-[60px] bg-slate-900 text-white rounded-2xl hover:bg-black transition-all flex items-center justify-center shadow-xl shadow-black/10 active:scale-95 group"
+                                     class="w-11 h-11 sm:w-[60px] sm:h-[60px] bg-slate-900 text-white rounded-xl sm:rounded-2xl hover:bg-black transition-all flex items-center justify-center shadow-xl shadow-black/10 active:scale-95 group flex-shrink-0"
                                  >
                                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="group-hover:scale-110 transition-transform"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                                  </button>
@@ -502,7 +502,7 @@ const profitability = computed(() => {
                              <button 
                                  @click="resetFilters"
                                  title="Reset Semua Filter"
-                                 class="w-[60px] h-[60px] bg-white text-slate-400 rounded-2xl border-2 border-slate-100 hover:border-red-500 hover:text-red-500 transition-all flex items-center justify-center shadow-sm active:scale-95 group"
+                                 class="w-11 h-11 sm:w-[60px] sm:h-[60px] bg-white text-slate-400 rounded-xl sm:rounded-2xl border-2 border-slate-100 hover:border-red-500 hover:text-red-500 transition-all flex items-center justify-center shadow-sm active:scale-95 group flex-shrink-0"
                              >
                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="group-hover:rotate-180 transition-transform duration-500"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
                              </button>
@@ -546,7 +546,7 @@ const profitability = computed(() => {
                                     <tr v-for="mutation in pagedStockMutations" :key="mutation.id" class="hover:bg-slate-50/50 transition-colors">
                                         <td class="px-8 py-5 text-xs text-slate-500 font-medium">{{ formatDateTime(mutation.createdAt) }}</td>
                                         <td class="px-8 py-5">
-                                            <span class="text-sm font-bold text-slate-800">{{ mutation.raw_material?.name }}</span>
+                                            <span class="text-sm font-bold text-slate-800">{{ mutation.rawMaterial?.name }}</span>
                                         </td>
                                         <td class="px-8 py-5 text-center">
                                             <span 

@@ -95,29 +95,44 @@ router.get('/', async (req, res) => {
         },
       },
     });
-    const perfMap: Record<string, { id: number; name: string | undefined; category_name: string | undefined; total_qty: number; total_revenue: number; total_cogs: number; margin: number }> = {};
+    const perfMap: Record<string, { id: number; name: string | undefined; category_name: string | undefined; totalQty: number; totalRevenue: number; total_cogs: number; margin: number; _cogsPerUnit: number }> = {};
     orderItems.forEach(oi => {
       const mid = oi.menuId;
       if (search && !oi.menu?.name?.toLowerCase().includes(search.toLowerCase()) &&
           !oi.menu?.category?.name?.toLowerCase().includes(search.toLowerCase())) return;
-      if (!perfMap[mid]) perfMap[mid] = { id: mid, name: oi.menu?.name, category_name: oi.menu?.category?.name, total_qty: 0, total_revenue: 0, total_cogs: 0, margin: 0 };
-      perfMap[mid].total_qty += oi.quantity;
-      perfMap[mid].total_revenue += Number(oi.subtotal);
-    });
-    // Calculate COGS per menu
-    for (const key of Object.keys(perfMap)) {
-      const menuId = parseInt(key);
-      const menu = await prisma.menu.findUnique({ where: { id: menuId }, include: { recipes: { include: { rawMaterial: true } } } });
-      if (menu) {
+      if (!perfMap[mid]) {
         let cogsPerUnit = 0;
-        for (const r of menu.recipes) {
-          if (r.rawMaterial) cogsPerUnit += Number(r.quantity) * Number(r.rawMaterial.costPerUnit);
+        if (oi.menu && oi.menu.recipes) {
+          for (const r of oi.menu.recipes) {
+            if (r.rawMaterial) {
+              cogsPerUnit += Number(r.quantity) * Number(r.rawMaterial.costPerUnit);
+            }
+          }
         }
-        perfMap[key].total_cogs = cogsPerUnit * perfMap[key].total_qty;
-        perfMap[key].margin = perfMap[key].total_revenue - perfMap[key].total_cogs;
+        perfMap[mid] = { 
+          id: mid, 
+          name: oi.menu?.name, 
+          category_name: oi.menu?.category?.name, 
+          totalQty: 0, 
+          totalRevenue: 0, 
+          total_cogs: 0, 
+          margin: 0,
+          _cogsPerUnit: cogsPerUnit
+        };
       }
+      perfMap[mid].totalQty += oi.quantity;
+      perfMap[mid].totalRevenue += Number(oi.subtotal);
+    });
+    
+    // Compute total COGS and margin without any additional database queries
+    for (const key of Object.keys(perfMap)) {
+      const item = perfMap[key];
+      item.total_cogs = item._cogsPerUnit * item.totalQty;
+      item.margin = item.totalRevenue - item.total_cogs;
     }
-    const menuPerformance = Object.values(perfMap).sort((a, b) => b.total_qty - a.total_qty);
+    const menuPerformance = Object.values(perfMap)
+      .map(({ _cogsPerUnit, ...rest }) => rest)
+      .sort((a, b) => b.totalQty - a.totalQty);
 
     // 5. Petty Cash Logs
     const pettyCashLogs = await prisma.pettyCash.findMany({
