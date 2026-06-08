@@ -458,72 +458,52 @@ const radarOptions = {
              <div class="py-6 md:py-10 bg-[#F8F9FD] min-h-screen">
              <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 space-y-8 md:space-y-12">
                  
-                 <!-- MODERN DASHBOARD HEADER -->
-                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 animate-fade-in-up">
-                     <div>
-                         <h2 class="text-3xl md:text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
-                             Insights <span class="text-amber-700 italic">Analitik</span>
-                         </h2>
-                         <p class="text-slate-400 text-xs mt-2 font-medium">
-                             Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
-                         </p>
-                         <div class="flex flex-wrap items-center gap-3 mt-3">
-                             <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                 Periode: {{ new Date(filters.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }} — {{ new Date(filters.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
-                             </span>
-                             <span class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-full text-slate-500 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                 Terakhir Diperbarui: Hari Ini
-                             </span>
+                 <!-- DASHBOARD HEADER -->
+                 <div class="animate-fade-in-up space-y-4">
+                     <!-- Title Row -->
+                     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                         <div>
+                             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                                 Insights <span class="text-amber-700 italic">Analitik</span>
+                             </h2>
+                             <p class="text-slate-400 text-[10px] sm:text-xs mt-1 font-medium">
+                                 Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
+                             </p>
                          </div>
-                     </div>
- 
-                     <!-- Actions Area (Filters & Active Shift) -->
-                     <div class="flex flex-wrap items-center gap-4">
-                         <!-- Date Filter Form -->
-                         <form @submit.prevent="submitFilter" class="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-3 bg-white p-3 sm:p-2 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 shadow-sm transition-all focus-within:shadow-md focus-within:border-amber-500">
-                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 px-1 sm:px-2">
-                                 <DatePicker 
-                                     v-model="form.start_date" 
-                                     placeholder="Mulai"
-                                     class="w-full sm:!w-40 lg:!w-48"
-                                  />
-                                 <span class="hidden sm:inline text-slate-300 font-light">—</span>
-                                 <DatePicker 
-                                     v-model="form.end_date" 
-                                     placeholder="Selesai"
-                                     class="w-full sm:!w-40 lg:!w-48"
-                                  />
-                             </div>
-                             <button type="submit" class="w-full sm:w-auto bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white py-3 px-4 sm:p-3 rounded-xl sm:rounded-2xl transition-all active:scale-95 shadow-lg shadow-amber-700/10 hover:shadow-amber-700/20 flex items-center justify-center cursor-pointer">
-                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                             </button>
-                         </form>
- 
-                         <!-- Active Shift Status Card -->
-                         <div v-if="activeShift" class="group bg-white border border-slate-100 px-5 py-3 rounded-[2rem] shadow-sm flex items-center gap-4 transition-all hover:shadow-md w-full sm:w-auto">
-                             <div class="relative flex h-3.5 w-3.5">
+                         <!-- Active Shift (inline badge, not a card) -->
+                         <div v-if="activeShift" class="flex items-center gap-2 flex-shrink-0">
+                             <div class="relative flex h-2.5 w-2.5">
                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                               <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                              </div>
-                             <div class="flex flex-col">
-                                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] leading-none">Shift Aktif</span>
-                                 <span class="text-xs font-bold text-slate-700 mt-1">{{ activeShift.user?.name }}</span>
-                             </div>
+                             <span class="text-[10px] font-bold text-slate-500"><span class="font-black text-slate-700">{{ activeShift.user?.name }}</span> · Shift Aktif</span>
                          </div>
                      </div>
-                 </div>
- 
-                 <!-- SECTION: OVERVIEW -->
-                 <div class="flex items-center gap-4 animate-fade-in-up">
-                     <div class="h-px flex-grow bg-slate-200/50"></div>
-                     <span class="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] bg-white px-4 py-1.5 rounded-full border border-slate-100 shadow-sm">Ringkasan Performa</span>
-                     <div class="h-px flex-grow bg-slate-200/50"></div>
+
+                     <!-- Filter Bar (flat, no card wrapper) -->
+                     <form @submit.prevent="submitFilter" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-1 sm:flex-initial">
+                             <DatePicker 
+                                 v-model="form.start_date" 
+                                 placeholder="Mulai"
+                                 class="w-full sm:!w-40 lg:!w-48"
+                              />
+                             <span class="hidden sm:inline text-slate-300 font-light text-sm">—</span>
+                             <DatePicker 
+                                 v-model="form.end_date" 
+                                 placeholder="Selesai"
+                                 class="w-full sm:!w-40 lg:!w-48"
+                              />
+                         </div>
+                         <button type="submit" class="bg-amber-700 hover:bg-amber-800 text-white py-2.5 px-5 sm:px-4 sm:py-2.5 rounded-xl transition-all active:scale-95 shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer text-[10px] font-black uppercase tracking-widest">
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                             <span class="sm:hidden">Filter</span>
+                         </button>
+                     </form>
                  </div>
  
                  <!-- MAIN KPI GRID (DEALDECK STYLE) -->
-                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 xl:gap-8">
                      <!-- Primary Card: Total Sales -->
                      <div class="bg-gradient-to-br from-amber-700 to-amber-800 rounded-[2.5rem] p-6 md:p-8 text-white shadow-2xl shadow-amber-700/20 relative overflow-hidden group">
                          <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform"></div>
@@ -598,8 +578,8 @@ const radarOptions = {
                 </div>
 
                 <!-- ANALYTICS GRID ROW 1: TRENDS & CATEGORIES -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div class="lg:col-span-8 bg-white rounded-[3rem] p-10 shadow-sm border border-slate-50">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
+                    <div class="xl:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
                             <div>
                                 <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Financial Trends</h3>
@@ -621,7 +601,7 @@ const radarOptions = {
                         </div>
                     </div>
  
-                    <div class="lg:col-span-4 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50 flex flex-col">
+                    <div class="xl:col-span-4 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50 flex flex-col">
                         <h3 class="text-xl font-black text-[#1C1E23] tracking-tight mb-8">Kategori Terlaris</h3>
                         <div class="h-[250px] relative flex items-center justify-center">
                             <Doughnut :data="categoryRevenueData" :options="doughnutOptions" />
@@ -649,8 +629,8 @@ const radarOptions = {
                 </div>
  
                 <!-- ANALYTICS GRID ROW 2: BUBBLES & RADAR (INSIGHTS) -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div class="lg:col-span-4 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8">
+                    <div class="xl:col-span-4 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
                         <div class="mb-8">
                             <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Meja Populer</h3>
                             <p class="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest">Distribusi Penggunaan Meja</p>
@@ -659,7 +639,7 @@ const radarOptions = {
                             <Bar v-if="popularTables.length > 0" :data="popularTablesData" :options="barChartOptions" />
                         </div>
                     </div>
-                    <div class="lg:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+                    <div class="xl:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 xl:gap-10">
                         <div>
                             <div class="mb-8">
                                 <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Performa Kasir</h3>
@@ -688,7 +668,7 @@ const radarOptions = {
                 </div>
  
                 <!-- ANALYTICS GRID ROW 3: STOCK & VARIANTS -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                     <div class="bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
                         <div class="mb-8">
                             <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Proyeksi Stok</h3>
@@ -740,7 +720,7 @@ const radarOptions = {
                             </div>
                             <h3 class="text-2xl font-black text-red-900 tracking-tight">Critical Inventory <span class="text-red-400 font-bold ml-2">Needs Attention</span></h3>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
                             <div v-for="item in lowStockItems.slice(0, 4)" :key="item.id" class="bg-white p-6 rounded-[2rem] border border-red-100 shadow-sm flex items-center justify-between group hover:scale-105 transition-transform">
                                 <div>
                                     <p class="text-sm font-black text-red-900">{{ item.name }}</p>
@@ -756,8 +736,8 @@ const radarOptions = {
                 </div>
  
                 <!-- RECENT ACTIVITY GRID: TRANSACTIONS & PETTY CASH -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10">
-                    <div class="lg:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 pb-10">
+                    <div class="xl:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
                         <div class="flex items-center justify-between mb-8">
                             <div>
                                 <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Recent Transactions</h3>
@@ -788,7 +768,7 @@ const radarOptions = {
                         </div>
                     </div>
 
-                     <div class="lg:col-span-4 bg-[#1C1E23] rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-2xl relative overflow-hidden">
+                     <div class="xl:col-span-4 bg-[#1C1E23] rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-2xl relative overflow-hidden">
                          <div class="absolute bottom-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -mr-32 -mb-32 blur-3xl"></div>
                          <div class="mb-8">
                              <h3 class="text-xl font-black text-white tracking-tight">Kas Keluar Terakhir</h3>
@@ -820,9 +800,9 @@ const radarOptions = {
                      <div class="h-px flex-grow bg-slate-200/50"></div>
                  </div>
  
-                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10">
+                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 pb-10">
                      <!-- Active Cashiers Cards -->
-                     <div class="lg:col-span-4 space-y-6">
+                     <div class="xl:col-span-4 space-y-6">
                          <div class="bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
                              <div class="mb-8">
                                  <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Kasir Aktif</h3>
@@ -861,7 +841,7 @@ const radarOptions = {
                      </div>
  
                      <!-- Activity Timeline -->
-                     <div class="lg:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
+                     <div class="xl:col-span-8 bg-white rounded-[2rem] sm:rounded-[3rem] p-6 md:p-10 shadow-sm border border-slate-50">
                          <div class="flex items-center justify-between mb-8">
                              <div>
                                  <h3 class="text-xl font-black text-[#1C1E23] tracking-tight">Log Aktivitas Hari Ini</h3>

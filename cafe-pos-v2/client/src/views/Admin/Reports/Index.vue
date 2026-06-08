@@ -324,21 +324,16 @@ const profitability = computed(() => {
             <div class="py-6 sm:py-8 lg:py-12 bg-[#FAFAF9]/50 min-h-screen">
             <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6 lg:space-y-8">
                 <!-- MODERN PAGE HEADER -->
-                <div class="flex flex-col gap-4 mb-6 lg:mb-10 animate-fade-in">
+                <div class="flex flex-col gap-2 mb-6 lg:mb-8 animate-fade-in">
                     <div>
                         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
                             Insights <span class="text-amber-600 italic">Analitik</span>
                         </h2>
-                        <p class="text-slate-400 text-[10px] sm:text-xs mt-1.5 sm:mt-2 font-medium">
+                        <p class="text-slate-400 text-[10px] sm:text-xs mt-1.5 font-medium">
                             Pantau performa finansial, efisiensi operasional, dan aktivitas kasir Denjavas Cafe secara real-time.
                         </p>
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
-                            <span class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                Periode: {{ formatDate(form.start_date) }} — {{ formatDate(form.end_date) }}
-                            </span>
-                            <span class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 border border-emerald-100/50 rounded-full text-emerald-700 text-[9px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                Terakhir Diperbarui: Hari Ini
-                            </span>
+                        <div class="flex items-center gap-3 mt-2 text-[10px] sm:text-xs font-bold text-slate-500">
+                            <span>Periode: {{ formatDate(form.start_date) }} — {{ formatDate(form.end_date) }}</span>
                         </div>
                     </div>
                 </div>

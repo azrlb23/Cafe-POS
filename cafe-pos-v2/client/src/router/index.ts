@@ -8,11 +8,15 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'Welcome',
-    component: () => import('../views/Welcome.vue'),
-    meta: { guestOnly: true }
+    component: () => import('../views/Welcome.vue')
   },
   {
-    path: '/login',
+    path: '/menu',
+    name: 'PublicMenu',
+    component: () => import('../views/PublicMenu.vue')
+  },
+  {
+    path: '/officedenjavas99',
     name: 'Login',
     component: () => import('../views/Auth/Login.vue'),
     meta: { guestOnly: true }

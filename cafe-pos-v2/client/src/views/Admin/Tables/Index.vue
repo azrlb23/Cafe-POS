@@ -47,31 +47,26 @@ const getInitials = (name) => {
 <template>
             <div class="max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <!-- MODERN PAGE HEADER -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
                 <div>
-                    <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
                         Layout <span class="text-amber-600 italic">Meja Cafe</span>
                     </h2>
-                    <p class="text-slate-400 text-xs mt-2 font-medium">
+                    <p class="text-slate-400 text-[10px] sm:text-xs mt-1.5 font-medium">
                         Pantau okupansi meja pelanggan, status pembayaran, dan pesanan aktif secara real-time di Denjavas Cafe.
                     </p>
-                    <div class="flex items-center gap-3 mt-3">
-                        <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                            Total Meja: {{ tables.length }} Meja
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] sm:text-xs font-bold text-slate-500">
+                        <span>Total Meja: {{ tables.length }} Meja</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Tersedia: {{ tables.filter(t => !t.orders || t.orders.length === 0).length }}
                         </span>
-                    </div>
-                </div>
-                
-                <!-- Status Indicators -->
-                <div class="flex items-center gap-8 bg-white px-8 py-4 rounded-[2rem] border border-slate-100 shadow-sm shrink-0">
-                    <div class="flex items-center gap-3">
-                        <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tersedia ({{ tables.filter(t => !t.orders || t.orders.length === 0).length }})</span>
-                    </div>
-                    <div class="w-px h-4 bg-slate-100"></div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20 animate-pulse"></div>
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Terisi ({{ tables.filter(t => t.orders && t.orders.length > 0).length }})</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                            Terisi: {{ tables.filter(t => t.orders && t.orders.length > 0).length }}
+                        </span>
                     </div>
                 </div>
             </div>

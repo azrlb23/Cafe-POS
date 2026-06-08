@@ -78,32 +78,27 @@ const confirmDeletion = async (menu) => {
             <div class="max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             
             <!-- MODERN PAGE HEADER -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 animate-fade-in-up">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
                 <div>
-                    <h2 class="text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-slate-800 tracking-tight leading-tight">
                         Katalog <span class="text-amber-700 italic">Menu</span>
                     </h2>
-                    <p class="text-slate-400 text-xs mt-2 font-medium">
+                    <p class="text-slate-400 text-[10px] sm:text-xs mt-1.5 font-medium">
                         Kelola menu makanan, minuman, harga jual, resep bahan baku, serta ketersediaan stok di Denjavas Cafe.
                     </p>
-                    <div class="flex flex-wrap items-center gap-3 mt-3">
-                        <span class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100/50 rounded-full text-amber-700 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            {{ menus.length }} Menu Terdaftar
-                        </span>
-                        <span class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-full text-slate-500 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                            {{ categories.length }} Kategori Aktif
-                        </span>
+                    <div class="flex items-center gap-3 mt-2 text-[10px] sm:text-xs font-bold text-slate-500">
+                        <span>{{ menus.length }} Menu Terdaftar</span>
+                        <span class="text-slate-300">•</span>
+                        <span>{{ categories.length }} Kategori Aktif</span>
                     </div>
                 </div>
 
                 <router-link
                     :to="{ name: 'AdminMenusCreate' }"
-                    class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white px-8 py-4 rounded-2xl font-black transition-all duration-300 shadow-lg shadow-amber-700/20 text-xs uppercase tracking-[0.15em] hover:scale-105 active:scale-95 text-center cursor-pointer"
+                    class="inline-flex items-center justify-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-5 py-2.5 rounded-xl font-black transition-all text-[10px] uppercase tracking-wider active:scale-95 text-center cursor-pointer"
                 >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Tambah Menu Baru
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Tambah Menu
                 </router-link>
             </div>
             <!-- Flash Messages -->

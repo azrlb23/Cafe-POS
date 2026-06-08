@@ -65,6 +65,23 @@ function parseId(val: string): number | null {
   return isNaN(n) ? null : n;
 }
 
+// GET /api/admin/public-menus (Publicly accessible)
+router.get('/public-menus', async (req, res) => {
+  try {
+    const menus = await prisma.menu.findMany({
+      include: { category: true },
+      orderBy: { id: 'desc' },
+    });
+    const categories = await prisma.category.findMany({
+      orderBy: { id: 'asc' }
+    });
+    return res.json({ menus, categories });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+});
+
 // All admin routes require authentication + admin role
 router.use(isAuthenticated, hasRole('admin'));
 
