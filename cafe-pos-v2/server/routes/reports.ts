@@ -95,11 +95,13 @@ router.get('/', async (req, res) => {
         },
       },
     });
-    const perfMap: Record<string, { id: number; name: string | undefined; category_name: string | undefined; totalQty: number; totalRevenue: number; total_cogs: number; margin: number; _cogsPerUnit: number }> = {};
+    const perfMap: Record<string, { id: number | null; name: string; category_name: string; totalQty: number; totalRevenue: number; total_cogs: number; margin: number; _cogsPerUnit: number }> = {};
     orderItems.forEach(oi => {
-      const mid = oi.menuId;
-      if (search && !oi.menu?.name?.toLowerCase().includes(search.toLowerCase()) &&
-          !oi.menu?.category?.name?.toLowerCase().includes(search.toLowerCase())) return;
+      const mid = oi.menuId ? String(oi.menuId) : 'deleted-' + oi.menuName;
+      const menuName = oi.menu?.name || oi.menuName;
+      const categoryName = oi.menu?.category?.name || 'Menu Dihapus';
+      if (search && !menuName.toLowerCase().includes(search.toLowerCase()) &&
+          !categoryName.toLowerCase().includes(search.toLowerCase())) return;
       if (!perfMap[mid]) {
         let cogsPerUnit = 0;
         if (oi.menu && oi.menu.recipes) {
@@ -110,9 +112,9 @@ router.get('/', async (req, res) => {
           }
         }
         perfMap[mid] = { 
-          id: mid, 
-          name: oi.menu?.name, 
-          category_name: oi.menu?.category?.name, 
+          id: oi.menuId, 
+          name: menuName, 
+          category_name: categoryName, 
           totalQty: 0, 
           totalRevenue: 0, 
           total_cogs: 0, 
@@ -257,10 +259,12 @@ router.get('/export', async (req, res) => {
         where: { order: { createdAt: { gte: start, lte: end }, status: 'completed' } },
         include: { menu: { include: { category: true } } },
       });
-      const map: Record<number, { name: string | undefined; cat: string | undefined; qty: number; rev: number }> = {};
+      const map: Record<string, { name: string; cat: string; qty: number; rev: number }> = {};
       items.forEach(oi => {
-        const mid = oi.menuId;
-        if (!map[mid]) map[mid] = { name: oi.menu?.name, cat: oi.menu?.category?.name, qty: 0, rev: 0 };
+        const mid = oi.menuId ? String(oi.menuId) : 'deleted-' + oi.menuName;
+        const menuName = oi.menu?.name || oi.menuName;
+        const catName = oi.menu?.category?.name || 'Menu Dihapus';
+        if (!map[mid]) map[mid] = { name: menuName, cat: catName, qty: 0, rev: 0 };
         map[mid].qty += oi.quantity; map[mid].rev += Number(oi.subtotal);
       });
       rows = Object.values(map).sort((a, b) => b.qty - a.qty).map(r => [r.name, r.cat, r.qty, r.rev]);

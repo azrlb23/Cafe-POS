@@ -47,9 +47,9 @@ onMounted(async () => {
     <div v-else-if="order" class="receipt-container">
         <!-- Header -->
         <div class="header">
-            <h1 class="store-name">{{ settings.store_name || 'DENJAVAS CAFE' }}</h1>
-            <p class="store-address">{{ settings.store_address || 'Jl. Raya Cafe No. 123' }}</p>
-            <p v-if="settings.store_phone">Telp: {{ settings.store_phone }}</p>
+            <h1 class="store-name">{{ settings.store_name || 'Denjavas Retro Café' }}</h1>
+            <p class="store-address">{{ settings.store_address || 'Denjavas Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam, Kabupaten Penajam Paser Utara, Kalimantan Timur 76143' }}</p>
+            <p v-if="settings.store_phone || settings.store_phone === undefined">Telp: {{ settings.store_phone || '+62 823-5343-8404' }}</p>
             <div class="divider"></div>
         </div>
 

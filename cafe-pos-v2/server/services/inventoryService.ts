@@ -8,20 +8,24 @@ import { Prisma } from '@prisma/client';
 export async function deductStockFromOrder(tx: Prisma.TransactionClient, order: any) {
   for (const item of order.orderItems) {
     // 1. Deduct base menu recipes
-    const menuRecipes = await tx.recipe.findMany({
-      where: { menuId: item.menuId },
-      include: { rawMaterial: true },
-    });
-    await processRecipes(tx, menuRecipes, item.quantity, `Order #${order.orderNumber}`, 'out');
+    if (item.menuId) {
+      const menuRecipes = await tx.recipe.findMany({
+        where: { menuId: item.menuId },
+        include: { rawMaterial: true },
+      });
+      await processRecipes(tx, menuRecipes, item.quantity, `Order #${order.orderNumber}`, 'out');
+    }
 
     // 2. Deduct option item recipes
     if (item.orderItemOptions && item.orderItemOptions.length > 0) {
       for (const option of item.orderItemOptions) {
-        const optionRecipes = await tx.recipe.findMany({
-          where: { menuOptionItemId: option.menuOptionItemId },
-          include: { rawMaterial: true },
-        });
-        await processRecipes(tx, optionRecipes, item.quantity, `Order #${order.orderNumber} (Option)`, 'out');
+        if (option.menuOptionItemId) {
+          const optionRecipes = await tx.recipe.findMany({
+            where: { menuOptionItemId: option.menuOptionItemId },
+            include: { rawMaterial: true },
+          });
+          await processRecipes(tx, optionRecipes, item.quantity, `Order #${order.orderNumber} (Option)`, 'out');
+        }
       }
     }
   }
@@ -33,19 +37,23 @@ export async function deductStockFromOrder(tx: Prisma.TransactionClient, order: 
  */
 export async function restoreStockFromOrder(tx: Prisma.TransactionClient, order: any) {
   for (const item of order.orderItems) {
-    const menuRecipes = await tx.recipe.findMany({
-      where: { menuId: item.menuId },
-      include: { rawMaterial: true },
-    });
-    await processRecipes(tx, menuRecipes, item.quantity, `VOID #${order.orderNumber}`, 'in');
+    if (item.menuId) {
+      const menuRecipes = await tx.recipe.findMany({
+        where: { menuId: item.menuId },
+        include: { rawMaterial: true },
+      });
+      await processRecipes(tx, menuRecipes, item.quantity, `VOID #${order.orderNumber}`, 'in');
+    }
 
     if (item.orderItemOptions && item.orderItemOptions.length > 0) {
       for (const option of item.orderItemOptions) {
-        const optionRecipes = await tx.recipe.findMany({
-          where: { menuOptionItemId: option.menuOptionItemId },
-          include: { rawMaterial: true },
-        });
-        await processRecipes(tx, optionRecipes, item.quantity, `VOID #${order.orderNumber} (Option)`, 'in');
+        if (option.menuOptionItemId) {
+          const optionRecipes = await tx.recipe.findMany({
+            where: { menuOptionItemId: option.menuOptionItemId },
+            include: { rawMaterial: true },
+          });
+          await processRecipes(tx, optionRecipes, item.quantity, `VOID #${order.orderNumber} (Option)`, 'in');
+        }
       }
     }
   }

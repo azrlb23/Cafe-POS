@@ -112,6 +112,7 @@ const handleLogout = async () => {
                             Laporan
                         </SidebarLink>
                     </div>
+
                 </div>
 
                 <!-- User Profile Card -->
@@ -196,7 +197,9 @@ const handleLogout = async () => {
                 <main class="flex-1 overflow-x-hidden no-scrollbar">
                     <router-view v-slot="{ Component }">
                         <transition name="fade" mode="out-in">
-                            <component :is="Component" />
+                            <div :key="$route.path" class="h-full w-full">
+                                <component :is="Component" />
+                            </div>
                         </transition>
                     </router-view>
                 </main>

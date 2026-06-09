@@ -17,11 +17,20 @@ const activeShift = computed(() => posStore.activeShift);
 
 const currentTime = ref(new Date());
 let timer;
+const isInitialLoading = ref(true);
 
-onMounted(() => {
+onMounted(async () => {
     timer = setInterval(() => {
         currentTime.value = new Date();
     }, 1000);
+    
+    try {
+        await posStore.fetchPosData(false);
+    } catch (e) {
+        console.error("Failed to load POS layout data", e);
+    } finally {
+        isInitialLoading.value = false;
+    }
 });
 
 onUnmounted(() => {
@@ -88,9 +97,14 @@ const logout = async () => {
 
         <!-- Main Content (Full height minus header) -->
         <main class="flex-1 overflow-hidden relative">
-            <router-view v-slot="{ Component }">
+            <div v-if="isInitialLoading" class="absolute inset-0 flex items-center justify-center bg-[#F8F9FD] h-full w-full z-50">
+                <div class="w-10 h-10 border-4 border-amber-600/20 border-t-amber-600 rounded-full animate-spin"></div>
+            </div>
+            <router-view v-else v-slot="{ Component }">
                 <transition name="fade" mode="out-in">
-                    <component :is="Component" />
+                    <div :key="$route.path" class="h-full w-full">
+                        <component :is="Component" />
+                    </div>
                 </transition>
             </router-view>
         </main>

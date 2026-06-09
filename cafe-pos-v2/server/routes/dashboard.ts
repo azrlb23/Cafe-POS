@@ -172,16 +172,18 @@ router.get('/', async (req, res) => {
 
     // ===== 3. Top 5 Menus & 8. Category Revenue (computed in-memory) =====
     const completedOrderItems = completedOrders.flatMap(o => o.orderItems);
-    const menuMap: Record<number, { menu_id: number; name: string | undefined; category: string | undefined; total_quantity: number; total_revenue: number }> = {};
+    const menuMap: Record<string, { menu_id: number | null; name: string; category: string; total_quantity: number; total_revenue: number }> = {};
     const catMap: Record<string, { category_name: string; revenue: number }> = {};
 
     completedOrderItems.forEach(oi => {
-      const mid = oi.menuId;
+      const mid = oi.menuId ? String(oi.menuId) : 'deleted-' + oi.menuName;
+      const menuName = oi.menu?.name || oi.menuName;
+      const categoryName = oi.menu?.category?.name || 'Menu Dihapus';
       if (!menuMap[mid]) {
         menuMap[mid] = { 
-          menu_id: mid, 
-          name: oi.menu?.name, 
-          category: oi.menu?.category?.name, 
+          menu_id: oi.menuId, 
+          name: menuName, 
+          category: categoryName, 
           total_quantity: 0, 
           total_revenue: 0 
         };
@@ -189,7 +191,7 @@ router.get('/', async (req, res) => {
       menuMap[mid].total_quantity += oi.quantity;
       menuMap[mid].total_revenue += Number(oi.subtotal);
 
-      const cat = oi.menu?.category?.name || 'Uncategorized';
+      const cat = categoryName;
       if (!catMap[cat]) catMap[cat] = { category_name: cat, revenue: 0 };
       catMap[cat].revenue += Number(oi.subtotal);
     });

@@ -13,20 +13,19 @@ const authStore = useAuthStore();
 const posStore = usePosStore();
 const user = computed(() => authStore.user);
 
-const todayOrders = ref([]);
-const todayPettyCash = ref([]);
+const todayOrders = computed(() => posStore.todayOrders);
+const todayPettyCash = computed(() => posStore.todayPettyCash);
 const activeShift = computed(() => posStore.activeShift);
-const isLoading = ref(true);
+const isLoading = ref(!posStore.hasLoaded);
 
-const fetchData = async () => {
+const fetchData = async (force = false) => {
     try {
-        isLoading.value = true;
-        const res = await api.get('/pos/data');
-        todayOrders.value = res.data.todayOrders;
-        todayPettyCash.value = res.data.todayPettyCash;
-        posStore.setActiveShift(res.data.activeShift);
+        if (!posStore.hasLoaded) {
+            isLoading.value = true;
+        }
+        await posStore.fetchPosData(force);
         
-        if (!res.data.activeShift) {
+        if (!posStore.activeShift) {
             showShiftModal.value = true;
         }
     } catch (e) {
@@ -36,8 +35,8 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
+onMounted(async () => {
+    await fetchData(false);
 });
 
 const showShiftModal = ref(false);
@@ -98,7 +97,7 @@ const submitVoid = async () => {
         showVoidModal.value = false;
         selectedOrderForVoid.value = null;
         voidReason.value = '';
-        await fetchData();
+        await fetchData(true);
     } catch (e) {
         console.error("Failed to void order", e);
     } finally {
@@ -373,9 +372,9 @@ const submitVoid = async () => {
         </div>
 
         <!-- Sidebar Modals -->
-        <ShiftModal :show="showShiftModal" @success="showShiftModal = false; fetchData();" />
-        <EndShiftModal :show="showEndShiftModal" :active-shift="activeShift" @close="showEndShiftModal = false" @success="showEndShiftModal = false; fetchData();" />
-        <PettyCashModal :show="showPettyCashModal" @close="showPettyCashModal = false" @success="showPettyCashModal = false; fetchData();" />
+        <ShiftModal :show="showShiftModal" @success="showShiftModal = false; fetchData(true);" />
+        <EndShiftModal :show="showEndShiftModal" :active-shift="activeShift" @close="showEndShiftModal = false" @success="showEndShiftModal = false; fetchData(true);" />
+        <PettyCashModal :show="showPettyCashModal" @close="showPettyCashModal = false" @success="showPettyCashModal = false; fetchData(true);" />
         <PrintReceiptModal :show="showPrintModal" :today-orders="todayOrders" :last-order="todayOrders && todayOrders.length > 0 ? todayOrders[0] : null" @close="showPrintModal = false" />
     </template>
 

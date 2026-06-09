@@ -423,11 +423,11 @@ async function main() {
   console.log('Seeding settings...');
   const defaults = [
     { key: 'store_name', value: 'Denjavas Retro Café' },
-    { key: 'store_phone', value: '081122334455' },
-    { key: 'store_instagram', value: '@denjavas.retrocafe' },
-    { key: 'store_address', value: 'Balikpapan, Kalimantan Timur' },
+    { key: 'store_phone', value: '+62 823-5343-8404' },
+    { key: 'store_instagram', value: '@denjavas' },
+    { key: 'store_address', value: 'Denjavas Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam, Kabupaten Penajam Paser Utara, Kalimantan Timur 76143' },
     { key: 'receipt_header', value: 'Denjavas Retro Café' },
-    { key: 'receipt_footer', value: 'Terima kasih atas kunjungan Anda! Follow IG kami @denjavas.retrocafe' },
+    { key: 'receipt_footer', value: 'Terima kasih atas kunjungan Anda! Follow IG kami @denjavas' },
   ];
 
   for (const item of defaults) {

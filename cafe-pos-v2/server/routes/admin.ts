@@ -38,25 +38,30 @@ async function saveMenuImage(file: any): Promise<string> {
   const filename = `menu-${Date.now()}${ext}`;
 
   if (supabase) {
-    const { error } = await supabase.storage
-      .from('menus')
-      .upload(filename, file.buffer, {
-        contentType: file.mimetype,
-        upsert: true,
-      });
+    try {
+      const { error } = await supabase.storage
+        .from('menus')
+        .upload(filename, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
 
-    if (error) {
-      console.error('Supabase Storage upload error:', error);
-      throw new Error(`Gagal mengunggah gambar ke Cloud Storage: ${error.message}`);
+      if (error) {
+        console.warn('Supabase Storage upload failed, falling back to local disk storage:', error);
+      } else {
+        return `menus/${filename}`;
+      }
+    } catch (err) {
+      console.warn('Supabase Storage upload threw exception, falling back to local disk storage:', err);
     }
-    return `menus/${filename}`;
-  } else {
-    const dir = path.join(process.cwd(), 'storage', 'menus');
-    fs.mkdirSync(dir, { recursive: true });
-    const filePath = path.join(dir, filename);
-    await fs.promises.writeFile(filePath, file.buffer);
-    return `menus/${filename}`;
   }
+
+  // Fallback local storage write
+  const dir = path.join(process.cwd(), 'storage', 'menus');
+  fs.mkdirSync(dir, { recursive: true });
+  const filePath = path.join(dir, filename);
+  await fs.promises.writeFile(filePath, file.buffer);
+  return `menus/${filename}`;
 }
 
 // Helper: parse integer ID, returns null if invalid
@@ -75,7 +80,10 @@ router.get('/public-menus', async (req, res) => {
     const categories = await prisma.category.findMany({
       orderBy: { id: 'asc' }
     });
-    return res.json({ menus, categories });
+    const settings = await prisma.storeSetting.findMany();
+    const settingsMap: Record<string, string | null> = {};
+    settings.forEach(s => { settingsMap[s.key] = s.value; });
+    return res.json({ menus, categories, settings: settingsMap });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ message: 'Server error.' });
@@ -321,12 +329,6 @@ router.delete('/menus/:id', async (req, res) => {
   try {
     const id = parseId(req.params.id);
     if (!id) return res.status(400).json({ message: 'ID tidak valid.' });
-
-    // Check if there are order items associated with this menu
-    const orderCount = await prisma.orderItem.count({ where: { menuId: id } });
-    if (orderCount > 0) {
-      return res.status(400).json({ message: 'Menu tidak dapat dihapus karena sudah memiliki riwayat penjualan.' });
-    }
 
     await prisma.menu.delete({ where: { id } });
     return res.json({ message: 'Menu berhasil dihapus.' });
@@ -803,6 +805,42 @@ router.get('/tables', async (req, res) => {
 // =============================================
 // STORE SETTINGS
 // =============================================
+
+router.post('/settings/upload', upload.single('image'), async (req: any, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Tidak ada file yang diunggah.' });
+    }
+    const ext = path.extname(req.file.originalname);
+    const filename = `setting-${Date.now()}${ext}`;
+    let pathResult = '';
+    
+    if (supabase) {
+      const { error } = await supabase.storage
+        .from('settings')
+        .upload(filename, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: true,
+        });
+
+      if (error) {
+        console.error('Supabase Storage upload error:', error);
+        throw new Error(`Gagal mengunggah gambar ke Cloud Storage: ${error.message}`);
+      }
+      pathResult = `settings/${filename}`;
+    } else {
+      const dir = path.join(process.cwd(), 'storage', 'settings');
+      fs.mkdirSync(dir, { recursive: true });
+      const filePath = path.join(dir, filename);
+      await fs.promises.writeFile(filePath, req.file.buffer);
+      pathResult = `settings/${filename}`;
+    }
+    return res.json({ path: pathResult });
+  } catch (e: any) {
+    console.error(e);
+    return res.status(500).json({ message: e.message || 'Server error.' });
+  }
+});
 
 router.get('/settings', async (req, res) => {
   try {

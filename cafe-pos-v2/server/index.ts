@@ -44,6 +44,13 @@ app.get('/storage/menus/:filename', (req, res, next) => {
   }
   next();
 });
+app.get('/storage/settings/:filename', (req, res, next) => {
+  if (process.env.SUPABASE_URL) {
+    const publicUrl = `${process.env.SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/settings/${req.params.filename}`;
+    return res.redirect(publicUrl);
+  }
+  next();
+});
 app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
 
 // Session Store Configuration

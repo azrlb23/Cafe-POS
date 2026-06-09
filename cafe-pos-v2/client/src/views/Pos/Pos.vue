@@ -18,14 +18,14 @@ const authStore = useAuthStore();
 const posStore = usePosStore();
 const user = computed(() => authStore.user);
 
-// Data states
-const menus = ref([]);
-const categories = ref([]);
-const tables = ref([]);
+// Data states from Pinia store
+const menus = computed(() => posStore.menus);
+const categories = computed(() => posStore.categories);
+const tables = computed(() => posStore.tables);
 const activeShift = computed(() => posStore.activeShift);
-const todayOrders = ref([]);
-const todayPettyCash = ref([]);
-const isLoading = ref(true);
+const todayOrders = computed(() => posStore.todayOrders);
+const todayPettyCash = computed(() => posStore.todayPettyCash);
+const isLoading = ref(!posStore.hasLoaded);
 
 // View states
 const activeCategoryId = ref(null);
@@ -58,18 +58,14 @@ const lastOrderId = ref(null);
 const searchQuery = ref('');
 const showPrintModal = ref(false);
 
-const fetchData = async () => {
+const fetchData = async (force = false) => {
     try {
-        isLoading.value = true;
-        const res = await api.get('/pos/data');
-        menus.value = res.data.menus;
-        categories.value = res.data.categories;
-        tables.value = res.data.tables;
-        posStore.setActiveShift(res.data.activeShift);
-        todayOrders.value = res.data.todayOrders;
-        todayPettyCash.value = res.data.todayPettyCash;
+        if (!posStore.hasLoaded) {
+            isLoading.value = true;
+        }
+        await posStore.fetchPosData(force);
         
-        if (!res.data.activeShift) {
+        if (!posStore.activeShift) {
             showShiftModal.value = true;
         }
 
@@ -83,8 +79,8 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
+onMounted(async () => {
+    await fetchData(false);
 });
 
 // Computed
@@ -192,7 +188,7 @@ const handlePaymentSubmit = async (paymentData) => {
         showMobileCart.value = false;
         
         // Refresh data
-        await fetchData();
+        await fetchData(true);
 
         // Trigger printing (Temporarily disabled due to missing PrinterService)
         lastOrderId.value = newOrder.id;
@@ -417,9 +413,9 @@ const handleManualPrint = (order) => {
         </div>
 
         <!-- Modals -->
-        <ShiftModal :show="showShiftModal" @success="showShiftModal = false; fetchData();" />
-        <EndShiftModal :show="showEndShiftModal" :active-shift="activeShift" @close="showEndShiftModal = false" @success="showEndShiftModal = false; fetchData();" />
-        <PettyCashModal :show="showPettyCashModal" @close="showPettyCashModal = false" @success="showPettyCashModal = false; fetchData();" />
+        <ShiftModal :show="showShiftModal" @success="showShiftModal = false; fetchData(true);" />
+        <EndShiftModal :show="showEndShiftModal" :active-shift="activeShift" @close="showEndShiftModal = false" @success="showEndShiftModal = false; fetchData(true);" />
+        <PettyCashModal :show="showPettyCashModal" @close="showPettyCashModal = false" @success="showPettyCashModal = false; fetchData(true);" />
 
         <TableSelectionModal :show="showTableModal" :tables="tables" :selected-table-id="selectedTable?.id" @close="showTableModal = false" @select="handleTableSelect" />
         <OptionSelectionModal :show="showOptionModal" :menu="currentMenuForOptions" @close="showOptionModal = false" @add="addToCart" />

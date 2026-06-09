@@ -8,14 +8,14 @@ export default {
     extend: {
       colors: {
         cafe: {
-          base: '#FAFAF9',
+          base: '#FAF6F0',
           surface: '#FFFFFF',
-          border: '#E2E8F0',
-          main: '#0F172A',
-          secondary: '#475569',
-          muted: '#64748B',
-          accent: '#B45309',
-          'accent-hover': '#92400E',
+          border: '#EBE5DC',
+          main: '#2D1F18',
+          secondary: '#5C4D46',
+          muted: '#8E7D75',
+          accent: '#8C6239',
+          'accent-hover': '#704E2B',
         }
       }
     },

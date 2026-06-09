@@ -13,18 +13,18 @@ const authStore = useAuthStore();
 const posStore = usePosStore();
 const user = computed(() => authStore.user);
 
-const todayOrders = ref([]);
+const todayOrders = computed(() => posStore.todayOrders);
 const activeShift = computed(() => posStore.activeShift);
-const isLoading = ref(true);
+const isLoading = ref(!posStore.hasLoaded);
 
-const fetchData = async () => {
+const fetchData = async (force = false) => {
     try {
-        isLoading.value = true;
-        const res = await api.get('/pos/data');
-        todayOrders.value = res.data.todayOrders;
-        posStore.setActiveShift(res.data.activeShift);
+        if (!posStore.hasLoaded) {
+            isLoading.value = true;
+        }
+        await posStore.fetchPosData(force);
         
-        if (!res.data.activeShift) {
+        if (!posStore.activeShift) {
             showShiftModal.value = true;
         }
     } catch (e) {
@@ -34,8 +34,8 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
+onMounted(async () => {
+    await fetchData(false);
 });
 
 // State for active modals from sidebar
@@ -105,7 +105,6 @@ const filteredOrders = computed(() => {
 
     return list;
 });
-
 // Serve (Sajikan) order action
 const serveOrder = async (order) => {
     try {
@@ -113,12 +112,11 @@ const serveOrder = async (order) => {
         if (selectedOrder.value?.id === order.id) {
             selectedOrder.value.status = 'completed';
         }
-        await fetchData();
+        await fetchData(true);
     } catch (e) {
         console.error("Failed to update status", e);
     }
 };
-
 const openDetails = (order) => {
     selectedOrder.value = order;
     showDetailModal.value = true;
@@ -141,7 +139,8 @@ const submitVoid = async () => {
         });
         showVoidModal.value = false;
         selectedOrderForVoid.value = null;
-        await fetchData();
+        voidReason.value = '';
+        await fetchData(true);
     } catch (e) {
         console.error("Failed to void order", e);
     } finally {
@@ -492,9 +491,9 @@ const getModifierText = (options) => {
         </div>
 
         <!-- Sidebar Modals -->
-        <ShiftModal :show="showShiftModal" @success="showShiftModal = false; fetchData();" />
-        <EndShiftModal :show="showEndShiftModal" :active-shift="activeShift" @close="showEndShiftModal = false" @success="showEndShiftModal = false; fetchData();" />
-        <PettyCashModal :show="showPettyCashModal" @close="showPettyCashModal = false" @success="showPettyCashModal = false; fetchData();" />
+        <ShiftModal :show="showShiftModal" @success="showShiftModal = false; fetchData(true);" />
+        <EndShiftModal :show="showEndShiftModal" :active-shift="activeShift" @close="showEndShiftModal = false" @success="showEndShiftModal = false; fetchData(true);" />
+        <PettyCashModal :show="showPettyCashModal" @close="showPettyCashModal = false" @success="showPettyCashModal = false; fetchData(true);" />
         <PrintReceiptModal :show="showPrintModal" :today-orders="todayOrders" :last-order="todayOrders && todayOrders.length > 0 ? todayOrders[0] : null" @close="showPrintModal = false" />
     </template>
 
