@@ -54,17 +54,20 @@ const logout = async () => {
 <template>
     <div class="min-h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden flex flex-col">
         <!-- POS Header -->
-        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0 shadow-sm z-50">
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center shadow-sm">
-                        <span class="text-white font-black text-xl italic">D</span>
-                    </div>
-                    <div>
-                        <h1 class="text-sm font-black uppercase tracking-[0.2em] text-amber-600">Denjavas <span class="text-slate-900">POS</span></h1>
-                        <p class="text-[10px] text-slate-500 font-medium tracking-widest">Beverage · Dessert · Nusantara</p>
-                    </div>
-                </div>
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-sm z-50">
+            <div class="flex items-center gap-3 sm:gap-6">
+                <!-- Hamburger Menu Button (visible on mobile/tablet) -->
+                <button 
+                    @click="posStore.isMobileSidebarOpen = !posStore.isMobileSidebarOpen"
+                    class="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all cursor-pointer"
+                    aria-label="Toggle Navigation"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+
+                <router-link :to="{ name: 'Pos' }" class="text-xl sm:text-2xl font-serif font-bold tracking-wider text-[#B45309]">
+                    Denjavas <span class="text-slate-800 font-serif font-medium italic text-lg sm:text-xl">POS</span>
+                </router-link>
                 
                 <!-- Time Display -->
                 <div class="hidden md:flex flex-col border-l border-slate-200 pl-6 h-8 justify-center">
@@ -73,12 +76,12 @@ const logout = async () => {
                 </div>
             </div>
 
-            <div class="flex items-center gap-4" v-if="user">
+            <div class="flex items-center gap-3 sm:gap-4" v-if="user">
                 <!-- User Info -->
-                <div class="flex flex-col items-end mr-2">
-                    <span class="text-xs font-bold text-slate-900 leading-none">{{ user.name }}</span>
-                    <span class="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-1">
-                        {{ activeShift ? 'Shift Active: ' + Number(activeShift.openingCash).toLocaleString('id-ID') : 'No Active Shift' }}
+                <div class="flex flex-col items-end mr-1 sm:mr-2">
+                    <span class="text-[10px] sm:text-xs font-bold text-slate-900 leading-none">{{ user.name }}</span>
+                    <span class="text-[8px] sm:text-[10px] text-amber-600 font-bold uppercase tracking-wider sm:tracking-widest mt-1">
+                        {{ activeShift ? 'Shift Aktif' : 'Shift Belum Buka' }}
                     </span>
                 </div>
 
@@ -86,10 +89,10 @@ const logout = async () => {
                 <div class="flex items-center gap-2">
                     <button 
                         @click="logout"
-                        class="p-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 transition-all border border-slate-200"
+                        class="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 transition-all border border-slate-200 cursor-pointer"
                         title="Logout"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     </button>
                 </div>
             </div>
@@ -112,6 +115,12 @@ const logout = async () => {
 </template>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap');
+
+.font-serif {
+    font-family: 'Playfair Display', serif;
+}
+
 /* Custom Scrollbar for POS */
 ::-webkit-scrollbar {
     width: 6px;

@@ -1,29 +1,44 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
 import CustomSelect from '@/components/CustomSelect.vue';
+import { useAdminStore } from '@/stores/admin';
 
 const router = useRouter();
+const adminStore = useAdminStore();
 
-const menus = ref([]);
-const categories = ref([]);
 const search = ref('');
 const categoryId = ref('');
 const isLoading = ref(true);
 const flashMessage = ref('');
 
-const fetchData = async () => {
-    isLoading.value = true;
+const menus = computed(() => {
+    let list = adminStore.menus;
+    
+    if (search.value) {
+        const q = search.value.toLowerCase();
+        list = list.filter(m => 
+            m.name.toLowerCase().includes(q) || 
+            (m.category?.name && m.category.name.toLowerCase().includes(q))
+        );
+    }
+    
+    if (categoryId.value) {
+        list = list.filter(m => m.categoryId === parseInt(categoryId.value));
+    }
+    
+    return list;
+});
+
+const categories = computed(() => adminStore.categories);
+
+const fetchData = async (force = false) => {
+    if (!adminStore.isMenusLoaded) {
+        isLoading.value = true;
+    }
     try {
-        const response = await api.get('/admin/menus', {
-            params: {
-                search: search.value,
-                category_id: categoryId.value
-            }
-        });
-        menus.value = response.data.menus;
-        categories.value = response.data.categories;
+        await adminStore.fetchMenus(force);
     } catch (error) {
         console.error("Failed to fetch menus", error);
     } finally {
@@ -31,27 +46,9 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
-});
-
-// Vanilla Debounce
-const debounce = (fn, delay) => {
-    let timeoutId;
-    return (...args) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-            fn(...args);
-        }, delay);
-    };
-};
-
-const performSearch = debounce(() => {
-    fetchData();
-}, 300);
-
-watch([search, categoryId], () => {
-    performSearch();
+onMounted(async () => {
+    await fetchData();
+    fetchData(true);
 });
 
 const resetFilters = () => {
@@ -64,7 +61,7 @@ const confirmDeletion = async (menu) => {
         try {
             await api.delete(`/admin/menus/${menu.id}`);
             flashMessage.value = 'Menu berhasil dihapus';
-            fetchData();
+            await fetchData(true);
             setTimeout(() => { flashMessage.value = ''; }, 3000);
         } catch (e) {
             console.error(e);
@@ -152,88 +149,151 @@ const confirmDeletion = async (menu) => {
                 <div class="w-12 h-12 border-4 border-amber-600/20 border-t-amber-600 rounded-full animate-spin"></div>
             </div>
 
-            <!-- Main Content Area -->
-            <div v-else class="overflow-x-auto -mx-4 sm:mx-0 delay-200">
-                <table class="w-full text-left border-separate border-spacing-y-4">
-                    <thead>
-                        <tr class="text-slate-400">
-                            <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Informasi Produk</th>
-                            <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Kategori</th>
-                            <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Harga</th>
-                            <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Status</th>
-                            <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-right">Manajemen</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="menu in menus" :key="menu.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
-                            <td class="py-6 px-8 first:rounded-l-[2rem]">
-                                <div class="flex items-center gap-6">
-                                    <div class="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-700">
-                                        <!-- NOTE: Assuming static assets are served from an S3 bucket or local folder accessible via `/storage` -->
-                                        <!-- In this SPA migration, ensure the backend serves `/storage/...` properly -->
-                                        <img v-if="menu.imagePath || menu.image_path" :src="'/storage/' + (menu.imagePath || menu.image_path)" alt="Menu" class="w-full h-full object-cover" />
-                                        <div v-else class="w-full h-full flex items-center justify-center text-slate-300">
-                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <div v-else class="delay-200">
+                <!-- Desktop Table View -->
+                <div class="hidden lg:block overflow-x-auto -mx-4 sm:mx-0">
+                    <table class="w-full text-left border-separate border-spacing-y-4">
+                        <thead>
+                            <tr class="text-slate-400">
+                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Informasi Produk</th>
+                                <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Kategori</th>
+                                <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Harga</th>
+                                <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Status</th>
+                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-right">Manajemen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="menu in menus" :key="menu.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
+                                <td class="py-6 px-8 first:rounded-l-[2rem]">
+                                    <div class="flex items-center gap-6">
+                                        <div class="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-700">
+                                            <img v-if="menu.imagePath || menu.image_path" :src="'/storage/' + (menu.imagePath || menu.image_path)" alt="Menu" class="w-full h-full object-cover" />
+                                            <div v-else class="w-full h-full flex items-center justify-center text-slate-300">
+                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="font-serif font-black text-slate-900 text-xl mb-1 group-hover:text-amber-700 transition-colors">{{ menu.name }}</div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] font-black text-amber-500/50 uppercase tracking-widest bg-amber-500/5 px-2 py-0.5 rounded">
+                                                    {{ menu.recipes?.length || 0 }} Bahan
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <div class="font-serif font-black text-slate-900 text-xl mb-1 group-hover:text-amber-700 transition-colors">{{ menu.name }}</div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-[10px] font-black text-amber-500/50 uppercase tracking-widest bg-amber-500/5 px-2 py-0.5 rounded">
-                                                {{ menu.recipes?.length || 0 }} Bahan
-                                            </span>
-                                        </div>
+                                </td>
+                                <td class="py-6 px-6">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 px-3 py-1.5 rounded-xl bg-slate-50 group-hover:bg-white transition-colors">
+                                        {{ menu.category?.name }}
+                                    </span>
+                                </td>
+                                <td class="py-6 px-6">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Base Price</span>
+                                        <span class="text-slate-900 font-black text-lg">Rp {{ parseInt(menu.basePrice).toLocaleString('id-ID') }}</span>
                                     </div>
+                                </td>
+                                <td class="py-6 px-6">
+                                    <div :class="menu.isActive ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-100'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-transparent text-[10px] font-black uppercase tracking-widest transition-all">
+                                        <span :class="menu.isActive ? 'bg-green-500 animate-pulse' : 'bg-slate-400'" class="w-1.5 h-1.5 rounded-full"></span>
+                                        {{ menu.isActive ? 'Tersedia' : 'Hidden' }}
+                                    </div>
+                                </td>
+                                <td class="py-6 px-8 text-right last:rounded-r-[2rem]">
+                                    <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                        <router-link
+                                            :to="{ name: 'AdminMenusEdit', params: { id: menu.id } }"
+                                            class="bg-white border border-slate-200 text-slate-400 hover:text-amber-700 hover:border-amber-500 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg active:scale-90 cursor-pointer"
+                                            title="Edit Menu"
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        </router-link>
+                                        
+                                        <button
+                                            @click="confirmDeletion(menu)"
+                                            class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg active:scale-90 cursor-pointer"
+                                            title="Hapus Menu"
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="menus.length === 0">
+                                <td colspan="5" class="py-32 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                                    <div class="bg-slate-50 inline-flex p-8 rounded-full mb-6">
+                                        <svg class="text-slate-200 w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                    </div>
+                                    <div class="text-slate-900 font-serif font-black text-2xl">Menu Tidak Ditemukan</div>
+                                    <p class="text-slate-400 text-sm mt-2 max-w-xs mx-auto uppercase font-bold tracking-widest leading-loose">Coba gunakan kata kunci lain atau ubah kategori pilihan Anda.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 -mx-4 sm:mx-0 px-4 sm:px-0">
+                    <div 
+                        v-for="menu in menus" 
+                        :key="menu.id" 
+                        class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300"
+                    >
+                        <div class="flex gap-4 items-start">
+                            <div class="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shrink-0 shadow-inner">
+                                <img v-if="menu.imagePath || menu.image_path" :src="'/storage/' + (menu.imagePath || menu.image_path)" alt="Menu" class="w-full h-full object-cover" />
+                                <div v-else class="w-full h-full flex items-center justify-center text-slate-300">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 </div>
-                            </td>
-                            <td class="py-6 px-6">
-                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 px-3 py-1.5 rounded-xl bg-slate-50 group-hover:bg-white transition-colors">
-                                    {{ menu.category?.name }}
-                                </span>
-                            </td>
-                            <td class="py-6 px-6">
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Base Price</span>
-                                    <span class="text-slate-900 font-black text-lg">Rp {{ parseInt(menu.basePrice).toLocaleString('id-ID') }}</span>
+                            </div>
+                            <div class="flex-grow min-w-0">
+                                <div class="font-serif font-black text-slate-900 text-lg mb-1 truncate">{{ menu.name }}</div>
+                                <div class="flex flex-wrap gap-2 items-center mt-1">
+                                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 px-2 py-0.5 rounded bg-slate-50">
+                                        {{ menu.category?.name }}
+                                    </span>
+                                    <span class="text-[9px] font-black text-amber-500/50 uppercase tracking-widest bg-amber-500/5 px-2 py-0.5 rounded">
+                                        {{ menu.recipes?.length || 0 }} Bahan
+                                    </span>
                                 </div>
-                            </td>
-                            <td class="py-6 px-6">
-                                <div :class="menu.isActive ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-100'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-transparent text-[10px] font-black uppercase tracking-widest transition-all">
-                                    <span :class="menu.isActive ? 'bg-green-500 animate-pulse' : 'bg-slate-400'" class="w-1.5 h-1.5 rounded-full"></span>
-                                    {{ menu.isActive ? 'Tersedia' : 'Hidden' }}
-                                </div>
-                            </td>
-                            <td class="py-6 px-8 text-right last:rounded-r-[2rem]">
-                                <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                                    <router-link
-                                        :to="{ name: 'AdminMenusEdit', params: { id: menu.id } }"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-amber-700 hover:border-amber-500 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg active:scale-90 cursor-pointer"
-                                        title="Edit Menu"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                    </router-link>
-                                    
-                                    <button
-                                        @click="confirmDeletion(menu)"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm hover:shadow-lg active:scale-90 cursor-pointer"
-                                        title="Hapus Menu"
-                                    >
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr v-if="menus.length === 0">
-                            <td colspan="5" class="py-32 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
-                                <div class="bg-slate-50 inline-flex p-8 rounded-full mb-6">
-                                    <svg class="text-slate-200 w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                                </div>
-                                <div class="text-slate-900 font-serif font-black text-2xl">Menu Tidak Ditemukan</div>
-                                <p class="text-slate-400 text-sm mt-2 max-w-xs mx-auto uppercase font-bold tracking-widest leading-loose">Coba gunakan kata kunci lain atau ubah kategori pilihan Anda.</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
+                            <div class="flex flex-col">
+                                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest">Base Price</span>
+                                <span class="text-slate-900 font-black text-base">Rp {{ parseInt(menu.basePrice).toLocaleString('id-ID') }}</span>
+                            </div>
+                            
+                            <div :class="menu.isActive ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-100'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                                <span :class="menu.isActive ? 'bg-green-500 animate-pulse' : 'bg-slate-400'" class="w-1.5 h-1.5 rounded-full"></span>
+                                {{ menu.isActive ? 'Tersedia' : 'Hidden' }}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mt-4 pt-4 border-t border-slate-100">
+                            <router-link
+                                :to="{ name: 'AdminMenusEdit', params: { id: menu.id } }"
+                                class="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer border border-amber-200/40"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
+                            </router-link>
+                            <button
+                                @click="confirmDeletion(menu)"
+                                class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer border border-rose-200/40"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div v-if="menus.length === 0" class="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-slate-200 px-4">
+                        <div class="text-slate-900 font-serif font-black text-xl">Menu Tidak Ditemukan</div>
+                        <p class="text-slate-400 text-xs mt-2 uppercase font-bold tracking-widest leading-loose">Coba gunakan kata kunci lain.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </template>

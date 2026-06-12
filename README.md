@@ -1,145 +1,65 @@
-# Denjavas Retro Café POS
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20svg/2%20line/3%20art%20%2B%20char%20%2B%20sub/2%20line%20art%20%2B%20char%20%2B%20sub.svg" width="400" alt="Laravel Logo"></a></p>
 
-Sistem Point of Sales (POS) khusus untuk **Denjavas Retro Café**, dibangun menggunakan stack modern (Laravel 12, Vue.js 3, Inertia.js, TailwindCSS) untuk operasional kasir dan manajemen back-office yang efisien.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
----
+## About Laravel
 
-## 📌 Fitur Utama
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in many web projects, such as:
 
-### Kasir (POS)
-- **Antarmuka Tablet**: UI full-screen 3-kolom yang dioptimalkan untuk tablet Android, dengan sidebar navigasi kasir.
-- **Manajemen Shift**: Buka/Tutup shift dengan kas awal, ringkasan penjualan, dan selisih kas.
-- **Pemesanan Lengkap**: Pemilihan menu, kustomisasi varian, pemilihan meja (1-30) atau Takeaway, dan checkout multi-metode (Cash, QRIS, E-Wallet, Transfer).
-- **Manajemen Stok Otomatis**: Bahan baku terpotong otomatis berdasarkan resep (BOM) saat transaksi diproses.
-- **Kas Keluar (Petty Cash)**: Pencatatan pengeluaran darurat dari laci kasir.
-- **Riwayat Transaksi**: Halaman riwayat penjualan dan kas keluar per hari.
-- **Pembatalan Pesanan (Void)**: Batalkan pesanan dengan alasan, otomatis mengembalikan stok dan mengoreksi saldo shift.
-- **Cetak Struk**: 3 format struk (Customer, Kasir, Dapur) via thermal printer (RawBT) dan PDF.
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- [Multiple backends for session and cache storage](https://laravel.com/docs/session).
+- [Expressive, intuitive database ORM](https://laravel.com/docs/eloquent).
+- [Database agnostic migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-### Admin / Manager
-- **Dashboard Analitik**: Ringkasan KPI (Pendapatan, Transaksi, Petty Cash, Saldo Laci) dengan filter rentang waktu fleksibel. Grafik tren penjualan, metode pembayaran, jam sibuk, dan performa kasir.
-- **Tabel Monitoring**: Transaksi terbaru, kas keluar terakhir, dan log aktivitas kasir hari ini.
-- **Peringatan Stok Kritis**: Notifikasi otomatis saat bahan baku menyentuh batas minimum.
-- **Manajemen Menu & Kategori**: CRUD lengkap dengan varian (ukuran, suhu, topping) dan resep bahan baku.
-- **Manajemen Bahan Baku**: Kelola stok (gram, ml, pcs) dengan batas minimum dan HPP (cost per unit).
-- **Manajemen Supplier**: CRUD data pemasok bahan baku.
-- **Stok Masuk (Purchase Orders)**: Pencatatan pembelian bahan baku dari supplier, otomatis menambah stok.
-- **Manajemen Kasir**: CRUD akun kasir, monitoring status shift aktif, timeline log aktivitas.
-- **Layout Meja**: Visualisasi layout 30 meja kafe dengan status real-time.
-- **Laporan Komprehensif**: 8 tab laporan (Dashboard Analitik, Penjualan, Performa Menu, Audit Stok, Shift, Transaksi, Kas Keluar, Void) dengan ekspor CSV/PDF.
-- **No Extra Tax**: Harga final tanpa PPN/service charge (sesuai kesepakatan klien).
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
----
+## Learning Laravel
 
-## 🛠️ Tech Stack
+Laravel has the most comprehensive and thorough [documentation](https://laravel.com/docs) and video tutorial library in the world, making it a breeze to get started with the framework.
 
-| Layer | Teknologi |
-|-------|-----------|
-| **Backend** | Laravel 12.x (PHP 8.2+) |
-| **Frontend** | Vue.js 3 (Composition API) + Inertia.js |
-| **Styling** | TailwindCSS |
-| **Database** | SQLite (dev) / MySQL (production) |
-| **Auth** | Laravel Breeze + Spatie Permission (RBAC) |
-| **Charts** | Chart.js (via vue-chartjs) |
-| **PDF** | barryvdh/laravel-dompdf |
-| **Thermal Print** | RawBT Protocol (ESC/POS) |
+You may also try [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
----
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on Laravel, modern PHP, JS, and the web development ecosystem in general. Laracasts is a great resource for both beginners and experienced developers looking to sharpen their skills.
 
-## 🚀 Instalasi & Setup
+## Laravel Sponsors
 
-```bash
-# 1. Clone dan install dependencies
-git clone https://github.com/azrlb23/Denjavas-POS.git
-cd Cafe-POS
-composer install
-npm install
+We would like to extend our thanks to the following sponsors for helping fund Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partner.laravel.com).
 
-# 2. Konfigurasi environment
-cp .env.example .env
-php artisan key:generate
+### Premium Partners
 
-# 3. Migrasi & seed database
-php artisan migrate:fresh --seed
+- **[Vehikl](https://vehikl.com/)**
+- **[Tighten](https://tighten.co)**
+- **[WebReinvent](https://webreinvent.com/)**
+- **[Kirschbaum Development Group](https://kirschbaumld.com)**
+- **[60 East Technologies](https://60east.com)**
+- **[Premier SaaS: Fastly](https://www.fastly.com/)**
+- **[ActiveCampaign](https://www.activecampaign.com/)**
+- **[Byte 5](https://byte5.de)**
+- **[Cariad](https://cariad.technology)**
+- **[Cherry](https://cherry.co)**
+- **[Codelitt](https://codelitt.com)**
+- **[Convective](https://convective.at)**
+- **[CreativeCanguruhs](https://creativecanguruhs.de)**
 
-# 4. Jalankan development server (satu perintah)
-composer run dev
-```
+## Contributing
 
-> `composer run dev` secara otomatis menjalankan PHP server, Vite, dan Queue Worker secara bersamaan.
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
----
+## Code of Conduct
 
-## 🔑 Default Users (Dari Seeder)
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://github.com/laravel/laravel/blob/master/code_of_conduct.md).
 
-| Role | Name | Email | Password | PIN |
-|------|------|-------|----------|-----|
-| **Admin** | Administrator | `admin@denjavas.com` | `password` | `123456` |
-| **Kasir 1** | Kasir 1 | `kasir@denjavas.com` | `password` | `654321` |
-| **Kasir 2** | Kasir 2 | `kasir2@denjavas.com` | `password` | `111222` |
-| **Kasir 3** | Kasir 3 | `kasir3@denjavas.com` | `password` | `333444` |
-| **Kasir 4** | Kasir 4 | `kasir4@denjavas.com` | `password` | `555666` |
+## Security Vulnerabilities
 
----
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-## 🗺️ Roadmap Development
+## License
 
-### ✅ Sprint 1: Core System & POS
-- [x] Skema database (menu, kategori, bahan baku, resep, meja, shift, orders)
-- [x] Admin UI: Katalog Menu, Kategori, Bahan Baku (CRUD)
-- [x] POS Kasir: Buka/Tutup Shift, Order, Checkout, Stok Otomatis
-- [x] Petty Cash & Riwayat Transaksi
-- [x] Void Order (Pembatalan + Restock + Koreksi Shift)
-
-### ✅ Sprint 2: Dashboard Analitik & Laporan
-- [x] Dashboard Admin: KPI Cards, Tren Penjualan, Top Menu
-- [x] Filter Rentang Waktu (Date Range Picker)
-- [x] Peringatan Stok Kritis (Low Stock Alert)
-- [x] Perbandingan Periode Otomatis
-- [x] Cetak Struk Multi-Format (Customer, Kasir, Dapur)
-- [x] Laporan 8-Tab (Dashboard, Penjualan, Menu, Stok, Shift, Transaksi, Kas Keluar, Void)
-- [x] Ekspor CSV/PDF
-
-### ✅ Sprint 3: Admin Modernization & Supply Chain
-- [x] Sidebar Navigation (Admin & POS)
-- [x] Dashboard Modernization (Grafik, Tabel, Log Aktivitas)
-- [x] Manajemen Supplier (CRUD)
-- [x] Stok Masuk / Purchase Orders (CRUD + auto-restock)
-- [x] Layout Meja (Visualisasi 30 meja)
-- [x] Manajemen Kasir (CRUD + monitoring + timeline log)
-- [x] Penyelarasan Warna Emas Gelap (amber-700)
-- [x] Font Plus Jakarta Sans untuk harga
-- [x] Form halaman mandiri (bukan popup) untuk semua CRUD
-
-### 🔲 Sprint 4: Integrasi Lanjutan (Backlog)
-- [ ] Export Excel (.xlsx) native
-- [ ] Cetak Struk (Thermal Printer via RawBT) — testing hardware
-- [ ] Integrasi QRIS Dinamis (Midtrans/Xendit)
-- [ ] Kitchen Display System (KDS)
-- [ ] Self-Ordering System (QR Code)
-- [ ] Toleransi Offline (IndexedDB/LocalStorage)
-
----
-
-## 📚 Dokumentasi
-
-| Dokumen | Deskripsi |
-|---------|-----------|
-| [Panduan Operasional](docs/PANDUAN_OPERASIONAL.md) | Cara mengoperasikan sistem untuk Admin & Kasir |
-| [Database Schema](docs/DB_SCHEMA.md) | Struktur tabel dan relasi database (18 tabel) |
-| [API Routes](docs/API_ROUTES.md) | Daftar endpoint dan payload (85 routes) |
-| [Karakteristik Visual](docs/CHARACTERISTIC.md) | Panduan warna, font, dan desain UI |
-| [Changelog](docs/CHANGELOG.md) | Riwayat perubahan per tanggal |
-| [Bug Log](docs/BUG_LOG.md) | Catatan resolusi bug & pelajaran |
-| [Data Statistics](docs/data_statistics.md) | Acuan data analitik untuk Dashboard |
-| [SRS](docs/SRS.md) | Software Requirements Specification |
-
----
-
-## 💡 Catatan Teknis
-
-- **Snapshot Pattern**: Kolom `menu_name`, `unit_price` di `order_items` adalah *hard copy* agar riwayat tidak berubah saat harga menu diupdate.
-- **No Tax**: `Total = Subtotal` tanpa PPN/service charge.
-- **Light Mode Only**: UI menggunakan tema Premium Light Mode (Amber & Slate) dengan font Plus Jakarta Sans + Playfair Display.
-- **Meja Dinamis**: Tabel `cafe_tables` terpisah (bukan hardcode) untuk mendukung ekspansi real-time status meja.
-- **Warna Emas**: Palet warna emas diselaraskan ke `#B45309` (amber-700) di seluruh aplikasi untuk kesan premium yang konsisten.
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

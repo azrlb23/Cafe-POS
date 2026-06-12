@@ -53,23 +53,23 @@ watch(() => props.show, (val) => {
         <div class="relative z-10 bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-300">
             
             <!-- Sticky Header -->
-            <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
-                <h2 class="text-xl font-serif font-black text-amber-700 uppercase tracking-widest">Pembayaran</h2>
+            <div class="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
+                <h2 class="text-lg sm:text-xl font-serif font-black text-amber-700 uppercase tracking-widest">Pembayaran</h2>
                 <button @click="emit('close')" class="text-slate-400 hover:text-slate-700 p-2 transition-colors relative z-20">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
 
             <!-- Scrollable Body Content -->
-            <div class="p-8 overflow-y-auto flex-1 space-y-6 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                 <!-- Total Display -->
                 <div class="text-center">
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-1">Total yang harus dibayar</span>
-                    <span class="text-4xl font-black text-slate-900 font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</span>
+                    <span class="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-1">Total yang harus dibayar</span>
+                    <span class="text-2xl sm:text-3xl font-black text-slate-900 font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</span>
                 </div>
 
                 <!-- Payment Method Toggle -->
-                <div class="flex gap-3">
+                <div class="flex gap-2 sm:gap-3">
                     <button 
                         v-for="method in [
                             { id: 'cash', label: 'Tunai' },
@@ -79,39 +79,39 @@ watch(() => props.show, (val) => {
                         :key="method.id"
                         @click="paymentMethod = method.id"
                         :class="paymentMethod === method.id ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/10' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'"
-                        class="flex-1 py-3.5 rounded-2xl border font-black uppercase text-xs tracking-widest transition-all relative z-20"
+                        class="flex-1 py-2 sm:py-3 rounded-2xl border font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all relative z-20"
                     >
                         {{ method.label }}
                     </button>
                 </div>
  
                 <!-- Cash Entry (Only if method is cash) -->
-                <div v-if="paymentMethod === 'cash'" class="space-y-6 animate-in slide-in-from-top-4 duration-300">
-                    <div class="grid grid-cols-2 gap-6">
+                <div v-if="paymentMethod === 'cash'" class="space-y-4 sm:space-y-5 animate-in slide-in-from-top-4 duration-300">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 text-center">Uang Diterima</label>
+                            <label class="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 sm:mb-1.5 text-center">Uang Diterima</label>
                             <input 
                                 v-model.number="amountReceived" 
                                 type="number" 
-                                class="w-full bg-slate-50 border border-slate-200 rounded-3xl py-4 text-center text-2xl font-black text-slate-900 focus:border-amber-600 focus:ring focus:ring-amber-600/10 focus:ring-opacity-50 outline-none transition-all shadow-inner relative z-20 font-jakarta"
+                                class="w-full bg-slate-50 border border-slate-200 rounded-3xl py-2 sm:py-3 text-center text-lg sm:text-xl font-black text-slate-900 focus:border-amber-600 focus:ring focus:ring-amber-600/10 focus:ring-opacity-50 outline-none transition-all shadow-inner relative z-20 font-jakarta"
                                 autofocus
                             >
                         </div>
                         <div class="flex flex-col justify-center text-center">
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Kembalian</label>
-                            <span :class="change > 0 ? 'text-green-600' : 'text-slate-300'" class="text-2xl font-black transition-colors font-jakarta">
+                            <label class="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 sm:mb-1.5">Kembalian</label>
+                            <span :class="change > 0 ? 'text-green-600' : 'text-slate-300'" class="text-lg sm:text-xl font-black transition-colors font-jakarta">
                                 Rp {{ change.toLocaleString('id-ID') }}
                             </span>
                         </div>
                     </div>
  
                     <!-- Quick Cash Buttons -->
-                    <div class="flex flex-wrap justify-center gap-2">
+                    <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                         <button 
                             v-for="amt in suggestAmounts" 
                             :key="amt"
                             @click="setAmount(amt)"
-                            class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-amber-55 hover:text-amber-700 hover:border-amber-500 transition-all active:scale-95 relative z-20 font-jakarta"
+                            class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-[10px] sm:text-xs font-bold hover:bg-amber-50 hover:text-amber-700 hover:border-amber-500 transition-all active:scale-95 relative z-20 font-jakarta"
                         >
                             Rp {{ amt.toLocaleString('id-ID') }}
                         </button>
@@ -120,26 +120,26 @@ watch(() => props.show, (val) => {
  
                 <!-- QRIS Manual Payment -->
                 <div v-else-if="paymentMethod === 'qris'" class="space-y-4 animate-in zoom-in-95 duration-300">
-                    <div class="py-6 bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center">
-                        <div class="w-28 h-28 bg-white border border-slate-200 p-2.5 rounded-2xl mb-3 shadow-sm flex items-center justify-center">
+                    <div class="py-4 bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center">
+                        <div class="w-24 h-24 bg-white border border-slate-200 p-2.5 rounded-2xl mb-2.5 shadow-sm flex items-center justify-center">
                             <!-- Visual static placeholder for merchant QRIS -->
                             <div class="w-full h-full bg-slate-100/80 rounded-lg flex flex-col items-center justify-center p-2 text-center">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="3" height="3" /><rect x="7" y="18" width="3" height="3" /></svg>
-                                <span class="text-[8px] font-black text-amber-700 uppercase tracking-widest mt-1.5">QRIS DENJAVAS</span>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="3" height="3" /><rect x="7" y="18" width="3" height="3" /></svg>
+                                <span class="text-[8px] font-black text-amber-700 uppercase tracking-widest mt-1">QRIS DENJAVAS</span>
                             </div>
                         </div>
-                        <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest text-center">Tunjukkan QRIS meja kasir ke pelanggan</p>
+                        <p class="text-[8px] sm:text-[9px] text-slate-500 font-black uppercase tracking-widest text-center">Tunjukkan QRIS meja kasir ke pelanggan</p>
                     </div>
  
                     <!-- MANDATORY VERIFICATION WARNING CARD -->
-                    <div class="bg-amber-50/60 border border-amber-300/30 rounded-3xl p-4 flex gap-3.5 items-start shadow-sm">
-                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div class="bg-amber-50/60 border border-amber-300/30 rounded-3xl p-3 sm:p-4 flex gap-3 items-start shadow-sm">
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
                         <div>
-                            <h4 class="text-[10px] font-black text-amber-950 uppercase tracking-wider mb-0.5">Verifikasi Mandiri Wajib</h4>
-                            <p class="text-[9px] text-amber-850 font-semibold leading-relaxed">
-                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[10px] font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
+                            <h4 class="text-[9px] sm:text-[10px] font-black text-amber-950 uppercase tracking-wider mb-0.5">Verifikasi Mandiri Wajib</h4>
+                            <p class="text-[8px] sm:text-[9px] text-amber-850 font-semibold leading-relaxed">
+                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[9px] sm:text-[10px] font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
                             </p>
                         </div>
                     </div>
@@ -147,24 +147,24 @@ watch(() => props.show, (val) => {
  
                 <!-- Bank Transfer Manual Payment -->
                 <div v-else-if="paymentMethod === 'transfer'" class="space-y-4 animate-in zoom-in-95 duration-300">
-                    <div class="py-6 bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center p-4 text-center">
-                        <div class="w-10 h-10 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm mb-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    <div class="py-4 bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center p-3 text-center">
+                        <div class="w-8 h-8 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm mb-1.5">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10"/></svg>
                         </div>
                         <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Nomor Rekening Denjavas</p>
-                        <h4 class="text-base font-serif font-black text-slate-800 mt-0.5">Bank BCA — 872-0988-121</h4>
+                        <h4 class="text-sm sm:text-base font-serif font-black text-slate-800 mt-0.5">Bank BCA — 872-0988-121</h4>
                         <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">a.n. Denjavas Cafe Utama</p>
                     </div>
  
                     <!-- MANDATORY VERIFICATION WARNING CARD -->
-                    <div class="bg-amber-50/60 border border-amber-300/30 rounded-3xl p-4 flex gap-3.5 items-start shadow-sm">
-                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div class="bg-amber-50/60 border border-amber-300/30 rounded-3xl p-3 sm:p-4 flex gap-3 items-start shadow-sm">
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
                         <div>
-                            <h4 class="text-[10px] font-black text-amber-950 uppercase tracking-wider mb-0.5">Verifikasi Mandiri Wajib</h4>
-                            <p class="text-[9px] text-amber-850 font-semibold leading-relaxed">
-                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[10px] font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
+                            <h4 class="text-[9px] sm:text-[10px] font-black text-amber-950 uppercase tracking-wider mb-0.5">Verifikasi Mandiri Wajib</h4>
+                            <p class="text-[8px] sm:text-[9px] text-amber-850 font-semibold leading-relaxed">
+                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[9px] sm:text-[10px] font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
                             </p>
                         </div>
                     </div>
@@ -172,17 +172,17 @@ watch(() => props.show, (val) => {
             </div>
 
             <!-- Sticky Footer -->
-            <div class="p-6 bg-slate-50 border-t border-slate-200 flex gap-4 shrink-0">
+            <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-200 flex gap-3 sm:gap-4 shrink-0">
                 <button 
                     @click="emit('close')"
-                    class="flex-1 py-4 rounded-3xl text-slate-500 hover:text-slate-900 bg-white border border-slate-200 font-black uppercase text-xs tracking-widest transition-all hover:bg-slate-100 relative z-20"
+                    class="flex-1 py-3 sm:py-4 rounded-3xl text-slate-500 hover:text-slate-900 bg-white border border-slate-200 font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all hover:bg-slate-100 relative z-20"
                 >
                     Kembali
                 </button>
                 <button 
                     @click="submit"
                     :disabled="!isAmountValid || processing"
-                    class="flex-[2] bg-amber-600 hover:bg-amber-700 text-white py-4 rounded-3xl font-black uppercase tracking-[0.3em] shadow-md shadow-amber-600/10 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-amber-600 relative z-20"
+                    class="flex-[2] bg-amber-600 hover:bg-amber-700 text-white py-3 sm:py-4 rounded-3xl font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] shadow-md shadow-amber-600/10 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-amber-600 relative z-20 text-[10px] sm:text-xs"
                 >
                     {{ processing ? 'Memproses...' : 'Selesaikan & Cetak' }}
                 </button>

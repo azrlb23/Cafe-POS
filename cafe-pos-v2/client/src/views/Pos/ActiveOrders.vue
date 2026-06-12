@@ -46,6 +46,7 @@ const showPrintModal = ref(false);
 
 // Active Orders specific state
 const activeTab = ref('all'); // 'all', 'pending' (on process), 'completed'
+const isDropdownOpen = ref(false);
 const searchQuery = ref('');
 
 // Details Modal state
@@ -156,11 +157,11 @@ const getModifierText = (options) => {
 
 <template>
             
-        <div v-if="isLoading" class="flex-1 flex items-center justify-center bg-[#FAF8F5] h-[calc(100vh-80px)]">
+        <div v-if="isLoading" class="flex-1 flex items-center justify-center bg-[#FAF8F5] h-full">
             <div class="w-10 h-10 border-4 border-amber-600/20 border-t-amber-600 rounded-full animate-spin"></div>
         </div>
 
-        <div v-else class="h-[calc(100vh-80px)] flex overflow-hidden relative bg-white border-t border-slate-100">
+        <div v-else class="h-full flex overflow-hidden relative bg-white border-t border-slate-100">
             <!-- Sidebar -->
             <PosSidebar 
                 :activeShift="activeShift"
@@ -186,30 +187,82 @@ const getModifierText = (options) => {
                 </div>
 
                 <!-- Tabs & Filters Row -->
-                <div class="flex flex-wrap justify-between items-center gap-4 shrink-0">
-                    <!-- Amber Pills Switcher -->
-                    <div class="bg-[#FCFAF7] border border-stone-200/80 p-1.5 rounded-2xl flex gap-1 shadow-sm">
+                <div class="flex flex-wrap justify-between items-center gap-4 shrink-0 max-w-full z-20">
+                    <div class="relative w-full sm:w-80">
+                        <!-- Click outside backdrop -->
+                        <div v-if="isDropdownOpen" class="fixed inset-0 z-10" @click="isDropdownOpen = false"></div>
+                        
                         <button 
-                            @click="activeTab = 'all'"
-                            :class="activeTab === 'all' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10' : 'text-stone-500 hover:bg-stone-50'"
-                            class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                            @click="isDropdownOpen = !isDropdownOpen"
+                            class="relative z-20 w-full bg-[#FCFAF7] border border-stone-200 rounded-2xl px-6 py-3 flex items-center justify-between shadow-sm hover:border-amber-500/50 transition-all active:scale-[0.98]"
                         >
-                            Semua ({{ todayOrders.length }})
+                            <div class="text-left">
+                                <p class="text-[8px] font-black text-stone-400 uppercase tracking-[0.2em] mb-0.5">Status Pesanan</p>
+                                <h4 class="text-[10px] sm:text-xs font-black uppercase tracking-widest text-stone-700 leading-none">
+                                    {{ activeTab === 'all' ? 'Semua' : (activeTab === 'pending' ? 'Proses Masak' : 'Selesai Saji') }}
+                                </h4>
+                            </div>
+                            <svg 
+                                width="18" 
+                                height="18" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                stroke-width="2.5" 
+                                :class="{'rotate-180': isDropdownOpen}" 
+                                class="text-amber-600 transition-transform duration-300"
+                            >
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
                         </button>
-                        <button 
-                            @click="activeTab = 'pending'"
-                            :class="activeTab === 'pending' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10' : 'text-stone-500 hover:bg-stone-50'"
-                            class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                        
+                        <Transition
+                            enter-active-class="transition duration-200 ease-out"
+                            enter-from-class="transform scale-95 opacity-0 -translate-y-4"
+                            enter-to-class="transform scale-100 opacity-100 translate-y-0"
+                            leave-active-class="transition duration-150 ease-in"
+                            leave-from-class="transform scale-100 opacity-100 translate-y-0"
+                            leave-to-class="transform scale-95 opacity-0 -translate-y-4"
                         >
-                            Proses Masak ({{ todayOrders.filter(o => o.status === 'pending').length }})
-                        </button>
-                        <button 
-                            @click="activeTab = 'completed'"
-                            :class="activeTab === 'completed' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10' : 'text-stone-500 hover:bg-stone-50'"
-                            class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
-                        >
-                            Selesai Saji ({{ todayOrders.filter(o => o.status === 'completed').length }})
-                        </button>
+                            <div v-if="isDropdownOpen" class="absolute right-0 left-0 mt-2 bg-[#FCFAF7] rounded-2xl shadow-xl border border-stone-200 py-1.5 z-30 overflow-hidden">
+                                <button 
+                                    @click="activeTab = 'all'; isDropdownOpen = false"
+                                    class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm">📋</span>
+                                        <span :class="activeTab === 'all' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
+                                            Semua ({{ todayOrders.length }})
+                                        </span>
+                                    </div>
+                                    <div v-if="activeTab === 'all'" class="w-1.5 h-1.5 rounded-full bg-amber-600"></div>
+                                </button>
+                                <button 
+                                    @click="activeTab = 'pending'; isDropdownOpen = false"
+                                    class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm">🍳</span>
+                                        <span :class="activeTab === 'pending' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
+                                            Proses Masak ({{ todayOrders.filter(o => o.status === 'pending').length }})
+                                        </span>
+                                    </div>
+                                    <div v-if="activeTab === 'pending'" class="w-1.5 h-1.5 rounded-full bg-amber-600"></div>
+                                </button>
+                                <button 
+                                    @click="activeTab = 'completed'; isDropdownOpen = false"
+                                    class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm">🍽️</span>
+                                        <span :class="activeTab === 'completed' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
+                                            Selesai Saji ({{ todayOrders.filter(o => o.status === 'completed').length }})
+                                        </span>
+                                    </div>
+                                    <div v-if="activeTab === 'completed'" class="w-1.5 h-1.5 rounded-full bg-amber-600"></div>
+                                </button>
+                            </div>
+                        </Transition>
                     </div>
                 </div>
 
@@ -446,33 +499,33 @@ const getModifierText = (options) => {
         <div v-if="showVoidModal && selectedOrderForVoid" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-sm z-0" @click="showVoidModal = false"></div>
             
-            <div class="relative z-10 bg-[#FCFAF7] border border-stone-200 rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-                <div class="p-8">
-                    <div class="text-center mb-6">
-                        <div class="w-14 h-14 bg-red-50 border border-red-150 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <svg class="text-red-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="relative z-10 bg-[#FCFAF7] border border-stone-200 rounded-[2rem] shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar animate-in fade-in zoom-in duration-300">
+                <div class="p-5 sm:p-8">
+                    <div class="text-center mb-4 sm:mb-6">
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 bg-red-50 border border-red-150 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                            <svg class="text-red-500 w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
-                        <h3 class="text-lg font-serif font-black text-red-650 uppercase tracking-widest text-red-600">Batalkan Pesanan</h3>
-                        <p class="text-stone-400 text-[10px] font-bold uppercase tracking-wider mt-1">Pembatalan transaksi #{{ selectedOrderForVoid.orderNumber }}</p>
+                        <h3 class="text-base sm:text-lg font-serif font-black text-red-650 uppercase tracking-widest text-red-600">Batalkan Pesanan</h3>
+                        <p class="text-stone-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-1">Pembatalan transaksi #{{ selectedOrderForVoid.orderNumber }}</p>
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-3 sm:space-y-4">
                         <div>
-                            <label class="block text-[9px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Alasan Pembatalan (Void Reason)</label>
+                            <label class="block text-[9px] font-black text-stone-400 uppercase tracking-[0.2em] mb-1.5 sm:mb-2">Alasan Pembatalan (Void Reason)</label>
                             <textarea 
                                 v-model="voidReason" 
-                                rows="3" 
+                                rows="2" 
                                 class="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-xs font-bold focus:border-red-400 outline-none transition-all" 
                                 placeholder="Cth: Salah input menu / Pelanggan membatalkan meja..."
                                 required
                             ></textarea>
                         </div>
 
-                        <div class="flex gap-3">
+                        <div class="flex gap-2.5 sm:gap-3">
                             <button 
                                 type="button" 
                                 @click="showVoidModal = false; openDetails(selectedOrderForVoid);" 
-                                class="flex-1 h-12 rounded-xl bg-stone-100 text-stone-600 font-bold hover:bg-stone-200 text-xs transition-all cursor-pointer"
+                                class="flex-1 h-10 sm:h-12 rounded-xl bg-stone-100 text-stone-600 font-bold hover:bg-stone-200 text-[11px] sm:text-xs transition-all cursor-pointer"
                             >
                                 Kembali
                             </button>
@@ -480,7 +533,7 @@ const getModifierText = (options) => {
                                 type="button"
                                 @click="submitVoid"
                                 :disabled="!voidReason.trim() || isProcessingVoid"
-                                class="flex-1 h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-xs transition-all shadow-md shadow-red-500/15 disabled:opacity-40 cursor-pointer"
+                                class="flex-1 h-10 sm:h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-[11px] sm:text-xs transition-all shadow-md shadow-red-500/15 disabled:opacity-40 cursor-pointer"
                             >
                                 {{ isProcessingVoid ? 'Memproses...' : 'Konfirmasi Void' }}
                             </button>

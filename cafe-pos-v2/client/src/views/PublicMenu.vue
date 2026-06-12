@@ -27,6 +27,7 @@ const error = ref<string | null>(null);
 const searchQuery = ref('');
 const selectedCategoryId = ref<number | null>(null);
 const isScrolled = ref(false);
+const isCategoryDropdownOpen = ref(false);
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20;
@@ -216,7 +217,9 @@ const selectCategory = (id: number | null) => {
         <!-- Filter Categories Tabs -->
         <div class="flex flex-col gap-3">
           <span class="text-[9px] font-black text-cafe-muted uppercase tracking-widest">Kategori Menu</span>
-          <div class="flex flex-wrap gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+          
+          <!-- Desktop Tabs (Visible on sm screens and up) -->
+          <div class="hidden sm:flex flex-wrap gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
             <button
               @click="selectCategory(null)"
               :class="[
@@ -241,6 +244,75 @@ const selectCategory = (id: number | null) => {
             >
               {{ cat.name }}
             </button>
+          </div>
+
+          <!-- Mobile Dropdown Selector (Visible on mobile/tablet below sm) -->
+          <div class="sm:hidden relative w-full">
+            <button 
+              @click="isCategoryDropdownOpen = !isCategoryDropdownOpen"
+              class="w-full flex items-center justify-between bg-white border border-cafe-border rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest text-cafe-secondary hover:text-cafe-main transition-all cursor-pointer"
+            >
+              <span>{{ selectedCategoryId === null ? 'Semua Menu' : (categories.find(c => c.id === selectedCategoryId)?.name || 'Semua Menu') }}</span>
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2.5"
+                :class="['transform transition-transform duration-200', isCategoryDropdownOpen ? 'rotate-180' : '']"
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            <!-- Click Outside Backdrop Overlay -->
+            <div 
+              v-if="isCategoryDropdownOpen" 
+              class="fixed inset-0 z-40 bg-transparent" 
+              @click="isCategoryDropdownOpen = false"
+            ></div>
+
+            <!-- Dropdown Options Panel -->
+            <Transition
+              enter-active-class="transition duration-100 ease-out"
+              enter-from-class="transform scale-95 opacity-0"
+              enter-to-class="transform scale-100 opacity-100"
+              leave-active-class="transition duration-75 ease-in"
+              leave-from-class="transform scale-100 opacity-100"
+              leave-to-class="transform scale-95 opacity-0"
+            >
+              <div 
+                v-if="isCategoryDropdownOpen" 
+                class="absolute left-0 right-0 mt-2 z-50 bg-white border border-cafe-border rounded-xl shadow-xl max-h-60 overflow-y-auto py-1"
+              >
+                <!-- Option: Semua Menu -->
+                <button
+                  @click="selectCategory(null); isCategoryDropdownOpen = false;"
+                  :class="[
+                    'w-full flex items-center justify-between px-4 py-3 text-[10px] font-black uppercase tracking-widest text-left transition-colors cursor-pointer',
+                    selectedCategoryId === null ? 'bg-cafe-base text-cafe-accent font-bold' : 'text-cafe-secondary hover:bg-cafe-base/50'
+                  ]"
+                >
+                  <span>Semua Menu</span>
+                  <svg v-if="selectedCategoryId === null" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-cafe-accent"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+
+                <!-- Options: Category list -->
+                <button
+                  v-for="cat in categories"
+                  :key="cat.id"
+                  @click="selectCategory(cat.id); isCategoryDropdownOpen = false;"
+                  :class="[
+                    'w-full flex items-center justify-between px-4 py-3 text-[10px] font-black uppercase tracking-widest text-left transition-colors cursor-pointer',
+                    selectedCategoryId === cat.id ? 'bg-cafe-base text-cafe-accent font-bold' : 'text-cafe-secondary hover:bg-cafe-base/50'
+                  ]"
+                >
+                  <span>{{ cat.name }}</span>
+                  <svg v-if="selectedCategoryId === cat.id" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="text-cafe-accent"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
@@ -270,16 +342,16 @@ const selectCategory = (id: number | null) => {
       </div>
 
       <!-- Menu Items Grid -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div v-else class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
         <div
           v-for="menu in filteredMenus"
           :key="menu.id"
-          class="group flex flex-col h-full bg-white rounded-[2rem] overflow-hidden border border-cafe-border hover:border-cafe-accent/30 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl relative"
+          class="group flex flex-col h-full bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden border border-cafe-border hover:border-cafe-accent/30 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl relative"
         >
           <!-- Image Section (Aspect 4/3) -->
           <div class="aspect-[4/3] bg-white relative overflow-hidden border-b border-cafe-border/40">
             <!-- Badges overlay -->
-            <span class="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm border border-cafe-border px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest text-cafe-accent shadow-sm z-10">
+            <span class="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 bg-white/95 backdrop-blur-sm border border-cafe-border px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-cafe-accent shadow-sm z-10">
               {{ menu.category?.name || 'Sajian' }}
             </span>
             <img
@@ -291,21 +363,21 @@ const selectCategory = (id: number | null) => {
           </div>
 
           <!-- Description Section -->
-          <div class="p-6 flex flex-col flex-grow justify-between bg-white">
-            <div class="space-y-2">
-              <h3 class="text-lg font-serif font-black text-cafe-main group-hover:text-cafe-accent transition-colors line-clamp-1">
+          <div class="p-4 sm:p-6 flex flex-col flex-grow justify-between bg-white">
+            <div class="space-y-1 sm:space-y-2">
+              <h3 class="text-sm sm:text-lg font-serif font-black text-cafe-main group-hover:text-cafe-accent transition-colors line-clamp-1">
                 {{ menu.name }}
               </h3>
-              <p class="text-cafe-secondary text-xs leading-relaxed line-clamp-3 italic">
+              <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed line-clamp-2 sm:line-clamp-3 italic">
                 {{ menu.description || 'Tidak ada deskripsi untuk menu klasik ini.' }}
               </p>
             </div>
 
-            <div class="flex items-center justify-between border-t border-cafe-border/50 pt-4 mt-6">
-              <span class="text-sm font-black text-cafe-accent tracking-wide">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between border-t border-cafe-border/50 pt-3 sm:pt-4 mt-4 sm:mt-6 gap-2">
+              <span class="text-xs sm:text-sm font-black text-cafe-accent tracking-wide">
                 {{ formatPrice(menu.basePrice) }}
               </span>
-              <span class="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-55/40 border border-emerald-200 px-2.5 py-1 rounded-lg">
+              <span class="self-start sm:self-auto text-[7px] sm:text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-55/40 border border-emerald-200 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg">
                 Tersedia
               </span>
             </div>
@@ -314,15 +386,6 @@ const selectCategory = (id: number | null) => {
       </div>
     </main>
 
-    <!-- Footer Staff Portal Link -->
-    <div class="w-full text-center mt-24">
-      <router-link
-        :to="{ name: 'Login' }"
-        class="text-[9px] font-black text-cafe-muted hover:text-cafe-accent transition-colors uppercase tracking-[0.25em] border border-cafe-border px-5 py-2.5 rounded-xl bg-white hover:bg-cafe-base shadow-sm inline-block"
-      >
-        Staff Portal
-      </router-link>
-    </div>
   </div>
 </template>
 

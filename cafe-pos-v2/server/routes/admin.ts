@@ -676,11 +676,35 @@ router.get('/cashiers', async (req, res) => {
       include: { shifts: { where: { closedAt: null } } },
     });
 
-    const mapped = cashiers.map(c => ({
-      ...c,
-      password: undefined,
-      is_active: c.shifts.length > 0,
-      active_shift_duration: c.shifts[0]?.openedAt || null,
+    const mapped = await Promise.all(cashiers.map(async (c) => {
+      const activeShift = c.shifts[0] || null;
+      let activeShiftData = null;
+
+      if (activeShift) {
+        const orders = await prisma.order.findMany({
+          where: { shiftId: activeShift.id, status: 'completed' },
+          select: { paymentMethod: true, total: true }
+        });
+
+        const paymentTotals: Record<string, number> = {};
+        orders.forEach(o => {
+          const method = o.paymentMethod.toLowerCase();
+          paymentTotals[method] = (paymentTotals[method] || 0) + Number(o.total);
+        });
+
+        activeShiftData = {
+          ...activeShift,
+          paymentTotals,
+        };
+      }
+
+      return {
+        ...c,
+        password: undefined,
+        is_active: c.shifts.length > 0,
+        active_shift: activeShiftData,
+        active_shift_duration: activeShift?.openedAt || null,
+      };
     }));
 
     const [activeCashiersCount, totalTransactionsToday, activityLogs] = await Promise.all([
@@ -777,6 +801,74 @@ router.delete('/cashiers/:id', async (req, res) => {
     await prisma.user.delete({ where: { id } });
     return res.json({ message: 'Akun Kasir berhasil dihapus.' });
   } catch (e) { console.error(e); return res.status(500).json({ message: 'Server error.' }); }
+});
+
+// =============================================
+// SHIFTS FORCE CLOSE
+// =============================================
+
+router.post('/shifts/:id/end', async (req, res) => {
+  try {
+    const shiftId = parseInt(req.params.id, 10);
+    const { closing_cash_option, custom_closing_cash, notes } = req.body;
+
+    const shift = await prisma.shift.findUnique({
+      where: { id: shiftId },
+      include: { user: true },
+    });
+
+    if (!shift) {
+      return res.status(404).json({ message: 'Shift tidak ditemukan.' });
+    }
+
+    if (shift.closedAt) {
+      return res.status(422).json({ message: 'Shift ini sudah ditutup sebelumnya.' });
+    }
+
+    // Expected cash = opening + cash sales - petty cash
+    const expectedClosingCash =
+      Number(shift.openingCash) +
+      Number(shift.totalCashSales) -
+      Number(shift.totalPettyCash);
+
+    let closingCash = expectedClosingCash;
+    if (closing_cash_option === 'custom') {
+      if (custom_closing_cash === undefined || isNaN(Number(custom_closing_cash))) {
+        return res.status(400).json({ message: 'Jumlah kas akhir kustom tidak valid.' });
+      }
+      closingCash = Number(custom_closing_cash);
+    }
+
+    const updatedShift = await prisma.shift.update({
+      where: { id: shiftId },
+      data: {
+        closedAt: new Date(),
+        closingCash: closingCash,
+        expectedClosingCash,
+        notes: notes || 'Ditutup oleh Admin',
+      },
+    });
+
+    const diff = closingCash - expectedClosingCash;
+    const formatRpLocal = (amount: number) => 'Rp ' + Number(amount).toLocaleString('id-ID');
+
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: req.session.userId!,
+        action: 'shift_close', // Use existing 'shift_close' action so it logs on the timeline properly
+        description: `Admin menutup shift kasir ${shift.user.name}. Kas akhir: ${formatRpLocal(closingCash)} (Seharusnya: ${formatRpLocal(expectedClosingCash)}, Selisih: ${formatRpLocal(diff)}). Ket: ${notes || 'Ditutup oleh Admin'}`
+      }
+    });
+
+    return res.json({
+      shift: updatedShift,
+      message: `Shift kasir ${shift.user.name} berhasil ditutup oleh Admin.`,
+    });
+  } catch (error) {
+    console.error('Admin end shift error:', error);
+    return res.status(500).json({ message: 'Gagal menutup shift kasir.' });
+  }
 });
 
 // =============================================

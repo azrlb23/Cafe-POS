@@ -222,11 +222,11 @@ const handleManualPrint = (order) => {
 
 <template>
 
-        <div v-if="isLoading" class="flex-1 flex items-center justify-center bg-[#F8F9FD] h-[calc(100vh-80px)]">
+        <div v-if="isLoading" class="flex-1 flex items-center justify-center bg-[#F8F9FD] h-full">
             <div class="w-10 h-10 border-4 border-amber-600/20 border-t-amber-600 rounded-full animate-spin"></div>
         </div>
 
-        <div v-else class="h-[calc(100vh-80px)] flex overflow-hidden relative bg-white border-t border-slate-100">
+        <div v-else class="h-full flex overflow-hidden relative bg-white border-t border-slate-100">
             <!-- COLUMN 1: Sidebar (Compact left sidebar navigasi) -->
             <PosSidebar 
                 :activeShift="activeShift"

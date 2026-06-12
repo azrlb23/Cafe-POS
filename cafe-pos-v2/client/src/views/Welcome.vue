@@ -335,7 +335,7 @@ const helpSlides = computed(() => {
             type: "policies",
             items: [
                 { label: "Kenyamanan WFC", desc: "Harap menggunakan headphone saat mendengarkan audio atau melakukan panggilan video di ruang indoor." },
-                { label: "Usia Minimum Pengunjung", desc: "Pengunjung di bawah usia 12 tahun wajib selalu dalam pengawasan orang twilight atau wali dewasa." },
+                { label: "Usia Minimum Pengunjung", desc: "Pengunjung di bawah usia 12 tahun wajib selalu dalam pengawasan orang tua atau wali dewasa." },
                 { label: "Keamanan Barang Pribadi", desc: "Jagalah barang bawaan Anda. Pihak manajemen tidak bertanggung jawab atas segala bentuk kehilangan." }
             ]
         },
@@ -509,6 +509,12 @@ const getFallbackImage = (menuName: string, categoryName?: string) => {
 };
 
 onMounted(async () => {
+    // Clear hash on initial mount/reload and force scroll to top of Hero
+    if (window.location.hash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    window.scrollTo({ top: 0 });
+
     window.addEventListener('scroll', () => {
         isScrolled.value = window.scrollY > 20;
     });
@@ -567,7 +573,7 @@ onUnmounted(() => {
     <div class="min-h-screen bg-cafe-base text-cafe-main font-sans selection:bg-cafe-accent selection:text-white overflow-x-hidden transition-colors duration-300">
         
         <!-- Navigation -->
-        <nav :class="['fixed w-full z-50 transition-all duration-500 border-b', isScrolled ? 'bg-cafe-surface/90 backdrop-blur-md border-cafe-border py-4 shadow-sm' : 'bg-transparent border-transparent py-6']">
+        <nav :class="['fixed w-full z-50 transition-all duration-500 border-b', isScrolled ? 'bg-cafe-surface/90 backdrop-blur-md border-cafe-border py-4 shadow-sm' : 'bg-transparent border-transparent py-4 sm:py-6']">
             <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
                 <!-- Logo -->
                 <a href="#" @click="closeMobileMenu" class="flex items-center gap-3 group">
@@ -648,31 +654,31 @@ onUnmounted(() => {
             <div class="absolute inset-6 z-0 border border-stone-800/40 pointer-events-none rounded-[2rem]"></div>
             <div class="absolute inset-8 z-0 border border-stone-900/20 pointer-events-none rounded-[1.8rem]"></div>
 
-            <div class="relative z-10 w-full max-w-7xl mx-auto px-8 flex flex-col lg:flex-row items-center gap-16 mt-20 pb-12">
+            <div class="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 flex flex-col lg:flex-row items-center gap-16 mt-20 pb-12">
                 <div class="flex-1 text-center lg:text-left animate-fade-in-up">
                     <div class="mb-6 inline-block">
                         <span class="text-[#C59B76] font-black tracking-[0.3em] text-[9px] uppercase border border-[#C59B76]/30 px-6 py-2.5 rounded-full bg-stone-900/60 backdrop-blur-sm shadow-sm">
-                            EST. 2024
+                            EST. 2019
                         </span>
                     </div>
                     
-                    <h1 class="text-5xl sm:text-6xl md:text-7xl font-serif font-black mb-8 leading-[1.15] tracking-tight text-stone-100">
-                        Good Coffee<br/>
-                        Good Vibes<br/>
+                    <h1 class="text-3xl sm:text-6xl md:text-7xl font-serif font-black mb-8 leading-[1.15] tracking-tight text-stone-100">
+                        Good Coffee <br class="hidden sm:inline" />
+                        Good Vibes <br class="hidden sm:inline" />
                         <span class="text-[#C59B76] italic font-light font-serif">Great Day</span>
                     </h1>
                     
-                    <p class="text-base md:text-lg text-stone-400 mb-10 max-w-md leading-relaxed mx-auto lg:mx-0">
+                    <p class="text-sm md:text-lg text-stone-400 mb-10 max-w-md leading-relaxed mx-auto lg:mx-0">
                         A cozy place to enjoy delicious food, great coffee and good times.
                     </p>
                     
-                    <div class="flex flex-col sm:flex-row gap-6 items-center justify-center lg:justify-start w-full">
-                        <a href="#menu" class="w-full sm:w-auto bg-cafe-accent hover:bg-cafe-accent-hover text-white px-10 py-4 rounded-xl font-bold transition-all duration-300 shadow-md flex items-center justify-center gap-3 hover:-translate-y-1 active:scale-95 uppercase text-[10px] tracking-widest">
+                    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center lg:justify-start w-full">
+                        <a href="#menu" class="w-full sm:w-auto bg-cafe-accent hover:bg-cafe-accent-hover text-white px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold transition-all duration-300 shadow-md flex items-center justify-center gap-3 hover:-translate-y-1 active:scale-95 uppercase text-[10px] tracking-widest">
                             EXPLORE MENU
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="stroke-current" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                         </a>
                         
-                        <a href="#about" class="w-full sm:w-auto text-stone-300 hover:text-white transition-colors flex items-center justify-center gap-3 font-bold uppercase text-[10px] tracking-widest py-4 hover:-translate-y-0.5">
+                        <a href="#about" class="w-full sm:w-auto text-stone-300 hover:text-white transition-colors flex items-center justify-center gap-3 font-bold uppercase text-[10px] tracking-widest py-3.5 sm:py-4 hover:-translate-y-0.5">
                             <span class="w-10 h-10 rounded-full border-2 border-stone-700 flex items-center justify-center hover:border-white transition-colors">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" class="text-stone-300 pl-0.5"><path d="M8 5v14l11-7z"/></svg>
                             </span>
@@ -701,73 +707,72 @@ onUnmounted(() => {
         </section>
 
         <!-- Fasilitas & Keunggulan Section (FR-03 & FR-04) -->
-        <!-- Fasilitas & Keunggulan Section (FR-03 & FR-04) -->
-        <section id="fasilitas" class="py-32 bg-white relative transition-colors duration-300 scroll-mt-20">
+        <section id="fasilitas" class="py-16 sm:py-24 lg:py-32 bg-white relative transition-colors duration-300 scroll-mt-20">
             <!-- Background Decoration -->
             <div class="absolute inset-0 z-0 bg-[radial-gradient(#80808008_1px,transparent_1px)] bg-[size:24px_24px] opacity-80"></div>
             
             <div class="max-w-7xl mx-auto px-6 relative z-10">
                 <!-- Section Header -->
-                <div class="flex flex-col items-center text-center mb-24 reveal-element">
+                <div class="flex flex-col items-center text-center mb-12 sm:mb-24 reveal-element">
                     <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] mb-4 font-bold">KENAPA PILIH KAMI</span>
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Keunggulan & Fasilitas</h2>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Keunggulan & Fasilitas</h2>
                     <div class="w-16 h-0.5 bg-cafe-accent/30 mx-auto rounded-full"></div>
                 </div>
 
                 <!-- Circular Feature Layout (Coffee Made Easy Style) -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center max-w-6xl mx-auto reveal-element delay-200">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-center max-w-6xl mx-auto reveal-element delay-200">
                     
-                    <!-- Left features (Aligned Right) -->
-                    <div class="space-y-12 lg:text-right">
+                    <!-- Left features (2 columns on mobile, stacked on desktop) -->
+                    <div class="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-12 lg:space-y-12 w-full text-center lg:text-right">
                         <!-- Point 1: Bumbu Autentik -->
-                        <div class="group">
-                            <div class="w-12 h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-4 lg:ml-auto shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        <div class="group bg-white border border-cafe-border/80 p-4 sm:p-6 rounded-2xl flex flex-col justify-between items-center lg:items-end shadow-sm hover:shadow-md transition-all duration-300">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-3 lg:ml-auto shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif font-bold mb-2 text-cafe-main group-hover:text-cafe-accent transition-colors">Bumbu Autentik Nusantara</h3>
-                            <p class="text-cafe-secondary text-xs leading-relaxed max-w-sm lg:ml-auto">Racikan bumbu tradisional warisan yang diolah segar untuk cita rasa Nusantara sejati yang memikat selera.</p>
+                            <h3 class="text-xs sm:text-lg font-serif font-bold mb-1.5 text-cafe-main group-hover:text-cafe-accent transition-colors">Bumbu Autentik Nusantara</h3>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed max-w-sm mx-auto lg:ml-auto lg:mr-0">Racikan bumbu tradisional warisan segar untuk cita rasa Nusantara sejati.</p>
                         </div>
 
                         <!-- Point 2: Kopi Pilihan -->
-                        <div class="group">
-                            <div class="w-12 h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-4 lg:ml-auto shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>
+                        <div class="group bg-white border border-cafe-border/80 p-4 sm:p-6 rounded-2xl flex flex-col justify-between items-center lg:items-end shadow-sm hover:shadow-md transition-all duration-300">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-3 lg:ml-auto shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif font-bold mb-2 text-cafe-main group-hover:text-cafe-accent transition-colors">Kopi Artisanal Pilihan</h3>
-                            <p class="text-cafe-secondary text-xs leading-relaxed max-w-sm lg:ml-auto">Diseduh secara teliti oleh barista berpengalaman menggunakan biji kopi lokal berkualitas tinggi yang dipanggang sempurna.</p>
+                            <h3 class="text-xs sm:text-lg font-serif font-bold mb-1.5 text-cafe-main group-hover:text-cafe-accent transition-colors">Kopi Artisanal Pilihan</h3>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed max-w-sm mx-auto lg:ml-auto lg:mr-0">Diseduh secara teliti oleh barista berpengalaman menggunakan biji kopi lokal berkualitas tinggi.</p>
                         </div>
                     </div>
 
                     <!-- Center graphic (Rotating / Floating Coffee Cup Image with Dotted Circles) -->
-                    <div class="relative flex items-center justify-center py-8">
+                    <div class="relative flex items-center justify-center py-6 lg:py-8">
                         <!-- Dotted circle layers -->
-                        <div class="absolute w-72 h-72 rounded-full border border-dashed border-cafe-border animate-[spin_60s_linear_infinite]"></div>
-                        <div class="absolute w-80 h-80 rounded-full border border-dotted border-cafe-accent/20 animate-[spin_80s_linear_infinite_reverse]"></div>
+                        <div class="absolute w-56 h-56 sm:w-72 sm:h-72 rounded-full border border-dashed border-cafe-border animate-[spin_60s_linear_infinite]"></div>
+                        <div class="absolute w-64 h-64 sm:w-80 sm:h-80 rounded-full border border-dotted border-cafe-accent/20 animate-[spin_80s_linear_infinite_reverse]"></div>
                         
                         <!-- Main Central image (No background, floating coffee cup) -->
-                        <div class="relative w-64 h-64 flex items-center justify-center transform hover:scale-110 transition-all duration-700">
+                        <div class="relative w-40 h-40 sm:w-64 sm:h-64 flex items-center justify-center transform hover:scale-110 transition-all duration-700">
                             <img src="/images/coffee_no_bg.png" class="w-full h-full object-contain mix-blend-multiply" alt="Denjavas Signature Coffee" />
                         </div>
                     </div>
 
-                    <!-- Right features (Aligned Left) -->
-                    <div class="space-y-12 lg:text-left">
+                    <!-- Right features (2 columns on mobile, stacked on desktop) -->
+                    <div class="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-12 lg:space-y-12 w-full text-center lg:text-left">
                         <!-- Point 3: Ruang Kerja & Diskusi -->
-                        <div class="group">
-                            <div class="w-12 h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-4 shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20M7 20v-4h10v4"/></svg>
+                        <div class="group bg-white border border-cafe-border/80 p-4 sm:p-6 rounded-2xl flex flex-col justify-between items-center lg:items-start shadow-sm hover:shadow-md transition-all duration-300">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-3 lg:mr-auto shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20M7 20v-4h10v4"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif font-bold mb-2 text-cafe-main group-hover:text-cafe-accent transition-colors">Ruang Kerja & Diskusi</h3>
-                            <p class="text-cafe-secondary text-xs leading-relaxed max-w-sm">Area bernuansa retro klasik dengan sudut-sudut estetis serta ruang tenang ber-AC khusus untuk rapat kelompok.</p>
+                            <h3 class="text-xs sm:text-lg font-serif font-bold mb-1.5 text-cafe-main group-hover:text-cafe-accent transition-colors">Ruang Kerja & Diskusi</h3>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed max-w-sm mx-auto lg:ml-0">Area bernuansa retro klasik dengan sudut-sudut estetis khusus untuk rapat kelompok.</p>
                         </div>
 
                         <!-- Point 4: Wifi Serat Optik -->
-                        <div class="group">
-                            <div class="w-12 h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-4 shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.38 8.86a16.89 16.89 0 0 1 21.24 0M8.5 16.43a6.83 6.83 0 0 1 7 0M12 20h.01"/></svg>
+                        <div class="group bg-white border border-cafe-border/80 p-4 sm:p-6 rounded-2xl flex flex-col justify-between items-center lg:items-start shadow-sm hover:shadow-md transition-all duration-300">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-cafe-base rounded-full flex items-center justify-center text-cafe-accent mb-3 lg:mr-auto shadow-sm group-hover:bg-cafe-accent group-hover:text-white transition-all duration-300">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.38 8.86a16.89 16.89 0 0 1 21.24 0M8.5 16.43a6.83 6.83 0 0 1 7 0M12 20h.01"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif font-bold mb-2 text-cafe-main group-hover:text-cafe-accent transition-colors">Wifi Serat Optik 150 Mbps</h3>
-                            <p class="text-cafe-secondary text-xs leading-relaxed max-w-sm">Jaringan internet nirkabel serat optik berkecepatan tinggi yang stabil untuk kelancaran pengerjaan tugas atau streaming.</p>
+                            <h3 class="text-xs sm:text-lg font-serif font-bold mb-1.5 text-cafe-main group-hover:text-cafe-accent transition-colors">Wifi Serat Optik 150 Mbps</h3>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed max-w-sm mx-auto lg:ml-0">Jaringan internet nirkabel serat optik kecepatan tinggi yang stabil untuk tugas atau streaming.</p>
                         </div>
                     </div>
                 </div>
@@ -775,12 +780,12 @@ onUnmounted(() => {
         </section>
 
         <!-- Featured Menu / Best Seller (Carousel Showcase Layout) -->
-        <section id="menu" class="py-32 relative bg-cafe-base border-y border-cafe-border/50 scroll-mt-20 overflow-hidden">
+        <section id="menu" class="py-16 sm:py-24 lg:py-32 relative bg-cafe-base border-y border-cafe-border/50 scroll-mt-20 overflow-hidden">
             <div class="max-w-7xl mx-auto px-6 relative">
                 <!-- Section Header -->
                 <div class="flex flex-col items-center text-center mb-16 reveal-element">
                     <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] mb-4 font-bold">PILIHAN KASIR</span>
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Menu Andalan Kami</h2>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Menu Andalan Kami</h2>
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-px bg-cafe-border"></div>
                         <span class="text-cafe-accent text-xs">◆</span>
@@ -827,12 +832,12 @@ onUnmounted(() => {
                                     <div class="p-6 flex flex-col flex-grow justify-between bg-cafe-surface">
                                         <div class="space-y-2">
                                             <span class="text-[9px] font-black text-cafe-accent uppercase tracking-widest block">{{ menu.Category?.name || menu.category?.name || 'Sajian' }}</span>
-                                            <h3 class="text-lg font-serif font-bold text-cafe-main mt-1 mb-2 group-hover:text-cafe-accent transition-colors line-clamp-1">{{ menu.name }}</h3>
-                                            <p class="text-cafe-secondary text-xs leading-relaxed line-clamp-2 italic">{{ menu.description || 'Tidak ada deskripsi untuk menu klasik ini.' }}</p>
+                                            <h3 class="text-sm sm:text-lg font-serif font-bold text-cafe-main mt-1 mb-2 group-hover:text-cafe-accent transition-colors line-clamp-1">{{ menu.name }}</h3>
+                                            <p class="text-cafe-secondary text-[11px] sm:text-xs leading-relaxed line-clamp-2 italic">{{ menu.description || 'Tidak ada deskripsi untuk menu klasik ini.' }}</p>
                                         </div>
                                         
                                         <div class="flex items-center justify-between border-t border-cafe-border/50 pt-4 mt-6">
-                                            <span class="text-sm font-bold text-cafe-accent tracking-wide">
+                                            <span class="text-xs sm:text-sm font-bold text-cafe-accent tracking-wide">
                                                 {{ typeof menu.basePrice === 'number' ? formatPrice(menu.basePrice) : menu.price || formatPrice(menu.basePrice) }}
                                             </span>
                                             
@@ -880,7 +885,7 @@ onUnmounted(() => {
 
 
         <!-- Tentang Kami & Galeri Nostalgia Terpadu (FR-07 & FR-08) -->
-        <section id="about" class="py-32 bg-cafe-base relative border-t border-cafe-border/50 scroll-mt-20">
+        <section id="about" class="py-16 sm:py-24 lg:py-32 bg-cafe-base relative border-t border-cafe-border/50 scroll-mt-20">
             <!-- Anchor for Gallery link to land correctly -->
             <div id="gallery" class="absolute top-0 left-0 scroll-mt-20"></div>
 
@@ -888,24 +893,31 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
                     
                     <!-- Left: Narrative Text & Kisah Kami -->
-                    <div class="lg:col-span-5 space-y-8 reveal-element text-left">
-                        <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] font-bold">KISAH & NOSTALGIA KAMI</span>
-                        <h2 class="text-4xl md:text-5xl font-serif font-bold text-cafe-main leading-[1.1]">
-                            Kisah di Balik Cita Rasa Kopi Denjavas
-                        </h2>
+                    <div class="lg:col-span-5 space-y-6 sm:space-y-8 reveal-element text-left">
+                        <div>
+                            <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] font-bold">KISAH & NOSTALGIA KAMI</span>
+                            <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-cafe-main leading-[1.1] mt-2 mb-4">
+                                Kisah di Balik Cita Rasa Kopi Denjavas
+                            </h2>
+                            <div class="w-12 h-0.5 bg-cafe-accent/30 rounded-full"></div>
+                        </div>
                         
-                        <div class="w-12 h-0.5 bg-cafe-accent/30 rounded-full"></div>
+                        <!-- 2-Column Cards on Mobile, Stacked on Desktop -->
+                        <div class="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-6 w-full">
+                            <div class="bg-white border border-cafe-border/80 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                                <p class="text-cafe-secondary text-[10px] sm:text-xs md:text-sm leading-relaxed">
+                                    Denjavas Retro Café lahir dari kecintaan mendalam pada harmoni rasa tradisional Nusantara dan nuansa nostalgia klasik yang tak lekang waktu. Kami memadukan biji kopi artisanal lokal pilihan dengan racikan resep warisan asli untuk menyajikan momen bersantap yang istimewa.
+                                </p>
+                            </div>
+                            <div class="bg-white border border-cafe-border/80 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                                <p class="text-cafe-secondary text-[10px] sm:text-xs md:text-sm leading-relaxed">
+                                    Setiap cangkir kopi dan hidangan yang kami sajikan diracik dengan penuh ketelitian oleh barista dan juru masak berpengalaman kami. Kami percaya bahwa rasa yang jujur dapat mengantarkan kehangatan layaknya rumah, menciptakan cerita baru di setiap sudut nostalgia.
+                                </p>
+                            </div>
+                        </div>
                         
-                        <p class="text-cafe-secondary text-sm leading-relaxed">
-                            Denjavas Retro Café lahir dari kecintaan mendalam pada harmoni rasa tradisional Nusantara dan nuansa nostalgia klasik yang tak lekang waktu. Kami memadukan biji kopi artisanal lokal pilihan dengan racikan resep warisan asli untuk menyajikan momen bersantap yang istimewa.
-                        </p>
-                        
-                        <p class="text-cafe-secondary text-sm leading-relaxed">
-                            Setiap cangkir kopi dan hidangan yang kami sajikan diracik dengan penuh ketelitian oleh barista dan juru masak berpengalaman kami. Kami percaya bahwa rasa yang jujur dapat mengantarkan kehangatan layaknya rumah, menciptakan cerita baru di setiap sudut nostalgia.
-                        </p>
-                        
-                        <div class="pt-4">
-                            <a href="#menu" class="bg-cafe-accent hover:bg-cafe-accent-hover text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 shadow-md inline-block uppercase text-[10px] tracking-widest cursor-pointer">
+                        <div class="pt-2">
+                            <a href="#menu" class="w-full sm:w-auto text-center bg-cafe-accent hover:bg-cafe-accent-hover text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 shadow-md inline-block uppercase text-[10px] tracking-widest cursor-pointer">
                                 LIHAT MENU KAMI
                             </a>
                         </div>
@@ -990,71 +1002,71 @@ onUnmounted(() => {
         </section>
 
         <!-- Testimoni (FR-09) -->
-        <section id="testimoni" class="py-32 bg-cafe-base relative border-t border-cafe-border/50 scroll-mt-20">
+        <section id="testimoni" class="py-16 sm:py-24 lg:py-32 bg-cafe-base relative border-t border-cafe-border/50 scroll-mt-20">
             <div class="max-w-7xl mx-auto px-6">
                 <!-- Section Header -->
-                <div class="flex flex-col items-center text-center mb-20 reveal-element">
+                <div class="flex flex-col items-center text-center mb-12 sm:mb-20 reveal-element">
                     <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] mb-4 font-bold">ULASAN PELANGGAN</span>
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Apa Kata Mereka</h2>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Apa Kata Mereka</h2>
                     <div class="w-16 h-0.5 bg-cafe-accent/30 mx-auto rounded-full"></div>
                 </div>
 
-                <!-- Testimonial Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto reveal-element delay-200">
+                <!-- Testimonial Grid (2 columns on mobile, 3 columns on desktop) -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto reveal-element delay-200">
                     <!-- Testimoni 1 -->
-                    <div class="bg-white border border-cafe-border p-8 rounded-3xl relative shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between">
+                    <div class="col-span-1 bg-white border border-cafe-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl relative shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between">
                         <div>
                             <!-- Star Rating -->
-                            <div class="flex gap-1 text-amber-500 mb-6">
+                            <div class="flex gap-1 text-amber-500 mb-3 sm:mb-6 text-[10px] sm:text-sm">
                                 <span v-for="i in 5" :key="i">★</span>
                             </div>
-                            <p class="text-cafe-secondary text-xs italic leading-relaxed mb-8">
-                                "Tempat favorit saya untuk WFC. Kopi susunya juara, rasanya pas tidak terlalu manis, dan koneksi wifinya cepat & stabil untuk melakukan video call kerja."
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs italic leading-relaxed mb-4 sm:mb-8">
+                                "Tempat favorit saya untuk WFC. Kopi susunya juara, rasanya pas tidak terlalu manis, dan koneksi wifinya cepat & stabil untuk video call."
                             </p>
                         </div>
-                        <div class="flex items-center gap-3.5 border-t border-cafe-border/60 pt-4">
-                            <div class="w-10 h-10 rounded-full bg-cafe-base border border-cafe-border flex items-center justify-center font-bold text-cafe-accent font-serif">B</div>
+                        <div class="flex items-center gap-2 sm:gap-3.5 border-t border-cafe-border/60 pt-4">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-cafe-base border border-cafe-border flex items-center justify-center font-bold text-cafe-accent font-serif text-xs sm:text-base">B</div>
                             <div>
-                                <h4 class="font-serif font-bold text-cafe-main text-xs">Budi Santoso</h4>
-                                <span class="text-[8px] text-cafe-muted uppercase tracking-wider font-bold">Local Guide</span>
+                                <h4 class="font-serif font-bold text-cafe-main text-[10px] sm:text-xs">Budi Santoso</h4>
+                                <span class="text-[7px] sm:text-[8px] text-cafe-muted uppercase tracking-wider font-bold">Local Guide</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Testimoni 2 -->
-                    <div class="bg-white border border-cafe-border p-8 rounded-3xl relative shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between">
+                    <div class="col-span-1 bg-white border border-cafe-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl relative shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between">
                         <div>
-                            <div class="flex gap-1 text-amber-500 mb-6">
+                            <div class="flex gap-1 text-amber-500 mb-3 sm:mb-6 text-[10px] sm:text-sm">
                                 <span v-for="i in 5" :key="i">★</span>
                             </div>
-                            <p class="text-cafe-secondary text-xs italic leading-relaxed mb-8">
-                                "Fasilitas PC di gaming area-nya spec dewa! Sangat seru nongkrong di sini bareng teman-teman kuliah sambil mengerjakan tugas pemrograman."
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs italic leading-relaxed mb-4 sm:mb-8">
+                                "Fasilitas PC di gaming area-nya spec dewa! Sangat seru nongkrong di sini bareng teman-teman kuliah sambil mengerjakan tugas kuliah."
                             </p>
                         </div>
-                        <div class="flex items-center gap-3.5 border-t border-cafe-border/60 pt-4">
-                            <div class="w-10 h-10 rounded-full bg-cafe-base border border-cafe-border flex items-center justify-center font-bold text-cafe-accent font-serif">A</div>
+                        <div class="flex items-center gap-2 sm:gap-3.5 border-t border-cafe-border/60 pt-4">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-cafe-base border border-cafe-border flex items-center justify-center font-bold text-cafe-accent font-serif text-xs sm:text-base">A</div>
                             <div>
-                                <h4 class="font-serif font-bold text-cafe-main text-xs">Amanda Putri</h4>
-                                <span class="text-[8px] text-cafe-muted uppercase tracking-wider font-bold">Mahasiswi</span>
+                                <h4 class="font-serif font-bold text-cafe-main text-[10px] sm:text-xs">Amanda Putri</h4>
+                                <span class="text-[7px] sm:text-[8px] text-cafe-muted uppercase tracking-wider font-bold">Mahasiswi</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Testimoni 3 -->
-                    <div class="bg-white border border-cafe-border p-8 rounded-3xl relative shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between">
+                    <div class="col-span-2 md:col-span-1 bg-white border border-cafe-border p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl relative shadow-sm hover:shadow-md transition duration-300 flex flex-col justify-between">
                         <div>
-                            <div class="flex gap-1 text-amber-500 mb-6">
+                            <div class="flex gap-1 text-amber-500 mb-3 sm:mb-6 text-[10px] sm:text-sm">
                                 <span v-for="i in 5" :key="i">★</span>
                             </div>
-                            <p class="text-cafe-secondary text-xs italic leading-relaxed mb-8">
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs italic leading-relaxed mb-4 sm:mb-8">
                                 "Makanan utamanya sangat lezat, terutama nasi goreng bumbu rempahnya. Layanan kasirnya sangat modern dan cepat, stafnya juga ramah."
                             </p>
                         </div>
-                        <div class="flex items-center gap-3.5 border-t border-cafe-border/60 pt-4">
-                            <div class="w-10 h-10 rounded-full bg-cafe-base border border-cafe-border flex items-center justify-center font-bold text-cafe-accent font-serif">R</div>
+                        <div class="flex items-center gap-2 sm:gap-3.5 border-t border-cafe-border/60 pt-4">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-cafe-base border border-cafe-border flex items-center justify-center font-bold text-cafe-accent font-serif text-xs sm:text-base">R</div>
                             <div>
-                                <h4 class="font-serif font-bold text-cafe-main text-xs">Rian Hidayat</h4>
-                                <span class="text-[8px] text-cafe-muted uppercase tracking-wider font-bold">Software Engineer</span>
+                                <h4 class="font-serif font-bold text-cafe-main text-[10px] sm:text-xs">Rian Hidayat</h4>
+                                <span class="text-[7px] sm:text-[8px] text-cafe-muted uppercase tracking-wider font-bold">Software Engineer</span>
                             </div>
                         </div>
                     </div>
@@ -1063,18 +1075,18 @@ onUnmounted(() => {
         </section>
 
         <!-- Lokasi Cafe (FR-11) -->
-        <section id="lokasi" class="py-32 bg-cafe-base relative border-t border-cafe-border/50 scroll-mt-20">
+        <section id="lokasi" class="py-16 sm:py-24 lg:py-32 bg-cafe-base relative border-t border-cafe-border/50 scroll-mt-20">
             <div class="max-w-7xl mx-auto px-6">
                 <!-- Section Header -->
-                <div class="flex flex-col items-center text-center mb-20 reveal-element">
+                <div class="flex flex-col items-center text-center mb-12 sm:mb-20 reveal-element">
                     <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] mb-4 font-bold">KUNJUNGI KAMI</span>
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Peta & Lokasi Cafe</h2>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Peta & Lokasi Cafe</h2>
                     <div class="w-16 h-0.5 bg-cafe-accent/30 mx-auto rounded-full"></div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center reveal-element delay-200">
                     <!-- Google Maps Frame -->
-                    <div class="lg:col-span-7 rounded-3xl overflow-hidden border border-cafe-border shadow-sm relative h-96">
+                    <div class="lg:col-span-7 rounded-3xl overflow-hidden border border-cafe-border shadow-sm relative h-72 sm:h-96 w-full">
                         <iframe 
                             src="https://maps.google.com/maps?q=Denjavas%20Retro%20Cafe,%20Giri%20Mukti,%20Penajam&t=&z=15&ie=UTF8&iwloc=&output=embed" 
                             class="w-full h-full border-none" 
@@ -1083,23 +1095,23 @@ onUnmounted(() => {
                         ></iframe>
                     </div>
 
-                    <!-- Sidebar Info -->
-                    <div class="lg:col-span-5 space-y-6">
-                        <div class="bg-white border border-cafe-border p-6 rounded-2xl">
-                            <h4 class="font-serif font-bold text-cafe-main mb-2">Alamat Lengkap</h4>
-                            <p class="text-cafe-secondary text-xs leading-relaxed">
+                    <!-- Sidebar Info (2 columns on mobile, 3 columns on tablet, stacked on desktop) -->
+                    <div class="lg:col-span-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-1 gap-4 lg:gap-6 w-full">
+                        <div class="col-span-1 lg:col-span-1 bg-white border border-cafe-border p-4 sm:p-6 rounded-2xl flex flex-col justify-between">
+                            <h4 class="font-serif font-bold text-cafe-main text-[11px] sm:text-xs md:text-sm mb-1.5 sm:mb-2">Alamat Lengkap</h4>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed">
                                 Denjavas Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam, Kabupaten Penajam Paser Utara, Kalimantan Timur 76143.
                             </p>
                         </div>
-                        <div class="bg-white border border-cafe-border p-6 rounded-2xl">
-                            <h4 class="font-serif font-bold text-cafe-main mb-2">Panduan Transportasi</h4>
-                            <p class="text-cafe-secondary text-xs leading-relaxed">
-                                Terletak strategis di pinggir jalan raya utama poros Penajam - Kuaro KM 16. Sangat mudah diakses menggunakan moda transportasi umum antarkota maupun kendaraan pribadi.
+                        <div class="col-span-1 lg:col-span-1 bg-white border border-cafe-border p-4 sm:p-6 rounded-2xl flex flex-col justify-between">
+                            <h4 class="font-serif font-bold text-cafe-main text-[11px] sm:text-xs md:text-sm mb-1.5 sm:mb-2">Panduan Transportasi</h4>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed">
+                                Terletak strategis di pinggir jalan raya utama poros Penajam - Kuaro KM 16. Sangat mudah diakses dengan transportasi umum atau pribadi.
                             </p>
                         </div>
-                        <div class="bg-white border border-cafe-border p-6 rounded-2xl">
-                            <h4 class="font-serif font-bold text-cafe-main mb-2">Informasi Parkir</h4>
-                            <p class="text-cafe-secondary text-xs leading-relaxed">
+                        <div class="col-span-2 md:col-span-1 lg:col-span-1 bg-white border border-cafe-border p-4 sm:p-6 rounded-2xl flex flex-col justify-between">
+                            <h4 class="font-serif font-bold text-cafe-main text-[11px] sm:text-xs md:text-sm mb-1.5 sm:mb-2">Informasi Parkir</h4>
+                            <p class="text-cafe-secondary text-[10px] sm:text-xs leading-relaxed">
                                 Tersedia area parkir luar yang lapang dan aman untuk kendaraan roda empat maupun roda dua, dilengkapi CCTV pemantau 24 jam.
                             </p>
                         </div>
@@ -1109,7 +1121,7 @@ onUnmounted(() => {
         </section>
 
         <!-- Kontak & Info (FR-12 - Minimalist Need Help Style) -->
-        <section id="contact" class="py-32 bg-white relative transition-colors duration-300 scroll-mt-20">
+        <section id="contact" class="py-16 sm:py-24 lg:py-32 bg-white relative transition-colors duration-300 scroll-mt-20">
             <!-- Background Decoration -->
             <div class="absolute inset-0 z-0 bg-[radial-gradient(#80808008_1px,transparent_1px)] bg-[size:24px_24px] opacity-80"></div>
 
@@ -1117,17 +1129,17 @@ onUnmounted(() => {
                 <!-- Section Header -->
                 <div class="flex flex-col items-center text-center mb-12 reveal-element">
                     <span class="text-cafe-accent text-xs uppercase tracking-[0.25em] mb-4 font-bold">PUSAT BANTUAN</span>
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Need Help?</h2>
+                    <h2 class="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-cafe-main mb-6">Need Help?</h2>
                     <div class="w-16 h-0.5 bg-cafe-accent/30 mx-auto rounded-full"></div>
                 </div>
 
-                <!-- Slide tabs -->
-                <div class="flex flex-wrap justify-center gap-2 mb-8 reveal-element delay-100">
+                <!-- Slide tabs (Horizontally scrollable on mobile, centered on desktop) -->
+                <div class="flex flex-nowrap overflow-x-auto pb-3 gap-2 mb-8 w-full max-w-full justify-start sm:justify-center no-scrollbar scroll-smooth reveal-element delay-100">
                     <button 
                         v-for="(slide, idx) in helpSlides" 
                         :key="idx" 
                         @click="currentHelpIndex = idx"
-                        :class="['px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border cursor-pointer', 
+                        :class="['shrink-0 px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border cursor-pointer', 
                             currentHelpIndex === idx 
                                 ? 'bg-cafe-accent text-white border-cafe-accent shadow-sm' 
                                 : 'bg-cafe-base text-cafe-secondary border-cafe-border hover:bg-white'
@@ -1146,15 +1158,15 @@ onUnmounted(() => {
                     class="relative select-none touch-pan-y cursor-grab active:cursor-grabbing reveal-element delay-200"
                 >
                     <!-- Outer double vintage border card -->
-                    <div class="bg-cafe-base border-2 border-cafe-accent/30 p-8 sm:p-12 rounded-[2.5rem] shadow-xl relative min-h-[480px] sm:min-h-[420px] flex flex-col justify-between">
-                        <div class="absolute inset-3 border border-cafe-border pointer-events-none rounded-[2rem]"></div>
+                    <div class="bg-cafe-base border-2 border-cafe-accent/30 p-6 sm:p-12 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl relative min-h-[420px] flex flex-col justify-between">
+                        <div class="absolute inset-3 border border-cafe-border pointer-events-none rounded-[1.6rem] sm:rounded-[2rem]"></div>
                         
                         <!-- Header inside slide -->
                         <div class="relative z-10 text-center mb-6">
-                            <h3 class="text-2xl font-serif font-black text-cafe-main mb-2">
+                            <h3 class="text-base sm:text-2xl font-serif font-black text-cafe-main mb-2">
                                 {{ helpSlides[currentHelpIndex].title }}
                             </h3>
-                            <p class="text-xs text-cafe-secondary max-w-lg mx-auto">
+                            <p class="text-[11px] sm:text-xs text-cafe-secondary max-w-lg mx-auto">
                                 {{ helpSlides[currentHelpIndex].subtitle }}
                             </p>
                             <div class="w-12 h-0.5 bg-cafe-accent/20 mx-auto mt-4 rounded-full"></div>
@@ -1162,80 +1174,83 @@ onUnmounted(() => {
 
                         <!-- Slide Body Content -->
                         <div class="relative z-10 flex-grow flex items-center justify-center py-4">
-                            <!-- Type 1: FAQ Slide -->
-                            <div v-if="helpSlides[currentHelpIndex].type === 'faq'" class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                            <!-- Type 1: FAQ Slide (2 columns on mobile, 2 columns on desktop) -->
+                            <div v-if="helpSlides[currentHelpIndex].type === 'faq'" class="w-full grid grid-cols-2 gap-3 sm:gap-4 text-left">
                                 <div 
                                     v-for="(item, itemIdx) in helpSlides[currentHelpIndex].items" 
                                     :key="itemIdx"
-                                    class="bg-white p-5 rounded-2xl border border-cafe-border/80 flex flex-col justify-between"
+                                    class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-cafe-border/80 flex flex-col justify-between"
                                 >
-                                    <h4 class="font-serif font-bold text-xs text-cafe-main mb-2 flex items-start gap-1.5">
+                                    <h4 class="font-serif font-bold text-[10px] sm:text-xs text-cafe-main mb-2 flex items-start gap-1">
                                         <span class="text-cafe-accent font-black">Q:</span>
                                         <span>{{ item.q }}</span>
                                     </h4>
-                                    <p class="text-[11px] text-cafe-secondary leading-relaxed">
+                                    <p class="text-[9px] sm:text-[11px] text-cafe-secondary leading-relaxed">
                                         {{ item.a }}
                                     </p>
                                 </div>
                             </div>
 
-                            <!-- Type 2: Guide Slide -->
-                            <div v-else-if="helpSlides[currentHelpIndex].type === 'guide'" class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                            <!-- Type 2: Guide Slide (2 columns on mobile with 3rd step spanning full width) -->
+                            <div v-else-if="helpSlides[currentHelpIndex].type === 'guide'" class="w-full grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-left">
                                 <div 
                                     v-for="(step, stepIdx) in helpSlides[currentHelpIndex].steps" 
                                     :key="stepIdx"
-                                    class="bg-white p-5 rounded-2xl border border-cafe-border/80 relative overflow-hidden"
+                                    class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-cafe-border/80 relative overflow-hidden"
+                                    :class="stepIdx === 2 ? 'col-span-2 md:col-span-1' : 'col-span-1'"
                                 >
-                                    <span class="absolute top-3 right-4 font-serif font-black text-2xl text-cafe-accent/15">
+                                    <span class="absolute top-2 right-3 font-serif font-black text-xl sm:text-2xl text-cafe-accent/15">
                                         {{ step.number }}
                                     </span>
-                                    <h4 class="font-serif font-bold text-xs text-cafe-main mb-2 mt-2">
+                                    <h4 class="font-serif font-bold text-[10px] sm:text-xs text-cafe-main mb-1.5 mt-1">
                                         {{ step.title }}
                                     </h4>
-                                    <p class="text-[11px] text-cafe-secondary leading-relaxed">
+                                    <p class="text-[9px] sm:text-[11px] text-cafe-secondary leading-relaxed">
                                         {{ step.desc }}
                                     </p>
                                 </div>
                             </div>
 
-                            <!-- Type 3: Policies Slide -->
-                            <div v-else-if="helpSlides[currentHelpIndex].type === 'policies'" class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                            <!-- Type 3: Policies Slide (2 columns on mobile with 3rd item spanning full width) -->
+                            <div v-else-if="helpSlides[currentHelpIndex].type === 'policies'" class="w-full grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-left">
                                 <div 
                                     v-for="(policy, policyIdx) in helpSlides[currentHelpIndex].items" 
                                     :key="policyIdx"
-                                    class="bg-white p-5 rounded-2xl border border-cafe-border/80"
+                                    class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-cafe-border/80"
+                                    :class="policyIdx === 2 ? 'col-span-2 md:col-span-1' : 'col-span-1'"
                                 >
-                                    <h4 class="font-serif font-bold text-xs text-cafe-main mb-2">
+                                    <h4 class="font-serif font-bold text-[10px] sm:text-xs text-cafe-main mb-1.5">
                                         {{ policy.label }}
                                     </h4>
-                                    <p class="text-[11px] text-cafe-secondary leading-relaxed">
+                                    <p class="text-[9px] sm:text-[11px] text-cafe-secondary leading-relaxed">
                                         {{ policy.desc }}
                                     </p>
                                 </div>
                             </div>
 
-                            <!-- Type 4: Chat & Channels Slide -->
-                            <div v-else-if="helpSlides[currentHelpIndex].type === 'chat'" class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <!-- Type 4: Chat & Channels Slide (2 columns on mobile with 3rd item spanning full width) -->
+                            <div v-else-if="helpSlides[currentHelpIndex].type === 'chat'" class="w-full grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 text-center">
                                 <div 
                                     v-for="(channel, channelIdx) in helpSlides[currentHelpIndex].channels" 
                                     :key="channelIdx"
-                                    class="bg-white p-6 rounded-2xl border border-cafe-border/80 flex flex-col items-center justify-between"
+                                    class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-cafe-border/80 flex flex-col items-center justify-between"
+                                    :class="channelIdx === 2 ? 'col-span-2 md:col-span-1' : 'col-span-1'"
                                 >
-                                    <div class="w-10 h-10 rounded-full bg-cafe-base flex items-center justify-center text-cafe-accent mb-3">
-                                        <svg v-if="channel.name.includes('WhatsApp')" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                                        <svg v-else-if="channel.name.includes('Email')" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                                        <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-cafe-base flex items-center justify-center text-cafe-accent mb-2 sm:mb-3">
+                                        <svg v-if="channel.name.includes('WhatsApp')" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                        <svg v-else-if="channel.name.includes('Email')" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                                     </div>
-                                    <h4 class="font-serif font-bold text-xs text-cafe-main mb-1">
+                                    <h4 class="font-serif font-bold text-[10px] sm:text-xs text-cafe-main mb-0.5">
                                         {{ channel.name }}
                                     </h4>
-                                    <p class="text-[9px] text-cafe-muted uppercase tracking-wider font-bold mb-2">
+                                    <p class="text-[7px] sm:text-[9px] text-cafe-muted uppercase tracking-wider font-bold mb-1.5">
                                         {{ channel.sub }}
                                     </p>
                                     <a 
                                         :href="channel.link" 
                                         target="_blank" 
-                                        class="mt-2 text-xs font-bold text-cafe-accent hover:underline break-all"
+                                        class="mt-1 text-[9px] sm:text-xs font-bold text-cafe-accent hover:underline break-all"
                                     >
                                         {{ channel.value }}
                                     </a>
@@ -1261,8 +1276,7 @@ onUnmounted(() => {
         </section>
 
         <!-- Footer -->
-        <!-- Footer -->
-        <footer class="bg-cafe-surface py-20 border-t border-cafe-border/60 text-left relative z-10">
+        <footer class="bg-cafe-surface py-12 sm:py-16 lg:py-20 border-t border-cafe-border/60 text-left relative z-10">
             <div class="max-w-7xl mx-auto px-8 reveal-element">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
                     <!-- Column 1: Brand & Tagline -->
@@ -1310,16 +1324,16 @@ onUnmounted(() => {
                     <div class="space-y-6">
                         <h4 class="text-[10px] font-black text-cafe-main uppercase tracking-wider">Kontak Info</h4>
                         <ul class="space-y-3.5 text-xs text-cafe-secondary leading-relaxed">
-                            <li class="flex items-start gap-2.5">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5 text-cafe-accent"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <li class="flex items-start gap-3.5">
+                                <svg class="w-5 h-5 shrink-0 text-cafe-accent mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                                 <span>{{ storeSettings.store_address }}</span>
                             </li>
-                            <li class="flex items-center gap-2.5">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cafe-accent"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            <li class="flex items-center gap-3.5">
+                                <svg class="w-5 h-5 shrink-0 text-cafe-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                                 <span>{{ storeSettings.store_phone }}</span>
                             </li>
-                            <li class="flex items-center gap-2.5">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cafe-accent"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                            <li class="flex items-center gap-3.5">
+                                <svg class="w-5 h-5 shrink-0 text-cafe-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                                 <span>hello@denjavas.com</span>
                             </li>
                         </ul>
@@ -1341,12 +1355,9 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Bottom copyright bar -->
-                <div class="pt-8 border-t border-cafe-border/50 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-cafe-muted">
+                <div class="pt-8 border-t border-cafe-border/50 flex justify-center items-center text-center text-xs text-cafe-muted">
                     <p>
                         &copy; 2026 Denjavas Retro Café & Eatery. All rights reserved.
-                    </p>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-cafe-accent">
-                        Sistem Kasir & POS Cerdas Terintegrasi.
                     </p>
                 </div>
             </div>
@@ -1475,5 +1486,15 @@ body {
 .photo-fade-leave-to {
   opacity: 0;
   transform: scale(1.02) translateY(-2px);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 </style>

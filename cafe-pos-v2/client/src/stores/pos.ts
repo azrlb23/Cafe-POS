@@ -12,6 +12,7 @@ interface PosState {
   loading: boolean;
   hasLoaded: boolean;
   error: string | null;
+  isMobileSidebarOpen: boolean;
 }
 
 export const usePosStore = defineStore('pos', {
@@ -25,6 +26,7 @@ export const usePosStore = defineStore('pos', {
     loading: false,
     hasLoaded: false,
     error: null,
+    isMobileSidebarOpen: false,
   }),
   actions: {
     async fetchPosData(force = false) {

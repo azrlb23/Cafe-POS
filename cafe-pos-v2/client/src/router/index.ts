@@ -192,7 +192,26 @@ const routes: Array<RouteRecordRaw> = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (!from.name) {
+      return { top: 0 };
+    }
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'smooth',
+      };
+    }
+    if (savedPosition) {
+      return savedPosition;
+    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ top: 0 });
+      }, 300); // Wait for page fade-out transition to complete
+    });
+  }
 });
 
 // Navigation Guards

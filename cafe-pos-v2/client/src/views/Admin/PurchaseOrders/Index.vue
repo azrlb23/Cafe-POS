@@ -199,68 +199,134 @@ const calculateTotal = (po) => {
                 </div>
 
                 <!-- PO List -->
-                <div class="overflow-x-auto delay-200">
-                    <table class="w-full text-left border-separate border-spacing-y-4">
-                        <thead>
-                            <tr class="text-slate-400">
-                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Order Info</th>
-                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Supplier</th>
-                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Bahan</th>
-                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Total</th>
-                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-right">Manajemen</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="po in purchaseOrders" :key="po.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
-                                <td class="py-6 px-8 first:rounded-l-[2rem]">
-                                    <router-link :to="{ name: 'AdminPurchaseOrdersShow', params: { id: po.id } }" class="block cursor-pointer">
-                                        <div class="font-serif font-black text-slate-900 text-xl group-hover:text-amber-600 transition-colors">#{{ po.poNumber || po.order_number }}</div>
-                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ new Date(po.createdAt).toLocaleDateString('id-ID') }}</div>
-                                    </router-link>
-                                </td>
-                                <td class="py-6 px-8">
-                                    <span class="text-sm font-black text-slate-700">{{ po.supplier?.name || '-' }}</span>
-                                </td>
-                                <td class="py-6 px-8">
-                                    <div class="flex flex-wrap gap-1">
-                                        <span v-for="item in (po.purchaseOrderItems || po.items || []).slice(0, 2)" :key="item.id" class="px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                            {{ item.rawMaterial?.name || item.raw_material?.name || '-' }}
-                                        </span>
-                                        <span v-if="(po.purchaseOrderItems || po.items || []).length > 2" class="text-[9px] font-black text-slate-300 uppercase tracking-widest self-center ml-1">
-                                            +{{ (po.purchaseOrderItems || po.items).length - 2 }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="py-6 px-8 text-sm font-black text-slate-900">
-                                    Rp {{ formatPrice(calculateTotal(po)) }}
-                                </td>
-                                <td class="py-6 px-8 text-right last:rounded-r-[2rem]">
-                                    <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                                        <router-link
-                                            :to="{ name: 'AdminPurchaseOrdersShow', params: { id: po.id } }"
-                                            class="bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
-                                            title="Detail PO"
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <div class="delay-200">
+                    <!-- Desktop Table View -->
+                    <div class="hidden lg:block overflow-x-auto">
+                        <table class="w-full text-left border-separate border-spacing-y-4">
+                            <thead>
+                                <tr class="text-slate-400">
+                                    <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Order Info</th>
+                                    <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Supplier</th>
+                                    <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Bahan</th>
+                                    <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em]">Total</th>
+                                    <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-right">Manajemen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="po in purchaseOrders" :key="po.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
+                                    <td class="py-6 px-8 first:rounded-l-[2rem]">
+                                        <router-link :to="{ name: 'AdminPurchaseOrdersShow', params: { id: po.id } }" class="block cursor-pointer">
+                                            <div class="font-serif font-black text-slate-900 text-xl group-hover:text-amber-600 transition-colors">#{{ po.poNumber || po.order_number }}</div>
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ new Date(po.createdAt).toLocaleDateString('id-ID') }}</div>
                                         </router-link>
-                                        
-                                        <button
-                                            @click="deletePO(po.id)"
-                                            class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
-                                            title="Hapus Riwayat"
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                        </button>
+                                    </td>
+                                    <td class="py-6 px-8">
+                                        <span class="text-sm font-black text-slate-700">{{ po.supplier?.name || '-' }}</span>
+                                    </td>
+                                    <td class="py-6 px-8">
+                                        <div class="flex flex-wrap gap-1">
+                                            <span v-for="item in (po.purchaseOrderItems || po.items || []).slice(0, 2)" :key="item.id" class="px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                {{ item.rawMaterial?.name || item.raw_material?.name || '-' }}
+                                            </span>
+                                            <span v-if="(po.purchaseOrderItems || po.items || []).length > 2" class="text-[9px] font-black text-slate-300 uppercase tracking-widest self-center ml-1">
+                                                +{{ (po.purchaseOrderItems || po.items).length - 2 }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="py-6 px-8 text-sm font-black text-slate-900">
+                                        Rp {{ formatPrice(calculateTotal(po)) }}
+                                    </td>
+                                    <td class="py-6 px-8 text-right last:rounded-r-[2rem]">
+                                        <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                            <router-link
+                                                :to="{ name: 'AdminPurchaseOrdersShow', params: { id: po.id } }"
+                                                class="bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:border-amber-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
+                                                title="Detail PO"
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </router-link>
+                                            
+                                            <button
+                                                @click="deletePO(po.id)"
+                                                class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
+                                                title="Hapus Riwayat"
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-if="purchaseOrders.length === 0">
+                                    <td colspan="5" class="py-32 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                                        <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest leading-loose">Belum ada riwayat stok masuk.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Card View -->
+                    <div class="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 -mx-4 sm:mx-0 px-4 sm:px-0">
+                        <div 
+                            v-for="po in purchaseOrders" 
+                            :key="po.id" 
+                            class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300"
+                        >
+                            <div>
+                                <div class="flex items-start justify-between mb-4">
+                                    <router-link :to="{ name: 'AdminPurchaseOrdersShow', params: { id: po.id } }" class="block cursor-pointer">
+                                        <div class="font-serif font-black text-slate-900 text-xl hover:text-amber-600 transition-colors">#{{ po.poNumber || po.order_number }}</div>
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mt-1">
+                                            {{ new Date(po.createdAt).toLocaleDateString('id-ID') }}
+                                        </span>
+                                    </router-link>
+                                </div>
+                                
+                                <div class="space-y-3 my-6">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-medium text-slate-400">Supplier:</span>
+                                        <span class="font-bold text-slate-700">{{ po.supplier?.name || '-' }}</span>
                                     </div>
-                                </td>
-                            </tr>
-                            <tr v-if="purchaseOrders.length === 0">
-                                <td colspan="5" class="py-32 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
-                                    <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest leading-loose">Belum ada riwayat stok masuk.</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    <div class="flex flex-col gap-1 text-xs">
+                                        <span class="font-medium text-slate-400">Bahan Baku:</span>
+                                        <div class="flex flex-wrap gap-1 mt-1">
+                                            <span v-for="item in (po.purchaseOrderItems || po.items || []).slice(0, 3)" :key="item.id" class="px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                {{ item.rawMaterial?.name || item.raw_material?.name || '-' }}
+                                            </span>
+                                            <span v-if="(po.purchaseOrderItems || po.items || []).length > 3" class="text-[9px] font-black text-slate-300 uppercase tracking-widest self-center ml-1">
+                                                +{{ (po.purchaseOrderItems || po.items).length - 3 }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-medium text-slate-400">Total Pengadaan:</span>
+                                        <span class="font-black text-amber-700">Rp {{ formatPrice(calculateTotal(po)) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+                                <router-link
+                                    :to="{ name: 'AdminPurchaseOrdersShow', params: { id: po.id } }"
+                                    class="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer border border-amber-200/40"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    Detail
+                                </router-link>
+                                <button
+                                    @click="deletePO(po.id)"
+                                    class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer border border-rose-200/40"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    Hapus
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div v-if="purchaseOrders.length === 0" class="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-slate-200 px-4">
+                            <p class="text-slate-400 font-black uppercase text-[10px] tracking-widest leading-loose">Belum ada riwayat stok masuk.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

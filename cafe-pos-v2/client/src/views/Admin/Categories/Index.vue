@@ -1,22 +1,33 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
+import { useAdminStore } from '@/stores/admin';
 
 const router = useRouter();
+const adminStore = useAdminStore();
 
-const categories = ref([]);
 const search = ref('');
 const isLoading = ref(true);
 const flashMessage = ref('');
 
-const fetchData = async () => {
-    isLoading.value = true;
+const categories = computed(() => {
+    let list = adminStore.categories;
+    
+    if (search.value) {
+        const q = search.value.toLowerCase();
+        list = list.filter(c => c.name.toLowerCase().includes(q));
+    }
+    
+    return list;
+});
+
+const fetchData = async (force = false) => {
+    if (!adminStore.isCategoriesLoaded) {
+        isLoading.value = true;
+    }
     try {
-        const response = await api.get('/admin/categories', {
-            params: { search: search.value }
-        });
-        categories.value = response.data.categories;
+        await adminStore.fetchCategories(force);
     } catch (error) {
         console.error("Failed to fetch categories", error);
     } finally {
@@ -24,27 +35,9 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
-});
-
-// Vanilla Debounce
-const debounce = (fn, delay) => {
-    let timeoutId;
-    return (...args) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-            fn(...args);
-        }, delay);
-    };
-};
-
-const performSearch = debounce(() => {
-    fetchData();
-}, 300);
-
-watch(search, () => {
-    performSearch();
+onMounted(async () => {
+    await fetchData();
+    fetchData(true);
 });
 
 const resetSearch = () => {
@@ -56,7 +49,7 @@ const deleteCategory = async (id) => {
     try {
         await api.delete(`/admin/categories/${id}`);
         flashMessage.value = 'Kategori berhasil dihapus';
-        fetchData();
+        await fetchData(true);
         setTimeout(() => { flashMessage.value = ''; }, 3000);
     } catch (e) {
         console.error(e);
@@ -132,56 +125,96 @@ const deleteCategory = async (id) => {
                 <div class="w-8 h-8 border-4 border-amber-600/20 border-t-amber-600 rounded-full animate-spin"></div>
             </div>
             
-            <div v-else class="overflow-x-auto -mx-4 sm:mx-0 delay-200">
-                <table class="w-full text-left border-separate border-spacing-y-4">
-                    <thead>
-                        <tr class="text-slate-400">
-                            <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] w-20">ID</th>
-                            <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Kategori</th>
-                            <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Slug (URL)</th>
-                            <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-right">Manajemen</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="category in categories" :key="category.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
-                            <td class="py-6 px-8 first:rounded-l-[2rem]">
-                                <span class="text-xs font-black text-slate-300">#{{ String(category.id).padStart(2, '0') }}</span>
-                            </td>
-                            <td class="py-6 px-6">
-                                <div class="font-serif font-black text-slate-900 text-xl group-hover:text-amber-700 transition-colors">{{ category.name }}</div>
-                            </td>
-                            <td class="py-6 px-6">
-                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg">
-                                    /{{ category.slug }}
-                                </span>
-                            </td>
-                            <td class="py-6 px-8 text-right last:rounded-r-[2rem]">
-                                <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                                    <router-link
-                                        :to="{ name: 'AdminCategoriesEdit', params: { id: category.id } }"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-amber-700 hover:border-amber-500 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
-                                        title="Edit Kategori"
-                                    >
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                    </router-link>
-                                    
-                                    <button
-                                        @click="deleteCategory(category.id)"
-                                        class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
-                                        title="Hapus Kategori"
-                                    >
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr v-if="categories.length === 0">
-                            <td colspan="4" class="py-24 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
-                                <div class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Belum ada kategori terdaftar</div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div v-else class="delay-200">
+                <!-- Desktop Table View -->
+                <div class="hidden lg:block overflow-x-auto -mx-4 sm:mx-0">
+                    <table class="w-full text-left border-separate border-spacing-y-4">
+                        <thead>
+                            <tr class="text-slate-400">
+                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] w-20">ID</th>
+                                <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Kategori</th>
+                                <th class="pb-4 px-6 text-[10px] font-black uppercase tracking-[0.2em]">Slug (URL)</th>
+                                <th class="pb-4 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-right">Manajemen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="category in categories" :key="category.id" class="group bg-white hover:bg-slate-50 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 rounded-3xl hover:-translate-y-1">
+                                <td class="py-6 px-8 first:rounded-l-[2rem]">
+                                    <span class="text-xs font-black text-slate-300">#{{ String(category.id).padStart(2, '0') }}</span>
+                                </td>
+                                <td class="py-6 px-6">
+                                    <div class="font-serif font-black text-slate-900 text-xl group-hover:text-amber-700 transition-colors">{{ category.name }}</div>
+                                </td>
+                                <td class="py-6 px-6">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg">
+                                        /{{ category.slug }}
+                                    </span>
+                                </td>
+                                <td class="py-6 px-8 text-right last:rounded-r-[2rem]">
+                                    <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                        <router-link
+                                            :to="{ name: 'AdminCategoriesEdit', params: { id: category.id } }"
+                                            class="bg-white border border-slate-200 text-slate-400 hover:text-amber-700 hover:border-amber-500 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
+                                            title="Edit Kategori"
+                                        >
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        </router-link>
+                                        
+                                        <button
+                                            @click="deleteCategory(category.id)"
+                                            class="bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-400 p-3 rounded-2xl transition-all shadow-sm active:scale-90 cursor-pointer"
+                                            title="Hapus Kategori"
+                                        >
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="categories.length === 0">
+                                <td colspan="4" class="py-24 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
+                                    <div class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Belum ada kategori terdaftar</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 -mx-4 sm:mx-0 px-4 sm:px-0">
+                    <div 
+                        v-for="category in categories" 
+                        :key="category.id" 
+                        class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300"
+                    >
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-black text-slate-300">#{{ String(category.id).padStart(2, '0') }}</span>
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">
+                                /{{ category.slug }}
+                            </span>
+                        </div>
+                        <div class="font-serif font-black text-slate-900 text-xl mb-6">{{ category.name }}</div>
+                        <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+                            <router-link
+                                :to="{ name: 'AdminCategoriesEdit', params: { id: category.id } }"
+                                class="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer border border-amber-200/40"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
+                            </router-link>
+                            <button
+                                @click="deleteCategory(category.id)"
+                                class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 py-3 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-2 cursor-pointer border border-rose-200/40"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div v-if="categories.length === 0" class="col-span-full py-16 text-center bg-white rounded-3xl border border-dashed border-slate-200 px-4">
+                        <div class="text-slate-400 font-black uppercase text-[10px] tracking-widest">Belum ada kategori terdaftar</div>
+                    </div>
+                </div>
             </div>
         </div>
     </template>

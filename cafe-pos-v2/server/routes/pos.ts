@@ -43,6 +43,25 @@ router.get('/data', isAuthenticated, async (req: Request, res: Response) => {
       where: { userId, closedAt: null },
     });
 
+    let activeShiftData: any = null;
+    if (activeShift) {
+      const orders = await prisma.order.findMany({
+        where: { shiftId: activeShift.id, status: 'completed' },
+        select: { paymentMethod: true, total: true }
+      });
+
+      const paymentTotals: Record<string, number> = {};
+      orders.forEach(o => {
+        const method = o.paymentMethod.toLowerCase();
+        paymentTotals[method] = (paymentTotals[method] || 0) + Number(o.total);
+      });
+
+      activeShiftData = {
+        ...activeShift,
+        paymentTotals,
+      };
+    }
+
     const todayStart = dayjs().startOf('day').toDate();
     const todayEnd = dayjs().endOf('day').toDate();
 
@@ -78,7 +97,7 @@ router.get('/data', isAuthenticated, async (req: Request, res: Response) => {
       menus,
       categories,
       tables,
-      activeShift,
+      activeShift: activeShiftData,
       todayOrders,
       todayPettyCash,
     });

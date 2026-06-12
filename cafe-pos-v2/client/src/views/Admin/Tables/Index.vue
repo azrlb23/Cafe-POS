@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import api from '@/utils/api';
+import { useAdminStore } from '@/stores/admin';
 
-const tables = ref([]);
+const adminStore = useAdminStore();
+
+const tables = computed(() => adminStore.tables);
 const isLoading = ref(true);
 
 const selectedTable = ref(null);
 const isModalOpen = ref(false);
 
-const fetchData = async () => {
-    isLoading.value = true;
+const fetchData = async (force = false) => {
+    if (!adminStore.isTablesLoaded) {
+        isLoading.value = true;
+    }
     try {
-        const response = await api.get('/admin/tables');
-        tables.value = response.data.tables || [];
+        await adminStore.fetchTables(force);
     } catch (e) {
         console.error("Failed to fetch tables", e);
     } finally {
@@ -20,8 +24,9 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
+onMounted(async () => {
+    await fetchData();
+    fetchData(true);
 });
 
 const openTableDetails = (table) => {
@@ -75,29 +80,29 @@ const getInitials = (name) => {
                 <div class="w-12 h-12 border-4 border-amber-600/20 border-t-amber-600 rounded-full animate-spin"></div>
             </div>
 
-            <!-- Table Grid -->
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 delay-100">
+            <!-- Table Grid (3 columns on mobile/tablet, 4 on lg, 5 on xl) -->
+            <div v-else class="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-8 delay-100">
                 <div 
                     v-for="table in tables" 
                     :key="table.id"
                     @click="openTableDetails(table)"
                     :class="[
-                        'relative rounded-[2.5rem] p-6 flex flex-col justify-between transition-all duration-500 border-2 cursor-pointer group active:scale-95 min-h-[220px]',
+                        'relative rounded-2xl sm:rounded-[2.5rem] p-2.5 sm:p-5 lg:p-6 flex flex-col justify-between transition-all duration-500 border-2 cursor-pointer group active:scale-95 min-h-[140px] sm:min-h-[180px] lg:min-h-[220px]',
                         !table.orders || table.orders.length === 0
                             ? 'bg-white border-slate-100 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/5' 
                             : 'bg-amber-50/40 border-amber-100 hover:border-amber-500 hover:shadow-2xl hover:shadow-amber-500/5'
                     ]"
                 >
                     <!-- Top Section: Table Number & Status Indicator -->
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-black text-slate-300 group-hover:text-amber-500 transition-colors uppercase tracking-[0.2em]">
+                    <div class="flex justify-between items-center mb-2 sm:mb-4">
+                        <span class="text-[8px] sm:text-xs font-black text-slate-300 group-hover:text-amber-500 transition-colors uppercase tracking-wider">
                             #{{ String(table.number).padStart(2, '0') }}
                         </span>
                         
                         <!-- Status Badge -->
                         <span 
                             :class="[
-                                'px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm',
+                                'px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-widest border shadow-sm',
                                 !table.orders || table.orders.length === 0
                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
                                     : 'bg-amber-100 text-amber-800 border-amber-200/60 animate-pulse'
@@ -108,14 +113,14 @@ const getInitials = (name) => {
                     </div>
 
                     <!-- Center Section: Elegant Table Branding -->
-                    <div class="flex flex-col items-center my-2">
+                    <div class="flex flex-col items-center my-1 sm:my-2">
                         <!-- Table Number Styled in Serif -->
-                        <h3 class="text-3xl font-serif font-black text-slate-900 group-hover:text-amber-600 transition-colors mb-1">
+                        <h3 class="text-xs sm:text-2xl lg:text-3xl font-serif font-black text-slate-900 group-hover:text-amber-600 transition-colors mb-0.5">
                             Meja {{ table.number }}
                         </h3>
                         
-                        <!-- Minimal Visual Table / Chair Representation -->
-                        <div class="mt-2 text-slate-400 group-hover:scale-110 transition-transform duration-500">
+                        <!-- Minimal Visual Table / Chair Representation (Hidden on mobile) -->
+                        <div class="hidden sm:block mt-2 text-slate-400 group-hover:scale-110 transition-transform duration-500">
                             <svg v-if="!table.orders || table.orders.length === 0" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-emerald-500/80">
                                 <path d="M3 10h18v2H3zm3 2h12v7H6zm-3-5h18v3H3z" />
                                 <circle cx="12" cy="5" r="1.5" />
@@ -129,18 +134,19 @@ const getInitials = (name) => {
                     </div>
 
                     <!-- Bottom Section: Dynamic Order Info or Status Hint -->
-                    <div class="mt-4 pt-4 border-t border-dashed border-slate-100">
+                    <div class="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-dashed border-slate-100">
                         <div v-if="table.orders && table.orders.length > 0" class="flex flex-col items-center text-center">
-                            <span class="text-xs font-black text-amber-600">
+                            <span class="text-[9px] sm:text-xs font-black text-amber-600">
                                 Rp {{ formatPrice(table.orders[0].total) }}
                             </span>
-                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                            <span class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
                                 Kasir: {{ table.orders[0].user?.name?.split(' ')[0] || '-' }}
                             </span>
                         </div>
                         <div v-else class="text-center">
-                            <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                                Siap Digunakan
+                            <span class="text-[7px] sm:text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                                <span class="hidden sm:inline">Siap Digunakan</span>
+                                <span class="sm:hidden">Siap</span>
                             </span>
                         </div>
                     </div>

@@ -2,22 +2,23 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/utils/api';
+import { useAdminStore } from '@/stores/admin';
 
 const router = useRouter();
+const adminStore = useAdminStore();
 
-const cashiers = ref([]);
-const stats = ref({});
-const activityLogs = ref([]);
+const cashiers = computed(() => adminStore.cashiers);
+const stats = computed(() => adminStore.stats);
+const activityLogs = computed(() => adminStore.activityLogs);
 const isLoading = ref(true);
 const errors = ref({});
 
-const fetchData = async () => {
-    isLoading.value = true;
+const fetchData = async (force = false) => {
+    if (!adminStore.isCashiersLoaded) {
+        isLoading.value = true;
+    }
     try {
-        const response = await api.get('/admin/cashiers');
-        cashiers.value = response.data.cashiers || [];
-        stats.value = response.data.stats || {};
-        activityLogs.value = response.data.activityLogs || [];
+        await adminStore.fetchCashiers(force);
     } catch (e) {
         console.error("Failed to fetch cashiers", e);
     } finally {
@@ -25,8 +26,9 @@ const fetchData = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
+onMounted(async () => {
+    await fetchData();
+    fetchData(true);
 });
 
 // Toggle PIN Visibility per Cashier
@@ -40,12 +42,55 @@ const deleteCashier = async (cashier) => {
     if (confirm(`Yakin ingin menghapus akun Kasir "${cashier.name}"? Ini akan menghapus data akses mereka.`)) {
         try {
             await api.delete(`/admin/cashiers/${cashier.id}`);
-            fetchData();
+            await fetchData(true);
         } catch (e) {
             console.error(e);
             alert(e.response?.data?.message || 'Gagal menghapus kasir');
             errors.value.error = e.response?.data?.message || 'Gagal menghapus kasir';
         }
+    }
+};
+
+// Force Close Shift Handlers
+const showCloseModal = ref(false);
+const selectedCashier = ref<any>(null);
+const closingCashOption = ref('expected');
+const customClosingCash = ref<number>(0);
+const closeNotes = ref('Lupa tutup shift, ditutup oleh Admin');
+const isSubmitting = ref(false);
+
+const getExpectedClosingCash = (cashier) => {
+    if (!cashier || !cashier.active_shift) return 0;
+    return Number(cashier.active_shift.openingCash) +
+           Number(cashier.active_shift.totalCashSales) -
+           Number(cashier.active_shift.totalPettyCash);
+};
+
+const openCloseShiftModal = (cashier) => {
+    selectedCashier.value = cashier;
+    closingCashOption.value = 'expected';
+    customClosingCash.value = getExpectedClosingCash(cashier);
+    closeNotes.value = 'Lupa tutup shift, ditutup oleh Admin';
+    showCloseModal.value = true;
+};
+
+const handleCloseShift = async () => {
+    if (!selectedCashier.value || !selectedCashier.value.active_shift) return;
+    isSubmitting.value = true;
+    try {
+        const shiftId = selectedCashier.value.active_shift.id;
+        await api.post(`/admin/shifts/${shiftId}/end`, {
+            closing_cash_option: closingCashOption.value,
+            custom_closing_cash: customClosingCash.value,
+            notes: closeNotes.value
+        });
+        showCloseModal.value = false;
+        await fetchData(true);
+    } catch (e: any) {
+        console.error(e);
+        alert(e.response?.data?.message || 'Gagal menutup shift');
+    } finally {
+        isSubmitting.value = false;
     }
 };
 
@@ -213,6 +258,17 @@ const actionConfig = {
                         <!-- Divider -->
                         <div class="border-t border-slate-50 my-6"></div>
 
+                        <!-- Akhiri Shift Button (if cashier is active/online) -->
+                        <div v-if="cashier.is_active" class="mb-4">
+                            <button 
+                                @click="openCloseShiftModal(cashier)"
+                                class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-2xl py-3 px-4 text-[10px] font-black uppercase tracking-wider transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+                                Akhiri Shift
+                            </button>
+                        </div>
+
                         <!-- PIN Indicator -->
                         <div class="flex justify-between items-center bg-slate-50/70 border border-slate-100 rounded-2xl px-4 py-3">
                             <div class="text-left">
@@ -292,6 +348,151 @@ const actionConfig = {
                         </div>
                         <p class="text-xs font-bold text-slate-400">Belum ada aktivitas kasir hari ini</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- FORCE CLOSE SHIFT MODAL -->
+            <div v-if="showCloseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Overlay background -->
+                <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showCloseModal = false"></div>
+                
+                <!-- Modal Box -->
+                <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl p-8 max-w-md w-full relative z-10 animate-fade-in-up">
+                    <button 
+                        @click="showCloseModal = false" 
+                        class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 cursor-pointer"
+                    >
+                        ✕
+                    </button>
+
+                    <h3 class="text-xl font-serif font-black text-slate-800 mb-2">Akhiri Shift Kasir</h3>
+                    <p class="text-xs font-medium text-slate-400 mb-6">
+                        Menutup paksa sesi shift aktif kasir <span class="text-amber-700 font-bold">{{ selectedCashier?.name }}</span> yang belum diakhiri.
+                    </p>
+
+                    <form @submit.prevent="handleCloseShift" class="space-y-6">
+                        <!-- Shift Details Summary -->
+                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs font-medium text-slate-600 space-y-2">
+                            <div class="flex justify-between">
+                                <span>Buka Shift:</span>
+                                <span class="font-bold text-slate-800">{{ selectedCashier?.active_shift ? new Date(selectedCashier.active_shift.openedAt).toLocaleString('id-ID') : '-' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Modal Awal:</span>
+                                <span class="font-bold text-slate-800">Rp {{ Number(selectedCashier?.active_shift?.openingCash || 0).toLocaleString('id-ID') }}</span>
+                            </div>
+
+                            <!-- Hasil Penjualan Asli -->
+                            <div class="border-t border-dashed border-slate-200 pt-2 space-y-1">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Hasil Penjualan</span>
+                                <div class="flex justify-between">
+                                    <span>Total Penjualan (Omset):</span>
+                                    <span class="font-bold text-slate-800">Rp {{ Number(selectedCashier?.active_shift?.totalSales || 0).toLocaleString('id-ID') }}</span>
+                                </div>
+                                <div class="pl-3 space-y-1 border-l-2 border-slate-200 text-slate-500 text-[11px]">
+                                    <div class="flex justify-between">
+                                        <span>Tunai:</span>
+                                        <span>Rp {{ Number(selectedCashier?.active_shift?.totalCashSales || 0).toLocaleString('id-ID') }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>QRIS:</span>
+                                        <span>Rp {{ Number(selectedCashier?.active_shift?.paymentTotals?.qris || 0).toLocaleString('id-ID') }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>E-Wallet:</span>
+                                        <span>Rp {{ Number(selectedCashier?.active_shift?.paymentTotals?.ewallet || 0).toLocaleString('id-ID') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between pt-1 border-t border-dashed border-slate-200">
+                                <span>Total Kas Keluar:</span>
+                                <span class="font-bold text-red-600">- Rp {{ Number(selectedCashier?.active_shift?.totalPettyCash || 0).toLocaleString('id-ID') }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Ending Cash Options -->
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Pilihan Uang Akhir Kas</label>
+                            <div class="space-y-3">
+                                <!-- Option System Expected -->
+                                <label class="flex items-start gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all duration-200" 
+                                    :class="closingCashOption === 'expected' ? 'border-amber-500 bg-amber-50/20' : 'border-slate-100 hover:bg-slate-50'">
+                                    <input 
+                                        type="radio" 
+                                        value="expected" 
+                                        v-model="closingCashOption" 
+                                        class="mt-0.5 text-amber-700 focus:ring-amber-500"
+                                    />
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">Uang Akhir Seharusnya (Sistem)</p>
+                                        <p class="text-[11px] font-black text-amber-700 mt-1">
+                                            Rp {{ Number(getExpectedClosingCash(selectedCashier)).toLocaleString('id-ID') }}
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <!-- Option Custom Input -->
+                                <label class="flex items-start gap-3 p-3.5 border rounded-2xl cursor-pointer transition-all duration-200"
+                                    :class="closingCashOption === 'custom' ? 'border-amber-500 bg-amber-50/20' : 'border-slate-100 hover:bg-slate-50'">
+                                    <input 
+                                        type="radio" 
+                                        value="custom" 
+                                        v-model="closingCashOption" 
+                                        class="mt-0.5 text-amber-700 focus:ring-amber-500"
+                                    />
+                                    <div class="flex-grow">
+                                        <p class="text-xs font-bold text-slate-800">Input Uang Akhir Kustom</p>
+                                        <div v-if="closingCashOption === 'custom'" class="mt-2">
+                                            <div class="relative rounded-xl shadow-sm">
+                                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                    <span class="text-xs font-bold text-slate-400">Rp</span>
+                                                </div>
+                                                <input 
+                                                    type="number" 
+                                                    v-model.number="customClosingCash"
+                                                    required
+                                                    min="0"
+                                                    class="block w-full rounded-xl border border-slate-200 pl-9 pr-3 py-2 text-xs font-bold text-slate-700 focus:border-amber-500 focus:ring-amber-500"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Notes/Description -->
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Keterangan Penutupan</label>
+                            <textarea 
+                                v-model="closeNotes"
+                                required
+                                rows="2"
+                                class="block w-full rounded-2xl border-slate-200 p-3 text-xs font-medium text-slate-700 focus:border-amber-500 focus:ring-amber-500"
+                                placeholder="Alasan penutupan oleh admin..."
+                            ></textarea>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex gap-4 pt-2">
+                            <button 
+                                type="button"
+                                @click="showCloseModal = false"
+                                class="flex-1 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl py-3 text-xs font-bold transition-all text-center cursor-pointer"
+                            >
+                                Batalkan
+                            </button>
+                            <button 
+                                type="submit"
+                                :disabled="isSubmitting"
+                                class="flex-1 bg-amber-700 hover:bg-amber-800 disabled:bg-amber-800/60 text-white rounded-xl py-3 text-xs font-bold transition-all text-center cursor-pointer"
+                            >
+                                {{ isSubmitting ? 'Memproses...' : 'Akhiri Shift' }}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

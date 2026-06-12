@@ -518,7 +518,9 @@ const profitability = computed(() => {
                                 <p class="text-xs text-slate-500 mt-1">Log mutasi keluar masuk bahan baku</p>
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -565,9 +567,45 @@ const profitability = computed(() => {
                                 </tbody>
                             </table>
                         </div>
-                        <div v-if="sortedStockMutations.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <div 
+                                v-for="mutation in pagedStockMutations" 
+                                :key="mutation.id" 
+                                class="py-5 flex flex-col gap-3"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <span class="text-sm font-bold text-slate-800 block">{{ mutation.rawMaterial?.name }}</span>
+                                        <span class="text-[10px] text-slate-500 font-medium">{{ formatDateTime(mutation.createdAt) }}</span>
+                                    </div>
+                                    <span 
+                                        :class="mutation.type === 'in' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'" 
+                                        class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest"
+                                    >
+                                        {{ mutation.type === 'in' ? 'Stok Masuk' : 'Stok Keluar' }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-baseline">
+                                    <div class="text-[10px] text-slate-500 font-medium pr-4">
+                                        <p class="font-bold text-slate-600 mb-0.5">{{ mutation.reference }}</p>
+                                        <p class="text-[9px] text-slate-400 italic">{{ mutation.notes }}</p>
+                                    </div>
+                                    <span class="text-base font-black whitespace-nowrap" :class="mutation.type === 'in' ? 'text-emerald-600' : 'text-red-600'">
+                                        {{ mutation.type === 'in' ? '+' : '-' }}{{ mutation.quantity }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div v-if="stockMutations.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada mutasi stok pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="sortedStockMutations.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.inventory }} dari {{ totalPages(sortedStockMutations) }} &middot; {{ sortedStockMutations.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('inventory', pages.inventory - 1)" :disabled="pages.inventory <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.inventory <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(sortedStockMutations)" :key="p" @click="goPage('inventory', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.inventory === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('inventory', pages.inventory + 1)" :disabled="pages.inventory >= totalPages(sortedStockMutations)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.inventory >= totalPages(sortedStockMutations) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
@@ -583,7 +621,9 @@ const profitability = computed(() => {
                                 <p class="text-xs text-slate-500 mt-1">Akumulasi pendapatan dan pengeluaran per hari</p>
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -678,9 +718,94 @@ const profitability = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
-                        <div v-if="sortedDailySales.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <template v-for="day in pagedDailySales" :key="day.date">
+                                <div 
+                                    @click="toggleDailySales(day.date)"
+                                    class="py-5 flex flex-col gap-3 cursor-pointer"
+                                >
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" :class="expandedDailySales === day.date ? 'rotate-90' : ''" class="text-amber-500 transition-transform"><path d="M9 18l6-6-6-6"/></svg>
+                                            <span class="text-sm font-bold text-slate-800">{{ formatDate(day.date) }}</span>
+                                        </div>
+                                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 border border-slate-100 rounded-lg">
+                                            {{ day.total_orders }} Transaksi
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-3 gap-2 text-right">
+                                        <div class="text-left">
+                                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Omzet Bruto</span>
+                                            <span class="text-xs font-black text-slate-900">Rp {{ formatPrice(day.revenue) }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Petty Cash</span>
+                                            <span class="text-xs font-bold text-red-500">- Rp {{ formatPrice(day.petty_cash) }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Laba Bersih</span>
+                                            <span class="text-xs font-black text-emerald-600">Rp {{ formatPrice(day.net_profit) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Expanded Transaction List on Mobile -->
+                                <div v-if="expandedDailySales === day.date" class="bg-slate-50 -mx-6 px-6 py-5 border-y border-slate-100 space-y-3">
+                                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Detail Transaksi</p>
+                                    <div class="flex flex-col gap-2">
+                                        <div 
+                                            v-for="order in getOrdersForDate(day.date)" 
+                                            :key="order.id"
+                                            class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center"
+                                        >
+                                            <div>
+                                                <p class="text-xs font-black text-slate-800">#{{ order.orderNumber }}</p>
+                                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{{ formatDateTime(order.createdAt).split(',')[1] }} • {{ order.paymentMethod }}</p>
+                                            </div>
+                                            <p class="text-xs font-black text-amber-600">Rp {{ formatPrice(order.total) }}</p>
+                                        </div>
+                                        <div v-if="getOrdersForDate(day.date).length === 0" class="py-6 text-center text-slate-400 italic text-xs">
+                                            Tidak ada transaksi detail
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- Mobile Total Period Footer -->
+                            <div v-if="dailySales.length > 0" class="bg-slate-900 -mx-6 px-6 py-6 text-white space-y-4">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Periode</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Transaksi</span>
+                                        <span class="text-sm font-black">{{ totals.dailySales.orders }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Bruto</span>
+                                        <span class="text-sm font-black text-amber-400">Rp {{ formatPrice(totals.dailySales.revenue) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Petty Cash</span>
+                                        <span class="text-sm font-bold text-red-400">- Rp {{ formatPrice(totals.dailySales.petty) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Laba Bersih</span>
+                                        <span class="text-sm font-black text-emerald-400">Rp {{ formatPrice(totals.dailySales.net) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-if="dailySales.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada data penjualan pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="sortedDailySales.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.sales }} dari {{ totalPages(sortedDailySales) }} &middot; {{ sortedDailySales.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('sales', pages.sales - 1)" :disabled="pages.sales <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.sales <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(sortedDailySales)" :key="p" @click="goPage('sales', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.sales === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('sales', pages.sales + 1)" :disabled="pages.sales >= totalPages(sortedDailySales)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.sales >= totalPages(sortedDailySales) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
@@ -694,7 +819,9 @@ const profitability = computed(() => {
                             <h3 class="text-xl font-serif font-bold text-slate-900">Riwayat & Audit Shift</h3>
                             <p class="text-xs text-slate-500 mt-1">Detail pertanggungjawaban kasir per sesi</p>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -725,7 +852,7 @@ const profitability = computed(() => {
                                         <th @click="toggleSort('closingCash')" class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right cursor-pointer hover:text-amber-600 transition-colors">
                                             <div class="flex items-center justify-end gap-2">
                                                 Uang Fisik
-                                                <svg v-if="sortKey === 'closingCash'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" :class="sortDir === 'desc' ? 'rotate-180' : ''" class="transition-transform"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                                                <svg v-if="sortKey === 'closingCash'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" :class="sortDir === 'desc' ? 'rotate-180' : ''" class="transition-transform"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                                             </div>
                                         </th>
                                         <th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Selisih</th>
@@ -830,9 +957,126 @@ const profitability = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
-                        <div v-if="sortedShifts.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <template v-for="shift in pagedShifts" :key="shift.id">
+                                <div 
+                                    @click="toggleShift(shift.id)"
+                                    class="py-5 flex flex-col gap-3 cursor-pointer"
+                                >
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" :class="expandedShift === shift.id ? 'rotate-90' : ''" class="text-amber-500 transition-transform"><path d="M9 18l6-6-6-6"/></svg>
+                                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-200">
+                                                {{ shift.user.name.charAt(0) }}
+                                            </div>
+                                            <span class="text-sm font-bold text-slate-800">{{ shift.user.name }}</span>
+                                        </div>
+                                        <span 
+                                            v-if="shift.closedAt"
+                                            :class="safeNumber(shift.closingCash) - (safeNumber(shift.opening_balance) + safeNumber(shift.totalCashSales) - safeNumber(shift.petty_cash_sum)) === 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'" 
+                                            class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest"
+                                        >
+                                            Selisih: {{ formatPrice(safeNumber(shift.closingCash) - (safeNumber(shift.opening_balance) + safeNumber(shift.totalCashSales) - safeNumber(shift.petty_cash_sum))) }}
+                                        </span>
+                                        <span v-else class="text-[9px] font-black text-amber-500 bg-amber-50 px-2.5 py-0.5 rounded-full uppercase tracking-widest">Active</span>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-400">Buka:</span>
+                                            <span class="font-bold text-slate-600">{{ formatDateTime(shift.openedAt).split(',')[1] || formatDateTime(shift.openedAt) }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-400">Tutup:</span>
+                                            <span class="font-bold text-slate-600">{{ shift.closedAt ? (formatDateTime(shift.closedAt).split(',')[1] || formatDateTime(shift.closedAt)) : '-' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-400">Tunai:</span>
+                                            <span class="font-bold text-slate-900">Rp {{ formatPrice(shift.totalCashSales) }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-400">Fisik:</span>
+                                            <span class="font-bold text-slate-900">Rp {{ formatPrice(shift.closingCash || 0) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Expanded Shift Breakdown on Mobile -->
+                                <div v-if="expandedShift === shift.id" class="bg-slate-900 text-white -mx-6 px-6 py-6 border-y border-slate-800 space-y-6 relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full -mr-24 -mt-24 blur-2xl"></div>
+                                    <div class="space-y-4 relative z-10">
+                                        <div>
+                                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">Ringkasan Saldo</p>
+                                            <div class="space-y-2 text-xs">
+                                                <div class="flex justify-between text-slate-400">
+                                                    <span>Modal Awal:</span>
+                                                    <span class="font-black text-white">Rp {{ formatPrice(shift.opening_balance) }}</span>
+                                                </div>
+                                                <div class="flex justify-between text-slate-400">
+                                                    <span>Total Penjualan:</span>
+                                                    <span class="font-black text-white">Rp {{ formatPrice(shift.totalCashSales) }}</span>
+                                                </div>
+                                                <div class="flex justify-between text-slate-400">
+                                                    <span>Petty Cash:</span>
+                                                    <span class="font-black text-red-400">- Rp {{ formatPrice(shift.petty_cash_sum || 0) }}</span>
+                                                </div>
+                                                <div class="h-px bg-slate-800 my-1"></div>
+                                                <div class="flex justify-between font-black text-amber-500">
+                                                    <span>Ekspektasi:</span>
+                                                    <span>Rp {{ formatPrice(safeNumber(shift.opening_balance) + safeNumber(shift.totalCashSales) - safeNumber(shift.petty_cash_sum)) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 font-semibold">Metode Pembayaran</p>
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                                                    <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1">Tunai (Laci)</p>
+                                                    <p class="text-sm font-black text-white">Rp {{ formatPrice(shift.totalCashSales) }}</p>
+                                                </div>
+                                                <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                                                    <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1">QRIS / Non-Tunai</p>
+                                                    <p class="text-sm font-black text-white">Rp {{ formatPrice(shift.total_non_cash_sales || 0) }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- Mobile Accumulated Footer -->
+                            <div v-if="shifts.length > 0" class="bg-slate-900 -mx-6 px-6 py-6 text-white space-y-4">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Periode</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Akumulasi Tunai</span>
+                                        <span class="text-sm font-black text-amber-400">Rp {{ formatPrice(totals.shifts.sales) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Akumulasi Fisik</span>
+                                        <span class="text-sm font-black">Rp {{ formatPrice(totals.shifts.physical) }}</span>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Selisih</span>
+                                        <span :class="totals.shifts.diff === 0 ? 'text-emerald-400' : 'text-red-400'" class="text-base font-black">
+                                            {{ totals.shifts.diff > 0 ? '+' : '' }}{{ formatPrice(totals.shifts.diff) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-if="shifts.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada riwayat shift pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="sortedShifts.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.shifts }} dari {{ totalPages(sortedShifts) }} &middot; {{ sortedShifts.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('shifts', pages.shifts - 1)" :disabled="pages.shifts <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.shifts <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(sortedShifts)" :key="p" @click="goPage('shifts', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.shifts === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('shifts', pages.shifts + 1)" :disabled="pages.shifts >= totalPages(sortedShifts)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.shifts >= totalPages(sortedShifts) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
@@ -861,7 +1105,9 @@ const profitability = computed(() => {
                                 </button>
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -927,9 +1173,80 @@ const profitability = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
-                        <div v-if="filteredMenuPerformance.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <div 
+                                v-for="(menu, index) in pagedMenuPerformance" 
+                                :key="menu.name" 
+                                class="py-5 flex flex-col gap-3"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-xs font-black text-slate-300 mt-1">#{{ (pages.performance - 1) * perPage + index + 1 }}</span>
+                                        <div>
+                                            <span class="text-sm font-bold text-slate-800 block">{{ menu.name }}</span>
+                                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ menu.category_name }}</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-black text-slate-600 bg-slate-50 px-2 py-0.5 border border-slate-100 rounded-lg">
+                                        {{ menu.totalQty }} Terjual
+                                    </span>
+                                </div>
+                                
+                                <div class="grid grid-cols-3 gap-2 text-right">
+                                    <div class="text-left">
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Revenue</span>
+                                        <span class="text-xs font-black text-slate-900">Rp {{ formatPrice(menu.totalRevenue) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total HPP</span>
+                                        <span class="text-xs font-bold text-red-500">Rp {{ formatPrice(menu.total_cogs) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Margin Laba</span>
+                                        <span class="text-xs font-black text-emerald-600">
+                                            Rp {{ formatPrice(menu.margin) }}
+                                            <span class="text-[8px] font-bold text-slate-400 block mt-0.5">
+                                                {{ menu.totalRevenue ? ((menu.margin / menu.totalRevenue) * 100).toFixed(1) : '0.0' }}%
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile Total Period Footer -->
+                            <div v-if="filteredMenuPerformance.length > 0" class="bg-slate-900 -mx-6 px-6 py-6 text-white space-y-4">
+                                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Periode</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Qty</span>
+                                        <span class="text-sm font-black text-amber-400">{{ totals.performance.qty }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Revenue</span>
+                                        <span class="text-sm font-black text-emerald-400">Rp {{ formatPrice(totals.performance.revenue) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total HPP</span>
+                                        <span class="text-sm font-bold text-red-400">Rp {{ formatPrice(profitability.total_cogs) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Gross Profit</span>
+                                        <span class="text-sm font-black text-emerald-400">Rp {{ formatPrice(profitability.gross_profit) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-if="filteredMenuPerformance.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada data performa menu pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="filteredMenuPerformance.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.performance }} dari {{ totalPages(filteredMenuPerformance) }} &middot; {{ filteredMenuPerformance.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('performance', pages.performance - 1)" :disabled="pages.performance <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.performance <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(filteredMenuPerformance)" :key="p" @click="goPage('performance', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.performance === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('performance', pages.performance + 1)" :disabled="pages.performance >= totalPages(filteredMenuPerformance)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.performance >= totalPages(filteredMenuPerformance) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
@@ -943,7 +1260,9 @@ const profitability = computed(() => {
                             <h3 class="text-xl font-serif font-bold text-slate-900">Buku Kas Keluar (Petty Cash)</h3>
                             <p class="text-xs text-slate-500 mt-1">Audit seluruh pengeluaran operasional laci kasir</p>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -987,9 +1306,41 @@ const profitability = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
-                        <div v-if="sortedPettyCashLogs.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <div 
+                                v-for="log in pagedPettyCashLogs" 
+                                :key="log.id" 
+                                class="py-5 flex flex-col gap-2"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <span class="text-sm font-bold text-slate-800 block">{{ log.user?.name }}</span>
+                                        <span class="text-[10px] text-slate-500 font-medium">{{ formatDateTime(log.createdAt) }}</span>
+                                    </div>
+                                    <span class="text-sm font-black text-red-600">
+                                        - Rp {{ formatPrice(log.amount) }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 italic">{{ log.notes || 'Tanpa keterangan' }}</p>
+                            </div>
+                            
+                            <!-- Mobile Total Period Footer -->
+                            <div v-if="pettyCashLogs.length > 0" class="bg-slate-900 -mx-6 px-6 py-6 text-white flex justify-between items-center">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Kas Keluar:</span>
+                                <span class="text-base font-black text-red-400">- Rp {{ formatPrice(totals.expenses) }}</span>
+                            </div>
+                            
+                            <div v-if="pettyCashLogs.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada catatan kas keluar pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="sortedPettyCashLogs.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.expenses }} dari {{ totalPages(sortedPettyCashLogs) }} &middot; {{ sortedPettyCashLogs.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('expenses', pages.expenses - 1)" :disabled="pages.expenses <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.expenses <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(sortedPettyCashLogs)" :key="p" @click="goPage('expenses', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.expenses === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('expenses', pages.expenses + 1)" :disabled="pages.expenses >= totalPages(sortedPettyCashLogs)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.expenses >= totalPages(sortedPettyCashLogs) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
@@ -1003,7 +1354,9 @@ const profitability = computed(() => {
                             <h3 class="text-xl font-serif font-bold text-slate-900">Log Pembatalan Pesanan (Void Audit)</h3>
                             <p class="text-xs text-slate-500 mt-1">Transparansi alasan pembatalan oleh staf</p>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -1054,9 +1407,50 @@ const profitability = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
-                        <div v-if="sortedVoidLogs.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <div 
+                                v-for="log in pagedVoidLogs" 
+                                :key="log.id" 
+                                class="py-5 flex flex-col gap-2"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <span class="text-sm font-black text-slate-800 block">Order #{{ log.orderNumber }}</span>
+                                        <span class="text-[10px] text-slate-500 font-medium">{{ formatDateTime(log.createdAt) }}</span>
+                                    </div>
+                                    <span class="text-sm font-black text-red-600">
+                                        Rp {{ formatPrice(log.total) }}
+                                    </span>
+                                </div>
+                                <div class="flex flex-col gap-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">Kasir:</span>
+                                        <span class="font-bold text-slate-700">{{ log.user?.name }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400">Alasan:</span>
+                                        <span class="italic text-slate-600">{{ log.voidReason || 'Tanpa alasan' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile Total Period Footer -->
+                            <div v-if="voidLogs.length > 0" class="bg-slate-900 -mx-6 px-6 py-6 text-white flex justify-between items-center">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Nilai Void:</span>
+                                <span class="text-base font-black text-red-400">Rp {{ formatPrice(totals.voids) }}</span>
+                            </div>
+                            
+                            <div v-if="voidLogs.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada catatan void pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="sortedVoidLogs.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.voids }} dari {{ totalPages(sortedVoidLogs) }} &middot; {{ sortedVoidLogs.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('voids', pages.voids - 1)" :disabled="pages.voids <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.voids <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(sortedVoidLogs)" :key="p" @click="goPage('voids', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.voids === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('voids', pages.voids + 1)" :disabled="pages.voids >= totalPages(sortedVoidLogs)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.voids >= totalPages(sortedVoidLogs) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
@@ -1070,7 +1464,9 @@ const profitability = computed(() => {
                             <h3 class="text-xl font-serif font-bold text-slate-900">Riwayat Transaksi Detail</h3>
                             <p class="text-xs text-slate-500 mt-1">Daftar seluruh pembelian pelanggan (Lunas)</p>
                         </div>
-                        <div class="overflow-x-auto">
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden lg:block overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-slate-50/50">
                                     <tr>
@@ -1145,9 +1541,55 @@ const profitability = computed(() => {
                                 </tfoot>
                             </table>
                         </div>
-                        <div v-if="sortedOrderHistory.length > perPage" class="px-8 py-5 border-t border-slate-100 flex items-center justify-between">
+
+                        <!-- Mobile Card View -->
+                        <div class="lg:hidden divide-y divide-slate-100 px-6">
+                            <div 
+                                v-for="order in pagedOrderHistory" 
+                                :key="order.id" 
+                                class="py-5 flex flex-col gap-3"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <span class="text-sm font-black text-slate-800 block">{{ order.orderNumber }}</span>
+                                        <span class="text-[10px] text-slate-500 font-medium">{{ formatDateTime(order.createdAt) }}</span>
+                                    </div>
+                                    <span class="text-sm font-black text-slate-900">
+                                        Rp {{ formatPrice(order.total) }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span v-if="order.cafeTable" class="bg-slate-100 px-2.5 py-0.5 rounded text-[10px] font-bold text-slate-600">{{ order.cafeTable.name }}</span>
+                                        <span v-else class="bg-slate-50 text-slate-400 border border-slate-100 px-2.5 py-0.5 rounded text-[10px] font-black uppercase">Takeaway</span>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-500">
+                                            {{ order.paymentMethod }}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        @click="viewOrder(order)"
+                                        class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer border border-amber-200/40"
+                                    >
+                                        Detail
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile Total Period Footer -->
+                            <div v-if="orderHistory.length > 0" class="bg-slate-900 -mx-6 px-6 py-6 text-white flex justify-between items-center">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Grand Total:</span>
+                                <span class="text-base font-black text-amber-400">Rp {{ formatPrice(totals.transactions) }}</span>
+                            </div>
+                            
+                            <div v-if="orderHistory.length === 0" class="py-16 text-center text-slate-400 italic text-sm">
+                                Tidak ada transaksi pada periode ini
+                            </div>
+                        </div>
+
+                        <!-- Pagination (Desktop & Mobile) -->
+                        <div v-if="sortedOrderHistory.length > perPage" class="px-8 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Halaman {{ pages.transactions }} dari {{ totalPages(sortedOrderHistory) }} &middot; {{ sortedOrderHistory.length }} data</span>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <button @click="goPage('transactions', pages.transactions - 1)" :disabled="pages.transactions <= 1" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.transactions <= 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Prev</button>
                                 <button v-for="p in totalPages(sortedOrderHistory)" :key="p" @click="goPage('transactions', p)" class="w-9 h-9 rounded-xl text-[10px] font-black transition-all" :class="pages.transactions === p ? 'bg-amber-600 text-white shadow-lg' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'">{{ p }}</button>
                                 <button @click="goPage('transactions', pages.transactions + 1)" :disabled="pages.transactions >= totalPages(sortedOrderHistory)" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" :class="pages.transactions >= totalPages(sortedOrderHistory) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">Next</button>
