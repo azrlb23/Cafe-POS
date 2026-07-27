@@ -1,7 +1,7 @@
 /**
- * ESC/POS Thermal Printer & Cash Drawer Web API Service
- * Supports WebUSB and WebBluetooth for 0-click direct thermal printing
- * & automatic 12V RJ11 cash drawer kick.
+ * ESC/POS Thermal Printer Web API Service
+ * Supports WebUSB and WebBluetooth for 0-click direct thermal printing.
+ * Uses 64-byte chunking & 35ms flow control delay to prevent printer hardware buffer overflow.
  */
 
 export interface PrinterDevice {
@@ -170,18 +170,10 @@ class DirectPrinterService {
     }
 
     /**
-     * Open 12V RJ11 Cash Drawer (Laci Kasir Otomatis)
+     * Open 12V RJ11 Cash Drawer (Disabled)
      */
     public async openCashDrawer(): Promise<boolean> {
-        if (!this.connectedDevice) return false;
-
-        // ESC p m t1 t2 (Pulse to cash drawer pin 2 or pin 5)
-        const drawerCommand = new Uint8Array([
-            0x1B, 0x70, 0x00, 0x19, 0xFA, // Pin 2 kick
-            0x1B, 0x70, 0x01, 0x19, 0xFA  // Pin 5 kick fallback
-        ]);
-
-        return await this.sendRawData(drawerCommand);
+        return false;
     }
 
     /**
@@ -200,27 +192,27 @@ class DirectPrinterService {
 
         // Header Title
         encoder.alignCenter();
-        encoder.textDoubleSize('DENJAVAS\n');
-        encoder.textBold('Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam\n');
-        encoder.text('Kab. PPU, Kaltim 76143\n');
-        encoder.text('--------------------------------\n');
+        encoder.textDoubleSize('DENJAVAS\r\n');
+        encoder.textBold('Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam\r\n');
+        encoder.text('Kab. PPU, Kaltim 76143\r\n');
+        encoder.text('--------------------------------\r\n');
 
         // Struk Salinan Badge
         if (type !== 'customer') {
-            encoder.textBold(`-- SALINAN ${type.toUpperCase()} --\n`);
+            encoder.textBold(`-- SALINAN ${type.toUpperCase()} --\r\n`);
         }
 
         // Order Meta
         encoder.alignLeft();
-        encoder.text(`No. Order : #${order.orderNumber}\n`);
-        encoder.text(`Tanggal   : ${new Date(order.createdAt || Date.now()).toLocaleString('id-ID')}\n`);
+        encoder.text(`No. Order : #${order.orderNumber}\r\n`);
+        encoder.text(`Tanggal   : ${new Date(order.createdAt || Date.now()).toLocaleString('id-ID')}\r\n`);
         encoder.text(`Tipe      : ${order.orderType === 'dine_in' ? 'Dine In' : 'Takeaway'}`);
         if (order.cafeTable?.number) {
-            encoder.text(` (Meja ${order.cafeTable.number})\n`);
+            encoder.text(` (Meja ${order.cafeTable.number})\r\n`);
         } else {
-            encoder.text('\n');
+            encoder.text('\r\n');
         }
-        encoder.text('--------------------------------\n');
+        encoder.text('--------------------------------\r\n');
 
         // Items List
         const items = order.orderItems || [];
@@ -229,56 +221,52 @@ class DirectPrinterService {
             const qty = item.quantity || 1;
             const price = Number(item.subtotal || item.unitPrice * qty);
 
-            encoder.textBold(`${menuName}\n`);
+            encoder.textBold(`${menuName}\r\n`);
             
             if (type !== 'kitchen') {
                 const qtyText = `  ${qty}x @ Rp ${Number(item.unitPrice || 0).toLocaleString('id-ID')}`;
                 const priceText = `Rp ${price.toLocaleString('id-ID')}`;
                 encoder.textRow(qtyText, priceText);
             } else {
-                encoder.text(`  x${qty}\n`);
+                encoder.text(`  x${qty}\r\n`);
             }
 
             // Print options/variants if present
             if (item.orderItemOptions && item.orderItemOptions.length > 0) {
                 for (const opt of item.orderItemOptions) {
-                    encoder.text(`    + ${opt.optionName}\n`);
+                    encoder.text(`    + ${opt.optionName}\r\n`);
                 }
             }
 
             if (item.notes) {
-                encoder.text(`    Catatan: ${item.notes}\n`);
+                encoder.text(`    Catatan: ${item.notes}\r\n`);
             }
         }
 
-        encoder.text('--------------------------------\n');
+        encoder.text('--------------------------------\r\n');
 
         // Totals (For Customer & Cashier only)
         if (type !== 'kitchen') {
             encoder.alignRight();
-            encoder.text(`Subtotal : Rp ${Number(order.subtotal || order.total).toLocaleString('id-ID')}\n`);
-            encoder.textDoubleHeight(`TOTAL : Rp ${Number(order.total).toLocaleString('id-ID')}\n`);
-            encoder.text(`Bayar (${(order.paymentMethod || 'cash').toUpperCase()}) : Rp ${Number(order.paymentAmount || order.total).toLocaleString('id-ID')}\n`);
+            encoder.text(`Subtotal : Rp ${Number(order.subtotal || order.total).toLocaleString('id-ID')}\r\n`);
+            encoder.textDoubleHeight(`TOTAL : Rp ${Number(order.total).toLocaleString('id-ID')}\r\n`);
+            encoder.text(`Bayar (${(order.paymentMethod || 'cash').toUpperCase()}) : Rp ${Number(order.paymentAmount || order.total).toLocaleString('id-ID')}\r\n`);
             if (Number(order.change) > 0) {
-                encoder.text(`Kembalian : Rp ${Number(order.change).toLocaleString('id-ID')}\n`);
+                encoder.text(`Kembalian : Rp ${Number(order.change).toLocaleString('id-ID')}\r\n`);
             }
-            encoder.text('--------------------------------\n');
+            encoder.text('--------------------------------\r\n');
         }
 
         // Footer
         encoder.alignCenter();
         if (type === 'customer') {
-            encoder.text('Terima Kasih Atas Kunjungan Anda!\n');
-            encoder.text('Instagram: @denjavas\n');
+            encoder.text('Terima Kasih Atas Kunjungan Anda!\r\n');
+            encoder.text('Instagram: @denjavas\r\n');
         }
-        encoder.text('\n\n\n'); // Feed paper
+        encoder.text('\r\n\r\n\r\n'); // Feed paper
 
         // Cut paper
         encoder.cut();
-        // Cash drawer kick temporarily disabled (no cash drawer connected yet)
-        // if (order.paymentMethod === 'cash' || type === 'cashier') {
-        //     encoder.kickDrawer();
-        // }
 
         const buffer = encoder.build();
         return await this.sendRawData(buffer);
@@ -295,34 +283,39 @@ class DirectPrinterService {
         const encoder = new ESCPOSBuilder(this.paperWidth);
         encoder.init();
         encoder.alignCenter();
-        encoder.textDoubleSize('TES PRINTER SANPIDIE\n');
-        encoder.textBold('Cafe POS System Online!\n');
-        encoder.text('--------------------------------\n');
-        encoder.text('Status : Terhubung via ' + this.connectedDevice.type.toUpperCase() + '\n');
-        encoder.text('Thermal Printer OK!\n');
-        encoder.text('--------------------------------\n');
-        encoder.text('\n\n');
+        encoder.textDoubleSize('TES PRINTER SANPIDIE\r\n');
+        encoder.textBold('Cafe POS System Online!\r\n');
+        encoder.text('--------------------------------\r\n');
+        encoder.text('Status : Terhubung via ' + this.connectedDevice.type.toUpperCase() + '\r\n');
+        encoder.text('Thermal Printer OK!\r\n');
+        encoder.text('--------------------------------\r\n');
+        encoder.text('\r\n\r\n\r\n');
         encoder.cut();
-        // encoder.kickDrawer();
 
         return await this.sendRawData(encoder.build());
     }
 
     /**
-     * Send raw Uint8Array buffer to connected device
+     * Send raw Uint8Array buffer to connected device in small chunks (64 bytes)
+     * with small delay (35ms) to prevent printer hardware buffer overflow.
      */
     private async sendRawData(buffer: Uint8Array): Promise<boolean> {
         if (!this.connectedDevice) return false;
 
+        const chunkSize = 64; // 64 bytes safe chunk size for 58mm/80mm thermal microcontrollers
+        const delayMs = 35; // 35ms sleep per chunk to allow print head & hardware buffer processing
+
         try {
             if (this.connectedDevice.type === 'usb') {
                 const endpoint = this.connectedDevice.endpointNumber || 1;
-                await this.connectedDevice.device.transferOut(endpoint, buffer);
+                for (let i = 0; i < buffer.length; i += chunkSize) {
+                    const chunk = buffer.slice(i, i + chunkSize);
+                    await this.connectedDevice.device.transferOut(endpoint, chunk);
+                    await new Promise(r => setTimeout(r, delayMs));
+                }
                 return true;
             } else if (this.connectedDevice.type === 'bluetooth') {
                 const char = this.connectedDevice.characteristic;
-                // Chunk data into 512 bytes max for Bluetooth MTU
-                const chunkSize = 512;
                 for (let i = 0; i < buffer.length; i += chunkSize) {
                     const chunk = buffer.slice(i, i + chunkSize);
                     if (char.writeValueWithoutResponse) {
@@ -330,6 +323,7 @@ class DirectPrinterService {
                     } else {
                         await char.writeValue(chunk);
                     }
+                    await new Promise(r => setTimeout(r, delayMs));
                 }
                 return true;
             }
@@ -421,7 +415,7 @@ class ESCPOSBuilder {
     public textRow(left: string, right: string): this {
         const maxLen = this.width === 58 ? 32 : 48;
         const spaces = Math.max(1, maxLen - left.length - right.length);
-        const line = left + ' '.repeat(spaces) + right + '\n';
+        const line = left + ' '.repeat(spaces) + right + '\r\n';
         this.addString(line);
         return this;
     }
