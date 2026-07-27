@@ -88,11 +88,11 @@ const handlePrintOrder = async (order: any, type: 'customer' | 'cashier' | 'kitc
         } catch (e: any) {
             errorMessage.value = e.message || 'Gagal cetak direct printer. Membuka pratinjau browser...';
             // Fallback to browser print window
-            window.open(`/pos/orders/${order.id}/print?type=${type}`, '_blank');
+            window.open(`/pos/print/${order.id}?type=${type}`, '_blank');
         }
     } else {
         // Fallback to browser PDF window
-        window.open(`/pos/orders/${order.id}/print?type=${type}`, '_blank');
+        window.open(`/pos/print/${order.id}?type=${type}`, '_blank');
     }
 };
 
