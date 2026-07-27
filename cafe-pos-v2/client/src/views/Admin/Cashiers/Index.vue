@@ -124,11 +124,11 @@ const formatTime = (time) => {
 };
 
 const actionConfig = {
-    shift_open: { icon: '▶', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', label: 'Buka Shift' },
-    shift_close: { icon: '⏹', color: 'bg-slate-100 text-slate-600 border-slate-200', label: 'Tutup Shift' },
-    order_create: { icon: '🧾', color: 'bg-amber-50/70 text-amber-700 border-amber-100/50', label: 'Pesanan' },
+    shift_open: { icon: 'IN', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', label: 'Buka Shift' },
+    shift_close: { icon: 'OUT', color: 'bg-slate-100 text-slate-600 border-slate-200', label: 'Tutup Shift' },
+    order_create: { icon: '+', color: 'bg-amber-50/70 text-amber-700 border-amber-100/50', label: 'Pesanan' },
     order_void: { icon: '✕', color: 'bg-red-50 text-red-600 border-red-100', label: 'Void' },
-    petty_cash: { icon: '💸', color: 'bg-violet-50 text-violet-600 border-violet-100', label: 'Kas Keluar' },
+    petty_cash: { icon: '-', color: 'bg-violet-50 text-violet-600 border-violet-100', label: 'Kas Keluar' },
 };
 </script>
 

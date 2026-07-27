@@ -357,6 +357,8 @@ const selectCategory = (id: number | null) => {
             <img
               :src="getMenuImage(menu)"
               :alt="menu.name"
+              loading="lazy"
+              decoding="async"
               class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
             />
             <div class="absolute inset-0 bg-amber-900/5 mix-blend-multiply pointer-events-none"></div>

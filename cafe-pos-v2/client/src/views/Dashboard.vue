@@ -146,12 +146,12 @@ watch(activityLogs, () => {
 });
 
 const actionConfig = {
-    shift_open: { icon: '▶', color: 'emerald', label: 'Buka Shift' },
-    shift_close: { icon: '⏹', color: 'slate', label: 'Tutup Shift' },
-    order_create: { icon: '🧾', color: 'amber', label: 'Pesanan Baru' },
-    order_update: { icon: '✏️', color: 'blue', label: 'Update Pesanan' },
+    shift_open: { icon: 'IN', color: 'emerald', label: 'Buka Shift' },
+    shift_close: { icon: 'OUT', color: 'slate', label: 'Tutup Shift' },
+    order_create: { icon: '+', color: 'amber', label: 'Pesanan Baru' },
+    order_update: { icon: '•', color: 'blue', label: 'Update Pesanan' },
     order_void: { icon: '✕', color: 'red', label: 'Void' },
-    petty_cash: { icon: '💸', color: 'violet', label: 'Kas Keluar' },
+    petty_cash: { icon: '-', color: 'violet', label: 'Kas Keluar' },
 };
 
 const formatTime = (dateTime) => {

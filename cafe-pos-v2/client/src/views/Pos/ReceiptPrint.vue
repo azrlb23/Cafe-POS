@@ -69,7 +69,7 @@ onMounted(async () => {
             </div>
             <div class="info-row">
                 <span>Tipe</span>
-                <span>{{ order.orderType === 'dine_in' ? 'Dine In' : 'Takeaway' }} <span v-if="order.cafeTable">- Meja {{ order.cafeTable.number }}</span></span>
+                <span>{{ order.orderType === 'dine_in' && order.cafeTable && order.cafeTable.number ? ('Dine In - Meja ' + order.cafeTable.number) : 'Takeaway' }}</span>
             </div>
             <div class="divider"></div>
         </div>

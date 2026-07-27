@@ -4,26 +4,30 @@ import { ref, computed, watch } from 'vue';
 const props = defineProps({
     show: Boolean,
     total: Number,
-    processing: Boolean
+    processing: Boolean,
+    orderType: String,
 });
 
 const emit = defineEmits(['close', 'submit']);
 
 const paymentMethod = ref('cash');
 const amountReceived = ref(0);
-const change = computed(() => Math.max(0, amountReceived.value - props.total));
-const isAmountValid = computed(() => paymentMethod.value !== 'cash' || amountReceived.value >= props.total);
+const orderStatus = ref('pending'); // 'pending' (Proses Masak) or 'completed' (Langsung Selesai)
+
+const change = computed(() => Math.max(0, amountReceived.value - (props.total || 0)));
+const isAmountValid = computed(() => paymentMethod.value !== 'cash' || amountReceived.value >= (props.total || 0));
 
 const quickAmounts = [20000, 50000, 100000];
 const suggestAmounts = computed(() => {
-    const suggestions = [props.total];
+    const totalVal = props.total || 0;
+    const suggestions = [totalVal];
     quickAmounts.forEach(amt => {
-        if (amt > props.total) suggestions.push(amt);
+        if (amt > totalVal) suggestions.push(amt);
     });
     return [...new Set(suggestions)].sort((a, b) => a - b);
 });
 
-const setAmount = (amt) => {
+const setAmount = (amt: number) => {
     amountReceived.value = amt;
 };
 
@@ -31,7 +35,8 @@ const submit = () => {
     if (!isAmountValid.value) return;
     emit('submit', {
         payment_method: paymentMethod.value,
-        payment_amount: paymentMethod.value === 'cash' ? amountReceived.value : props.total
+        payment_amount: paymentMethod.value === 'cash' ? amountReceived.value : props.total,
+        status: orderStatus.value
     });
 };
 
@@ -40,6 +45,7 @@ watch(() => props.show, (val) => {
     if (val) {
         amountReceived.value = 0;
         paymentMethod.value = 'cash';
+        orderStatus.value = props.orderType === 'takeaway' ? 'completed' : 'pending';
     }
 });
 </script>
@@ -49,10 +55,10 @@ watch(() => props.show, (val) => {
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity z-0" @click="emit('close')"></div>
         
-        <!-- Modal Content (Sticky Header/Footer & Flex-1 Scrollable Body) -->
+        <!-- Modal Content -->
         <div class="relative z-10 bg-white border border-slate-200 rounded-[2.5rem] shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-300">
             
-            <!-- Sticky Header -->
+            <!-- Header -->
             <div class="p-4 sm:p-6 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
                 <h2 class="text-lg sm:text-xl font-serif font-black text-amber-700 uppercase tracking-widest">Pembayaran</h2>
                 <button @click="emit('close')" class="text-slate-400 hover:text-slate-700 p-2 transition-colors relative z-20">
@@ -65,7 +71,7 @@ watch(() => props.show, (val) => {
                 <!-- Total Display -->
                 <div class="text-center">
                     <span class="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] block mb-1">Total yang harus dibayar</span>
-                    <span class="text-2xl sm:text-3xl font-black text-slate-900 font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</span>
+                    <span class="text-2xl sm:text-3xl font-black text-slate-900 font-jakarta">Rp {{ (total || 0).toLocaleString('id-ID') }}</span>
                 </div>
 
                 <!-- Payment Method Toggle -->
@@ -84,7 +90,32 @@ watch(() => props.show, (val) => {
                         {{ method.label }}
                     </button>
                 </div>
- 
+
+                <!-- Status Pesanan Toggle (Pending / Langsung Selesai) -->
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
+                    <label class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 text-center">Status Pesanan Setelah Bayar</label>
+                    <div class="flex gap-2">
+                        <button 
+                            type="button"
+                            @click="orderStatus = 'pending'"
+                            :class="orderStatus === 'pending' ? 'bg-amber-600 text-white border-amber-600 shadow-sm font-bold' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 font-semibold'"
+                            class="flex-1 py-2 px-3 rounded-xl border text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <span class="w-2 h-2 rounded-full" :class="orderStatus === 'pending' ? 'bg-white' : 'bg-amber-500'"></span>
+                            Proses Dapur (Pending)
+                        </button>
+                        <button 
+                            type="button"
+                            @click="orderStatus = 'completed'"
+                            :class="orderStatus === 'completed' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-bold' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 font-semibold'"
+                            class="flex-1 py-2 px-3 rounded-xl border text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <span class="w-2 h-2 rounded-full" :class="orderStatus === 'completed' ? 'bg-white' : 'bg-emerald-500'"></span>
+                            Langsung Selesai (Saji)
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Cash Entry (Only if method is cash) -->
                 <div v-if="paymentMethod === 'cash'" class="space-y-4 sm:space-y-5 animate-in slide-in-from-top-4 duration-300">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -104,7 +135,7 @@ watch(() => props.show, (val) => {
                             </span>
                         </div>
                     </div>
- 
+
                     <!-- Quick Cash Buttons -->
                     <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                         <button 
@@ -117,12 +148,11 @@ watch(() => props.show, (val) => {
                         </button>
                     </div>
                 </div>
- 
+
                 <!-- QRIS Manual Payment -->
                 <div v-else-if="paymentMethod === 'qris'" class="space-y-4 animate-in zoom-in-95 duration-300">
                     <div class="py-4 bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center">
                         <div class="w-24 h-24 bg-white border border-slate-200 p-2.5 rounded-2xl mb-2.5 shadow-sm flex items-center justify-center">
-                            <!-- Visual static placeholder for merchant QRIS -->
                             <div class="w-full h-full bg-slate-100/80 rounded-lg flex flex-col items-center justify-center p-2 text-center">
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="3" height="3" /><rect x="7" y="18" width="3" height="3" /></svg>
                                 <span class="text-[8px] font-black text-amber-700 uppercase tracking-widest mt-1">QRIS DENJAVAS</span>
@@ -130,7 +160,7 @@ watch(() => props.show, (val) => {
                         </div>
                         <p class="text-[8px] sm:text-[9px] text-slate-500 font-black uppercase tracking-widest text-center">Tunjukkan QRIS meja kasir ke pelanggan</p>
                     </div>
- 
+
                     <!-- MANDATORY VERIFICATION WARNING CARD -->
                     <div class="bg-amber-50/60 border border-amber-300/30 rounded-3xl p-3 sm:p-4 flex gap-3 items-start shadow-sm">
                         <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -139,12 +169,12 @@ watch(() => props.show, (val) => {
                         <div>
                             <h4 class="text-[9px] sm:text-[10px] font-black text-amber-950 uppercase tracking-wider mb-0.5">Verifikasi Mandiri Wajib</h4>
                             <p class="text-[8px] sm:text-[9px] text-amber-850 font-semibold leading-relaxed">
-                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[9px] sm:text-[10px] font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
+                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[9px] sm:text-[10px] font-jakarta">Rp {{ (total || 0).toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
                             </p>
                         </div>
                     </div>
                 </div>
- 
+
                 <!-- Bank Transfer Manual Payment -->
                 <div v-else-if="paymentMethod === 'transfer'" class="space-y-4 animate-in zoom-in-95 duration-300">
                     <div class="py-4 bg-slate-50 rounded-3xl border border-slate-200 flex flex-col items-center justify-center p-3 text-center">
@@ -155,7 +185,7 @@ watch(() => props.show, (val) => {
                         <h4 class="text-sm sm:text-base font-serif font-black text-slate-800 mt-0.5">Bank BCA — 872-0988-121</h4>
                         <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">a.n. Denjavas Cafe Utama</p>
                     </div>
- 
+
                     <!-- MANDATORY VERIFICATION WARNING CARD -->
                     <div class="bg-amber-50/60 border border-amber-300/30 rounded-3xl p-3 sm:p-4 flex gap-3 items-start shadow-sm">
                         <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -164,7 +194,7 @@ watch(() => props.show, (val) => {
                         <div>
                             <h4 class="text-[9px] sm:text-[10px] font-black text-amber-950 uppercase tracking-wider mb-0.5">Verifikasi Mandiri Wajib</h4>
                             <p class="text-[8px] sm:text-[9px] text-amber-850 font-semibold leading-relaxed">
-                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[9px] sm:text-[10px] font-jakarta">Rp {{ total.toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
+                                Kasir bertanggung jawab penuh memverifikasi keberhasilan transfer dan mencocokkan nominal <strong class="text-amber-950 font-black text-[9px] sm:text-[10px] font-jakarta">Rp {{ (total || 0).toLocaleString('id-ID') }}</strong> di ponsel pelanggan secara mandiri sebelum menekan tombol penyelesaian.
                             </p>
                         </div>
                     </div>
@@ -175,14 +205,14 @@ watch(() => props.show, (val) => {
             <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-200 flex gap-3 sm:gap-4 shrink-0">
                 <button 
                     @click="emit('close')"
-                    class="flex-1 py-3 sm:py-4 rounded-3xl text-slate-500 hover:text-slate-900 bg-white border border-slate-200 font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all hover:bg-slate-100 relative z-20"
+                    class="flex-1 py-3 sm:py-4 rounded-3xl text-slate-500 hover:text-slate-900 bg-white border border-slate-200 font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all hover:bg-slate-100 relative z-20 cursor-pointer"
                 >
                     Kembali
                 </button>
                 <button 
                     @click="submit"
                     :disabled="!isAmountValid || processing"
-                    class="flex-[2] bg-amber-600 hover:bg-amber-700 text-white py-3 sm:py-4 rounded-3xl font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] shadow-md shadow-amber-600/10 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-amber-600 relative z-20 text-[10px] sm:text-xs"
+                    class="flex-[2] bg-amber-600 hover:bg-amber-700 text-white py-3 sm:py-4 rounded-3xl font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] shadow-md shadow-amber-600/10 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:bg-amber-600 relative z-20 text-[10px] sm:text-xs cursor-pointer"
                 >
                     {{ processing ? 'Memproses...' : 'Selesaikan & Cetak' }}
                 </button>
@@ -192,7 +222,6 @@ watch(() => props.show, (val) => {
 </template>
 
 <style scoped>
-/* Hide spin buttons for numeric inputs */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;

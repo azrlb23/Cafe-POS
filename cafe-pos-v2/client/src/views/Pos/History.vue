@@ -175,7 +175,6 @@ const submitVoid = async () => {
                                             class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
                                         >
                                             <div class="flex items-center gap-3">
-                                                <span class="text-sm">📥</span>
                                                 <span :class="activeTab === 'penjualan' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
                                                     Pemasukan ({{ todayOrders.length }})
                                                 </span>
@@ -187,7 +186,6 @@ const submitVoid = async () => {
                                             class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
                                         >
                                             <div class="flex items-center gap-3">
-                                                <span class="text-sm">📤</span>
                                                 <span :class="activeTab === 'kaskeluar' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
                                                     Pengeluaran ({{ todayPettyCash.length }})
                                                 </span>

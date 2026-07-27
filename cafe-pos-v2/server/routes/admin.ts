@@ -73,16 +73,32 @@ function parseId(val: string): number | null {
 // GET /api/admin/public-menus (Publicly accessible)
 router.get('/public-menus', async (req, res) => {
   try {
-    const menus = await prisma.menu.findMany({
-      include: { category: true },
-      orderBy: { id: 'desc' },
-    });
-    const categories = await prisma.category.findMany({
-      orderBy: { id: 'asc' }
-    });
-    const settings = await prisma.storeSetting.findMany();
+    const [menus, categories, settings] = await Promise.all([
+      prisma.menu.findMany({
+        where: { isActive: true },
+        include: {
+          category: true,
+          menuOptionGroups: {
+            include: {
+              menuOptionItems: {
+                where: { isAvailable: true }
+              }
+            }
+          }
+        },
+        orderBy: { id: 'desc' },
+      }),
+      prisma.category.findMany({
+        orderBy: { id: 'asc' }
+      }),
+      prisma.storeSetting.findMany()
+    ]);
+
     const settingsMap: Record<string, string | null> = {};
     settings.forEach(s => { settingsMap[s.key] = s.value; });
+    
+    // Set Cache-Control header for API response (e.g. max-age 15s, s-maxage 60s)
+    res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
     return res.json({ menus, categories, settings: settingsMap });
   } catch (e) {
     console.error(e);

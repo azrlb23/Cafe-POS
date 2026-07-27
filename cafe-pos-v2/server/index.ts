@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import session from 'express-session';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import pg from 'pg';
 import connectPgSimple from 'connect-pg-simple';
@@ -16,6 +17,9 @@ import reportsRoutes from './routes/reports.js';
 dotenv.config();
 
 const app = express();
+
+// Enable HTTP Compression (Gzip / Brotli)
+app.use(compression());
 
 // Ensure uploads directory exists (only locally, not on Vercel)
 if (!process.env.VERCEL) {
@@ -38,6 +42,7 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files (menu photos, etc.) from /storage
 // Redirect to Supabase Storage if SUPABASE_URL environment variable is set
 app.get('/storage/menus/:filename', (req, res, next) => {
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   if (process.env.SUPABASE_URL) {
     const publicUrl = `${process.env.SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/menus/${req.params.filename}`;
     return res.redirect(publicUrl);
@@ -45,12 +50,17 @@ app.get('/storage/menus/:filename', (req, res, next) => {
   next();
 });
 app.get('/storage/settings/:filename', (req, res, next) => {
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   if (process.env.SUPABASE_URL) {
     const publicUrl = `${process.env.SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/settings/${req.params.filename}`;
     return res.redirect(publicUrl);
   }
   next();
 });
+app.use('/storage', express.static(path.join(process.cwd(), 'storage'), {
+  maxAge: '1y',
+  immutable: true
+}));
 app.use('/storage', express.static(path.join(process.cwd(), 'storage')));
 
 // Session Store Configuration

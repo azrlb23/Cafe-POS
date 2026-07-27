@@ -8,7 +8,7 @@ defineProps({
     activeShift: Object,
 });
 
-defineEmits(['open-petty-cash', 'open-end-shift', 'open-print']);
+defineEmits(['open-petty-cash', 'open-end-shift', 'open-print', 'open-printer-settings']);
 
 const authStore = useAuthStore();
 const posStore = usePosStore();
@@ -109,13 +109,13 @@ const handleLogout = async () => {
             <div class="space-y-2">
                 <p class="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kasir</p>
 
-                <!-- Cetak -->
+                <!-- Cetak Struk & Printer -->
                 <button 
                     @click="closeSidebar(); $emit('open-print');"
                     class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-[13px] text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-semibold transition-all duration-200 cursor-pointer text-left"
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    <span>Cetak Struk</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span>Cetak Struk & Printer</span>
                 </button>
 
                 <!-- Petty Cash -->

@@ -385,13 +385,13 @@ const profitability = computed(() => {
                             <div v-if="isReportDropdownOpen" class="absolute inset-x-0 mt-2 sm:mt-4 bg-white rounded-2xl sm:rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.15)] border border-slate-100 py-2 sm:py-4 z-[100] overflow-hidden">
                                 <button 
                                     v-for="tab in [
-                                        {id: 'sales', label: 'Penjualan Harian', icon: '📅'},
-                                        {id: 'performance', label: 'Performa Menu', icon: '🌟'},
-                                        {id: 'inventory', label: 'Audit Stok Bahan', icon: '📦'},
-                                        {id: 'shifts', label: 'Riwayat Shift', icon: '🕒'},
-                                        {id: 'transactions', label: 'Riwayat Transaksi', icon: '💳'},
-                                        {id: 'expenses', label: 'Buku Kas Keluar', icon: '💸'},
-                                        {id: 'voids', label: 'Log Void', icon: '⚠️'}
+                                        {id: 'sales', label: 'Penjualan Harian'},
+                                        {id: 'performance', label: 'Performa Menu'},
+                                        {id: 'inventory', label: 'Audit Stok Bahan'},
+                                        {id: 'shifts', label: 'Riwayat Shift'},
+                                        {id: 'transactions', label: 'Riwayat Transaksi'},
+                                        {id: 'expenses', label: 'Buku Kas Keluar'},
+                                        {id: 'voids', label: 'Log Void'}
                                     ]" 
                                     :key="tab.id"
                                     @click="activeTab = tab.id; isReportDropdownOpen = false"

@@ -45,7 +45,7 @@ const formattedTime = computed(() => {
                 <h2 class="text-lg font-serif font-black text-stone-850 tracking-tight leading-tight">Order Details</h2>
                 <div class="flex flex-col gap-1 mt-1 text-[10px] font-black uppercase tracking-widest text-stone-400">
                     <p class="text-stone-800">
-                        {{ orderType === 'takeaway' ? 'TAKE AWAY' : (selectedTable ? 'Meja ' + selectedTable.number : 'PILIH MEJA...') }}
+                        {{ orderType === 'takeaway' || !selectedTable || !selectedTable.number ? 'TAKEAWAY (BAWA PULANG)' : 'MEJA ' + selectedTable.number }}
                     </p>
                     <p>{{ formattedDate }} <span class="text-stone-300 mx-1">•</span> <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="inline mb-0.5 mr-0.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 15 15"/></svg> {{ formattedTime }}</p>
                 </div>
@@ -68,7 +68,7 @@ const formattedTime = computed(() => {
         <div class="px-6 py-4 border-b border-stone-150 flex gap-3 bg-[#FCFAF7]">
             <button 
                 @click="$emit('change-type', 'dine_in'); $emit('open-table')" 
-                :class="orderType === 'dine_in' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10 border-transparent' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'"
+                :class="orderType === 'dine_in' && selectedTable && selectedTable.number ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10 border-transparent' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'"
                 class="flex-1 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
             >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v8c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2z"/><path d="M19 17v5"/></svg>
@@ -76,7 +76,7 @@ const formattedTime = computed(() => {
             </button>
             <button 
                 @click="$emit('change-type', 'takeaway')" 
-                :class="orderType === 'takeaway' ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10 border-transparent' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'"
+                :class="orderType === 'takeaway' || !selectedTable || !selectedTable.number ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10 border-transparent' : 'bg-white text-stone-500 border border-stone-200 hover:bg-stone-50'"
                 class="flex-1 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
             >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -88,7 +88,7 @@ const formattedTime = computed(() => {
         <div class="px-6 py-3.5 bg-stone-100/50 border-b border-stone-150 text-[10px] font-black text-stone-500 uppercase tracking-widest flex justify-between items-center">
             <span>Pesanan Aktif</span>
             <span class="text-amber-750 font-mono tracking-normal font-bold">
-                {{ selectedTable ? 'DINE IN' : 'TAKE AWAY' }}
+                {{ selectedTable && selectedTable.number ? 'DINE IN (MEJA ' + selectedTable.number + ')' : 'TAKE AWAY' }}
             </span>
         </div>
 

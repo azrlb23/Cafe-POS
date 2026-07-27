@@ -187,6 +187,12 @@ router.post('/shifts/end', isAuthenticated, async (req: Request, res: Response) 
       },
     });
 
+    // Reset all occupied tables to available when shift ends
+    await prisma.cafeTable.updateMany({
+      where: { status: 'occupied' },
+      data: { status: 'available' }
+    });
+
     const diff = closing_cash - expectedClosingCash;
     await ActivityLogger.log(
       userId!,
@@ -215,7 +221,7 @@ router.post('/shifts/end', isAuthenticated, async (req: Request, res: Response) 
 // ========================================
 router.post('/orders', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const { shift_id, cafe_table_id, order_type, items, payment_method, payment_amount, notes } = req.body;
+    const { shift_id, cafe_table_id, order_type, items, payment_method, payment_amount, notes, status: requested_status } = req.body;
     const userId = req.session.userId;
 
     // Basic validation
@@ -226,6 +232,8 @@ router.post('/orders', isAuthenticated, async (req: Request, res: Response) => {
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create order
       const orderNumber = await generateOrderNumber(tx);
+      const initialStatus = requested_status ? requested_status : (order_type === 'dine_in' ? 'pending' : 'completed');
+
       const order = await tx.order.create({
         data: {
           orderNumber,
@@ -238,7 +246,7 @@ router.post('/orders', isAuthenticated, async (req: Request, res: Response) => {
           paymentMethod: payment_method,
           paymentAmount: payment_amount,
           change: 0,
-          status: order_type === 'dine_in' ? 'pending' : 'completed',
+          status: initialStatus,
           notes: notes || null,
         },
       });
@@ -325,7 +333,16 @@ router.post('/orders', isAuthenticated, async (req: Request, res: Response) => {
       // 6. Deduct stock from inventory
       await deductStockFromOrder(tx, updatedOrder);
 
-      // 7. Log the activity
+      // 7. Update Table status if dine_in
+      if (cafe_table_id && order_type === 'dine_in') {
+        const tableStatus = updatedOrder.status === 'pending' ? 'occupied' : 'available';
+        await tx.cafeTable.update({
+          where: { id: cafe_table_id },
+          data: { status: tableStatus }
+        });
+      }
+
+      // 8. Log the activity
       await ActivityLogger.log(
         userId!,
         'order_create',
@@ -405,6 +422,14 @@ router.post('/orders/:id/void', isAuthenticated, async (req: Request, res: Respo
 
       // 3. Restore stock
       await restoreStockFromOrder(tx, order);
+
+      // 4. Release table if assigned
+      if (order.cafeTableId) {
+        await tx.cafeTable.update({
+          where: { id: order.cafeTableId },
+          data: { status: 'available' }
+        });
+      }
     }, {
       maxWait: 5000,
       timeout: 15000,
@@ -440,6 +465,14 @@ router.patch('/orders/:id/status', isAuthenticated, async (req: Request, res: Re
       where: { id: orderId },
       data: { status },
     });
+
+    if (order.cafeTableId) {
+      const tableStatus = status === 'pending' ? 'occupied' : 'available';
+      await prisma.cafeTable.update({
+        where: { id: order.cafeTableId },
+        data: { status: tableStatus }
+      });
+    }
 
     await ActivityLogger.log(
       userId!,
@@ -603,6 +636,62 @@ router.get('/orders/:id/print', isAuthenticated, async (req: Request, res: Respo
   } catch (error) {
     console.error('Print receipt error:', error);
     return res.status(500).json({ message: 'Gagal memuat data struk.' });
+  }
+});
+
+// ========================================
+// PATCH /api/pos/tables/:id/status — Toggle/update single table status manually by cashier
+// ========================================
+router.patch('/tables/:id/status', isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const tableId = parseInt(String(req.params.id), 10);
+    const { status } = req.body; // 'available' or 'occupied'
+    const userId = req.session.userId;
+
+    if (!status || !['available', 'occupied'].includes(status)) {
+      return res.status(400).json({ message: 'Status meja tidak valid.' });
+    }
+
+    const updatedTable = await prisma.cafeTable.update({
+      where: { id: tableId },
+      data: { status }
+    });
+
+    await ActivityLogger.log(
+      userId!,
+      'table_update',
+      `Kasir mengubah status Meja #${updatedTable.number} menjadi ${status === 'occupied' ? 'Terisi' : 'Kosong'}`
+    );
+
+    return res.json({ table: updatedTable, message: `Status Meja #${updatedTable.number} berhasil diubah.` });
+  } catch (error) {
+    console.error('Toggle table status error:', error);
+    return res.status(500).json({ message: 'Gagal mengubah status meja.' });
+  }
+});
+
+// ========================================
+// POST /api/pos/tables/reset-all — Reset all tables to available manually
+// ========================================
+router.post('/tables/reset-all', isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId;
+    await prisma.cafeTable.updateMany({
+      data: { status: 'available' }
+    });
+
+    const tables = await prisma.cafeTable.findMany({ orderBy: { number: 'asc' } });
+
+    await ActivityLogger.log(
+      userId!,
+      'table_reset',
+      'Kasir me-reset semua meja menjadi Kosong (Available)'
+    );
+
+    return res.json({ tables, message: 'Semua meja berhasil di-reset menjadi Kosong.' });
+  } catch (error) {
+    console.error('Reset all tables error:', error);
+    return res.status(500).json({ message: 'Gagal me-reset meja.' });
   }
 });
 

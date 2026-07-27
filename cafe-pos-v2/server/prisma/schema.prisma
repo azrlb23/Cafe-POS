@@ -51,6 +51,8 @@ model Menu {
   recipes          Recipe[]
   orderItems       OrderItem[]
 
+  @@index([categoryId])
+  @@index([isActive])
   @@map("menus")
 }
 
@@ -155,6 +157,7 @@ model Shift {
   orders              Order[]
   pettyCashes         PettyCash[]
 
+  @@index([userId, closedAt])
   @@map("shifts")
 }
 
@@ -181,6 +184,8 @@ model Order {
   
   orderItems    OrderItem[]
 
+  @@index([shiftId, status])
+  @@index([createdAt])
   @@map("orders")
 }
 

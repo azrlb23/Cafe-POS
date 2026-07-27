@@ -230,7 +230,6 @@ const getModifierText = (options) => {
                                     class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
                                 >
                                     <div class="flex items-center gap-3">
-                                        <span class="text-sm">📋</span>
                                         <span :class="activeTab === 'all' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
                                             Semua ({{ todayOrders.length }})
                                         </span>
@@ -242,7 +241,6 @@ const getModifierText = (options) => {
                                     class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
                                 >
                                     <div class="flex items-center gap-3">
-                                        <span class="text-sm">🍳</span>
                                         <span :class="activeTab === 'pending' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
                                             Proses Masak ({{ todayOrders.filter(o => o.status === 'pending').length }})
                                         </span>
@@ -254,7 +252,6 @@ const getModifierText = (options) => {
                                     class="w-full px-6 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors group text-left cursor-pointer"
                                 >
                                     <div class="flex items-center gap-3">
-                                        <span class="text-sm">🍽️</span>
                                         <span :class="activeTab === 'completed' ? 'text-amber-700 font-black' : 'text-stone-600 font-bold'" class="text-[10px] sm:text-xs uppercase tracking-wider">
                                             Selesai Saji ({{ todayOrders.filter(o => o.status === 'completed').length }})
                                         </span>
@@ -292,7 +289,7 @@ const getModifierText = (options) => {
                                         </div>
                                         <div>
                                             <h3 class="text-xs font-black text-stone-850 leading-none flex items-center gap-1.5 font-serif">
-                                                {{ order.orderType === 'takeaway' ? 'Pelanggan Takeaway' : (order.cafeTable?.name || 'Dine-In') }}
+                                                {{ order.orderType === 'takeaway' || !order.cafeTable || !order.cafeTable.number ? 'Pelanggan Takeaway' : ('Meja ' + order.cafeTable.number) }}
                                             </h3>
                                             <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest font-mono mt-1">
                                                 {{ order.orderNumber }}
