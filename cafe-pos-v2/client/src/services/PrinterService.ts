@@ -200,8 +200,9 @@ class DirectPrinterService {
 
         // Header Title
         encoder.alignCenter();
-        encoder.textDoubleSize('DENJAVAS CAFE\n');
-        encoder.textBold('Jl. Utama Cafe No. 12\n');
+        encoder.textDoubleSize('DENJAVAS\n');
+        encoder.textBold('Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam\n');
+        encoder.text('Kab. PPU, Kaltim 76143\n');
         encoder.text('--------------------------------\n');
 
         // Struk Salinan Badge
@@ -268,7 +269,7 @@ class DirectPrinterService {
         encoder.alignCenter();
         if (type === 'customer') {
             encoder.text('Terima Kasih Atas Kunjungan Anda!\n');
-            encoder.text('WiFi: DenjavasCafe | Pass: kopiuenak\n');
+            encoder.text('Instagram: @denjavas\n');
         }
         encoder.text('\n\n\n'); // Feed paper
 

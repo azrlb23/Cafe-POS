@@ -233,7 +233,7 @@ const formatTime = (timeString: any) => {
                             <div class="absolute top-0 left-0 right-0 h-1.5 bg-amber-600"></div>
                             
                             <div class="text-center pb-4 border-b border-dashed border-stone-200">
-                                <h3 class="text-xs font-serif font-black uppercase tracking-[0.2em] text-[#B45309]">Denjavas Cafe</h3>
+                                <h3 class="text-xs font-serif font-black uppercase tracking-[0.2em] text-[#B45309]">Denjavas</h3>
                                 <p class="text-base font-black text-stone-850 mt-1 font-mono tracking-tight font-serif">{{ effectiveLastOrder.orderNumber }}</p>
                                 <div class="flex items-center justify-center gap-2 mt-2 flex-wrap">
                                     <span :class="effectiveLastOrder.orderType === 'dine_in' ? 'bg-[#3F6253]/10 text-[#3F6253] border border-[#3F6253]/20' : 'bg-[#B45309]/10 text-[#B45309] border border-[#B45309]/20'"

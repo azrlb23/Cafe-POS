@@ -47,9 +47,8 @@ onMounted(async () => {
     <div v-else-if="order" class="receipt-container">
         <!-- Header -->
         <div class="header">
-            <h1 class="store-name">{{ settings.store_name || 'Denjavas Retro Café' }}</h1>
-            <p class="store-address">{{ settings.store_address || 'Denjavas Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam, Kabupaten Penajam Paser Utara, Kalimantan Timur 76143' }}</p>
-            <p v-if="settings.store_phone || settings.store_phone === undefined">Telp: {{ settings.store_phone || '+62 823-5343-8404' }}</p>
+            <h1 class="store-name">Denjavas</h1>
+            <p class="store-address">Jl. Penajam - Kuaro KM 16, Giri Mukti, Penajam, Kab. Penajam Paser Utara, Kaltim 76143</p>
             <div class="divider"></div>
         </div>
 
@@ -132,8 +131,8 @@ onMounted(async () => {
 
         <!-- Footer -->
         <div class="footer">
-            <p v-if="printType === 'customer'">Terima Kasih</p>
-            <p v-if="printType === 'customer'">Silakan Berkunjung Kembali</p>
+            <p v-if="printType === 'customer'">Terima Kasih Atas Kunjungan Anda</p>
+            <p v-if="printType === 'customer'">Instagram: @denjavas</p>
             <p v-else>=== BATAS STRUK ===</p>
         </div>
     </div>
